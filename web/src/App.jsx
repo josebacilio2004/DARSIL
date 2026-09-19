@@ -9,13 +9,25 @@ import PdfViewerModal from './components/PdfViewerModal';
 import MapboxRouteModal from './components/MapboxRouteModal';
 import CatalogView from './components/CatalogView';
 import CompanyInfoView from './components/CompanyInfoView';
+import LoginModal from './components/LoginModal';
 import { api } from './services/api';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('portal'); // Iniciar en el portal público de clientes
   const [quotes, setQuotes] = useState([]);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Autenticación de Darios Bacilio
+  const [authUser, setAuthUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('darsil_auth_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Estados de Modales
   const [showNewQuoteModal, setShowNewQuoteModal] = useState(false);
@@ -51,6 +63,10 @@ export default function App() {
   useEffect(() => {
     fetchQuotes();
     fetchCompany();
+    // Si ya estaba autenticado previamente, ir directo al dashboard
+    if (authUser) {
+      setActiveTab('dashboard');
+    }
   }, []);
 
   const handleShareWhatsApp = (q) => {
@@ -60,25 +76,84 @@ export default function App() {
     window.open(`https://api.whatsapp.com/send?phone=51${phone}&text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // Si está en la vista del Portal / Landing de Clientes, mostrar a pantalla completa con video
+  const handleLogout = () => {
+    localStorage.removeItem('darsil_auth_user');
+    localStorage.removeItem('darsil_auth_token');
+    setAuthUser(null);
+    setActiveTab('portal');
+  };
+
+  const handleSwitchToAdmin = () => {
+    if (authUser) {
+      setActiveTab('dashboard');
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleNavClickTab = (tab) => {
+    if (tab === 'portal') {
+      setActiveTab('portal');
+      return;
+    }
+    // Para acceder al ERP taller (dashboard, quotes, catalog, company) se requiere autenticación
+    if (!authUser) {
+      setShowLoginModal(true);
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  // 1. Si está en el Portal / Landing Page de Clientes
   if (activeTab === 'portal') {
     return (
-      <LandingPage
-        quotes={quotes}
-        onSwitchToAdmin={() => setActiveTab('dashboard')}
-      />
+      <>
+        <LandingPage
+          quotes={quotes}
+          onSwitchToAdmin={handleSwitchToAdmin}
+        />
+        {showLoginModal && (
+          <LoginModal
+            onLoginSuccess={(user) => {
+              setAuthUser(user);
+              setShowLoginModal(false);
+              setActiveTab('dashboard');
+            }}
+            onCancel={() => setShowLoginModal(false)}
+          />
+        )}
+      </>
     );
   }
 
+  // 2. Si intenta acceder al ERP Taller sin sesión iniciada
+  if (!authUser) {
+    return (
+      <div className="min-h-screen bg-darsil-obsidian flex flex-col justify-center items-center p-4">
+        <LoginModal
+          onLoginSuccess={(user) => {
+            setAuthUser(user);
+            setActiveTab('dashboard');
+          }}
+          onCancel={() => setActiveTab('portal')}
+        />
+      </div>
+    );
+  }
+
+  // 3. Sistema ERP Taller Autenticado (Darios Bacilio)
   return (
     <div className="min-h-screen bg-darsil-obsidian text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
       
       {/* Barra Superior */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleNavClickTab}
         onOpenNewQuote={() => setShowNewQuoteModal(true)}
         company={company}
+        authUser={authUser}
+        onLogout={handleLogout}
+        onOpenLogin={() => setShowLoginModal(true)}
       />
 
       {/* Contenido Principal */}
@@ -117,6 +192,17 @@ export default function App() {
         )}
 
       </main>
+
+      {/* Modal Login si se abre desde navbar */}
+      {showLoginModal && (
+        <LoginModal
+          onLoginSuccess={(user) => {
+            setAuthUser(user);
+            setShowLoginModal(false);
+          }}
+          onCancel={() => setShowLoginModal(false)}
+        />
+      )}
 
       {/* Modal Nueva Cotización */}
       {showNewQuoteModal && (

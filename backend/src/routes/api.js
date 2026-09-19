@@ -5,6 +5,11 @@ const quoteController = require('../controllers/quoteController');
 const catalogController = require('../controllers/catalogController');
 const clientController = require('../controllers/clientController');
 const companyController = require('../controllers/companyController');
+const authController = require('../controllers/authController');
+
+// Autenticación ERP DARSIL
+router.post('/auth/login', authController.login);
+router.get('/auth/me', authController.getMe);
 
 // Cotizaciones
 router.get('/quotes', quoteController.getQuotes);
@@ -16,15 +21,16 @@ router.patch('/quotes/:id/status', quoteController.updateStatus);
 router.post('/quotes/:id/signature', quoteController.addSignature);
 router.get('/quotes/:id/pdf', quoteController.downloadPdf);
 
-// Catálogo
+// Catálogo (MO01-MO21, Diagnóstico, Impresión 3D)
 router.get('/catalog', catalogController.getCatalog);
 router.post('/catalog', catalogController.createCatalogItem);
+router.post('/catalog/seed', catalogController.seedCatalog);
 
 // Clientes y Vehículos
 router.get('/clients', clientController.getClients);
 router.get('/vehicles', clientController.getVehicles);
 
-// Integraciones
+// Integraciones SUNAT / RENIEC
 router.get('/integrations/ruc/:ruc', clientController.lookupRuc);
 router.get('/integrations/dni/:dni', clientController.lookupDni);
 

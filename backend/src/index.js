@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -31,8 +31,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'DARSIL Automotive Solutions API', time: new Date() });
 });
 
+const { initializeSystemDefaults } = require('./services/initService');
+
 // Iniciar servidor
-connectDB().then(() => {
+connectDB().then(async () => {
+  await initializeSystemDefaults();
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`====================================================`);
     console.log(`⚡ DARSIL API corriendo en: http://localhost:${PORT}`);
