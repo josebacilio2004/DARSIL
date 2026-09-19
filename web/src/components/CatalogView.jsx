@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Wrench, 
   Search, 
@@ -178,16 +178,6 @@ export default function CatalogView() {
               className="text-xs bg-darsil-obsidian border border-darsil-border text-white rounded-xl pl-10 pr-3 py-2 w-full outline-none focus:border-amber-400"
             />
           </div>
-
-          <button
-            onClick={handleSeedCatalog}
-            disabled={loading}
-            title="Sincronizar y restaurar catálogo oficial de 25 servicios"
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition shrink-0 active:scale-95"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden md:inline">Restaurar Oficial</span>
-          </button>
 
           <button
             onClick={handleOpenNew}

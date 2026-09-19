@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import DashboardView from './components/DashboardView';
 import QuoteList from './components/QuoteList';
 import LandingPage from './components/LandingPage';
@@ -11,12 +12,14 @@ import CatalogView from './components/CatalogView';
 import CompanyInfoView from './components/CompanyInfoView';
 import LoginModal from './components/LoginModal';
 import { api } from './services/api';
+import { Menu, PlusCircle, Radio, Sparkles } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('portal'); // Iniciar en el portal público de clientes
   const [quotes, setQuotes] = useState([]);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Autenticación de Darios Bacilio
   const [authUser, setAuthUser] = useState(() => {
@@ -140,59 +143,133 @@ export default function App() {
     );
   }
 
-  // 3. Sistema ERP Taller Autenticado (Darios Bacilio)
+  // 3. Sistema ERP Taller Autenticado con Menú Lateral Desplegable
   return (
-    <div className="min-h-screen bg-darsil-obsidian text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-darsil-obsidian text-slate-100 flex font-sans selection:bg-amber-500 selection:text-slate-950">
       
-      {/* Barra Superior */}
-      <Navbar
+      {/* Menú Lateral Desplegable (Sidebar Drawer) */}
+      <Sidebar
         activeTab={activeTab}
         setActiveTab={handleNavClickTab}
         onOpenNewQuote={() => setShowNewQuoteModal(true)}
-        company={company}
+        quotes={quotes}
         authUser={authUser}
         onLogout={handleLogout}
-        onOpenLogin={() => setShowLoginModal(true)}
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
       />
 
-      {/* Contenido Principal */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+      {/* Área de Trabajo Principal */}
+      <div 
+        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${
+          sidebarOpen ? 'lg:pl-72' : 'lg:pl-20'
+        }`}
+      >
         
-        {/* Pestaña: Dashboard Ejecutivo */}
-        {activeTab === 'dashboard' && (
-          <DashboardView
-            quotes={quotes}
-            onOpenNewQuote={() => setShowNewQuoteModal(true)}
-            onSelectQuote={(q) => setSelectedQuoteForPdf(q)}
-            setActiveTab={setActiveTab}
-            onShareWhatsApp={handleShareWhatsApp}
-          />
-        )}
+        {/* Topbar Ejecutiva */}
+        <header className="sticky top-0 z-30 bg-darsil-obsidian/95 backdrop-blur-md border-b border-darsil-border h-16 px-4 sm:px-6 flex items-center justify-between shadow-md">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-xl bg-darsil-card hover:bg-slate-800 text-slate-300 hover:text-white border border-darsil-border transition active:scale-95"
+              title="Desplegar / Ocultar Menú Lateral"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
 
-        {/* Pestaña: Cotizaciones */}
-        {activeTab === 'quotes' && (
-          <QuoteList
-            quotes={quotes}
-            onSelectQuote={(q) => setSelectedQuoteForPdf(q)}
-            onEditQuote={(q) => setEditingQuote(q)}
-            onOpenMap={(q) => setMappingQuote(q)}
-            onRefresh={fetchQuotes}
-          />
-        )}
+            {/* Breadcrumb del ERP */}
+            <div className="flex items-center space-x-2 text-xs">
+              <span className="font-bold text-slate-400 hidden sm:inline">ERP DARSIL</span>
+              <span className="text-slate-600 hidden sm:inline">/</span>
+              <span className="font-black text-amber-400 tracking-wide uppercase">
+                {activeTab === 'dashboard' ? 'Dashboard General' :
+                 activeTab === 'quotes' ? 'Cotizaciones Oficiales' :
+                 activeTab === 'catalog' ? 'Catálogo de Mano de Obra' :
+                 activeTab === 'company' ? 'Datos Bancarios & Taller' :
+                 activeTab}
+              </span>
+            </div>
+          </div>
 
-        {/* Pestaña: Catálogo MO */}
-        {activeTab === 'catalog' && (
-          <CatalogView />
-        )}
+          <div className="flex items-center space-x-3">
+            {/* Píldora de Estado */}
+            <div className="hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Render Cloud & Atlas Conectado</span>
+            </div>
 
-        {/* Pestaña: Datos Bancarios & Taller */}
-        {activeTab === 'company' && (
-          <CompanyInfoView />
-        )}
+            {/* Botón Acción Rápida: Nueva Cotización */}
+            <button
+              onClick={() => setShowNewQuoteModal(true)}
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
+            >
+              <PlusCircle className="w-3.5 h-3.5 text-slate-950" />
+              <span className="hidden md:inline">+ Nueva Cotización</span>
+            </button>
 
-      </main>
+            {/* Perfil Rápido */}
+            <div className="flex items-center space-x-2 pl-2 border-l border-darsil-border">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 font-black flex items-center justify-center text-xs shadow-inner">
+                DB
+              </div>
+              <div className="hidden xl:block text-left">
+                <span className="text-xs font-bold text-white block leading-none">
+                  {authUser?.name || 'Darios Bacilio'}
+                </span>
+                <span className="text-[9px] text-amber-400 font-mono">
+                  ADMINISTRADOR
+                </span>
+              </div>
+            </div>
+          </div>
+        </header>
 
-      {/* Modal Login si se abre desde navbar */}
+        {/* Contenido de la Vista Activa */}
+        <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+          
+          {/* Pestaña: Dashboard Ejecutivo */}
+          {activeTab === 'dashboard' && (
+            <DashboardView
+              quotes={quotes}
+              onOpenNewQuote={() => setShowNewQuoteModal(true)}
+              onSelectQuote={(q) => setSelectedQuoteForPdf(q)}
+              setActiveTab={setActiveTab}
+              onShareWhatsApp={handleShareWhatsApp}
+            />
+          )}
+
+          {/* Pestaña: Cotizaciones */}
+          {activeTab === 'quotes' && (
+            <QuoteList
+              quotes={quotes}
+              onSelectQuote={(q) => setSelectedQuoteForPdf(q)}
+              onEditQuote={(q) => setEditingQuote(q)}
+              onOpenMap={(q) => setMappingQuote(q)}
+              onRefresh={fetchQuotes}
+            />
+          )}
+
+          {/* Pestaña: Catálogo MO */}
+          {activeTab === 'catalog' && (
+            <CatalogView />
+          )}
+
+          {/* Pestaña: Datos Bancarios & Taller */}
+          {activeTab === 'company' && (
+            <CompanyInfoView />
+          )}
+
+        </main>
+
+        {/* Footer ERP */}
+        <footer className="bg-darsil-obsidian border-t border-darsil-border py-4 px-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+          <span>DARSIL AUTOMOTIVE SOLUTIONS • Sistema de Cotizaciones & Logística de Flotas • 2026</span>
+          <span className="text-amber-400 font-mono text-[10px]">v2.6.0 Enterprise</span>
+        </footer>
+
+      </div>
+
+      {/* Modal Login si se abre desde sidebar */}
       {showLoginModal && (
         <LoginModal
           onLoginSuccess={(user) => {
@@ -256,11 +333,6 @@ export default function App() {
           }}
         />
       )}
-
-      {/* Footer */}
-      <footer className="bg-darsil-obsidian border-t border-darsil-border py-4 text-center text-xs text-slate-500">
-        DARSIL AUTOMOTIVE SOLUTIONS • Sistema de Cotizaciones & Logística con Mapbox • 2026
-      </footer>
 
     </div>
   );

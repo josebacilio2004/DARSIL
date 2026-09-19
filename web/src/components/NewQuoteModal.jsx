@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, Search, Plus, Trash2, CheckCircle2, Loader2, Car, Building2, Wrench, Calendar, Clock, UserCheck } from 'lucide-react';
 import { api } from '../services/api';
+import CatalogSearchModal from './CatalogSearchModal';
 
 export default function NewQuoteModal({ onClose, onSuccess }) {
   const [templateType, setTemplateType] = useState('TALLER_DETALLADO');
   const [loading, setLoading] = useState(false);
   const [searchingDoc, setSearchingDoc] = useState(false);
   const [catalog, setCatalog] = useState([]);
+  const [showCatalogSearch, setShowCatalogSearch] = useState(false);
 
   // Helper para fechas por defecto (hoy y +15 días)
   const todayStr = new Date().toISOString().split('T')[0];
@@ -81,8 +83,8 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
     }
   };
 
-  const handleAddCatalogItem = (code) => {
-    const found = catalog.find(c => c.code === code);
+  const handleAddCatalogItem = (codeOrItem) => {
+    const found = typeof codeOrItem === 'object' ? codeOrItem : catalog.find(c => c.code === codeOrItem);
     if (!found) return;
     setItems([
       ...items,
@@ -90,7 +92,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
         code: found.code,
         description: found.description,
         quantity: 1,
-        unitPrice: found.defaultPrice,
+        unitPrice: Number(found.defaultPrice) || 0,
         stockDisp: 'DISPONIBLE'
       }
     ]);
@@ -408,7 +410,16 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                 <span>4. Propuesta Económica y Mano de Obra</span>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCatalogSearch(true)}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
+                >
+                  <Search className="w-3.5 h-3.5 text-slate-950" />
+                  <span>🔍 Buscar Servicio (Código / Palabra)</span>
+                </button>
+
                 <select
                   onChange={(e) => {
                     if (e.target.value) {
@@ -418,7 +429,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                   }}
                   className="text-xs bg-darsil-card border border-darsil-border rounded-xl px-2.5 py-1.5 font-semibold text-slate-200 focus:border-amber-400 outline-none"
                 >
-                  <option value="">⚡ + Agregar del Catálogo (MO01-MO21)...</option>
+                  <option value="">⚡ + Catálogo Rápido...</option>
                   {catalog.map(c => (
                     <option key={c.code} value={c.code}>
                       {c.code} - {c.description} (S/ {c.defaultPrice})
@@ -549,6 +560,15 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
         </form>
 
       </div>
+
+      {/* Modal de Búsqueda Avanzada de Catálogo por Código y Palabra Clave */}
+      <CatalogSearchModal
+        isOpen={showCatalogSearch}
+        onClose={() => setShowCatalogSearch(false)}
+        catalog={catalog}
+        onSelectItem={handleAddCatalogItem}
+        onAddBlankRow={handleAddBlankRow}
+      />
     </div>
   );
 }
