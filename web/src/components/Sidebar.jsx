@@ -12,11 +12,14 @@ import {
   Server, 
   UserCheck, 
   Shield, 
-  X,
-  Radio,
-  ExternalLink,
-  CheckCircle2,
-  Menu
+  X, 
+  Radio, 
+  ExternalLink, 
+  CheckCircle2, 
+  Menu,
+  ClipboardList,
+  Package,
+  BarChart3
 } from 'lucide-react';
 import { getApiUrl, setApiUrl } from '../services/api';
 
@@ -66,16 +69,24 @@ export default function Sidebar({
 
   const navigationGroups = [
     {
-      title: 'OPERACIONES & FLOTAS',
+      title: 'OPERACIONES & TALLER',
       items: [
         { id: 'dashboard', label: 'Dashboard General', icon: LayoutDashboard, badge: null },
         { id: 'quotes', label: 'Cotizaciones', icon: FileText, badge: quotes.length ? String(quotes.length) : null },
+        { id: 'workorders', label: 'Órdenes de Trabajo & OT', icon: ClipboardList, badge: 'Taller' },
         { id: 'catalog', label: 'Catálogo MO', icon: Wrench, badge: '25' }
       ]
     },
     {
-      title: 'ADMINISTRACIÓN & TALLER',
+      title: 'ALMACÉN & LOGÍSTICA',
       items: [
+        { id: 'inventory', label: 'Inventario & Kardex', icon: Package, badge: null }
+      ]
+    },
+    {
+      title: 'GERENCIA & CONTABILIDAD',
+      items: [
+        { id: 'reports', label: 'Reportes & Libro Ventas', icon: BarChart3, badge: 'Excel' },
         { id: 'company', label: 'Datos Bancarios & Taller', icon: ShieldCheck, badge: null }
       ]
     },

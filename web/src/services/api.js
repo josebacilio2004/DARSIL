@@ -187,5 +187,112 @@ export const api = {
       method: 'DELETE',
     });
     return res.json();
+  },
+
+  // Control de Inventario & Kardex
+  getInventory: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const res = await fetch(`${getApiUrl()}/inventory?${query}`);
+    return res.json();
+  },
+  getInventorySummary: async () => {
+    const res = await fetch(`${getApiUrl()}/inventory/summary`);
+    return res.json();
+  },
+  createInventoryItem: async (data) => {
+    const res = await fetch(`${getApiUrl()}/inventory`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  updateInventoryItem: async (id, data) => {
+    const res = await fetch(`${getApiUrl()}/inventory/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  deleteInventoryItem: async (id) => {
+    const res = await fetch(`${getApiUrl()}/inventory/${id}`, {
+      method: 'DELETE',
+    });
+    return res.json();
+  },
+  registerKardexMovement: async (data) => {
+    const res = await fetch(`${getApiUrl()}/inventory/movements`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  getKardexByItem: async (id) => {
+    const res = await fetch(`${getApiUrl()}/inventory/${id}/kardex`);
+    return res.json();
+  },
+
+  // Reportes Ejecutivos & Exportación Contable
+  getExecutiveReports: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const res = await fetch(`${getApiUrl()}/reports/executive?${query}`);
+    return res.json();
+  },
+  getExportCsvUrl: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return `${getApiUrl()}/reports/export-csv?${query}`;
+  },
+
+  // Órdenes de Trabajo & Taller (Check-In Digital)
+  getWorkOrders: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const res = await fetch(`${getApiUrl()}/work-orders?${query}`);
+    return res.json();
+  },
+  getWorkOrderById: async (id) => {
+    const res = await fetch(`${getApiUrl()}/work-orders/${id}`);
+    return res.json();
+  },
+  createWorkOrder: async (data) => {
+    const res = await fetch(`${getApiUrl()}/work-orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  updateWorkOrder: async (id, data) => {
+    const res = await fetch(`${getApiUrl()}/work-orders/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  updateWorkOrderStatus: async (id, status) => {
+    const res = await fetch(`${getApiUrl()}/work-orders/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    return res.json();
+  },
+  saveWorkOrderSignature: async (id, data) => {
+    const res = await fetch(`${getApiUrl()}/work-orders/${id}/signature`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  addWorkOrderMaterial: async (id, data) => {
+    const res = await fetch(`${getApiUrl()}/work-orders/${id}/materials`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
   }
 };

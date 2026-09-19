@@ -10,6 +10,9 @@ import PdfViewerModal from './components/PdfViewerModal';
 import MapboxRouteModal from './components/MapboxRouteModal';
 import CatalogView from './components/CatalogView';
 import CompanyInfoView from './components/CompanyInfoView';
+import WorkOrdersView from './components/WorkOrdersView';
+import InventoryView from './components/InventoryView';
+import ReportsView from './components/ReportsView';
 import LoginModal from './components/LoginModal';
 import { api } from './services/api';
 import { Menu, PlusCircle, Radio, Sparkles } from 'lucide-react';
@@ -184,7 +187,10 @@ export default function App() {
               <span className="font-black text-amber-400 tracking-wide uppercase">
                 {activeTab === 'dashboard' ? 'Dashboard General' :
                  activeTab === 'quotes' ? 'Cotizaciones Oficiales' :
+                 activeTab === 'workorders' ? 'Órdenes de Trabajo & Check-In Taller' :
                  activeTab === 'catalog' ? 'Catálogo de Mano de Obra' :
+                 activeTab === 'inventory' ? 'Control de Inventario & Kardex' :
+                 activeTab === 'reports' ? 'Reportes Ejecutivos & Libro Ventas' :
                  activeTab === 'company' ? 'Datos Bancarios & Taller' :
                  activeTab}
               </span>
@@ -249,9 +255,26 @@ export default function App() {
             />
           )}
 
+          {/* Pestaña: Órdenes de Trabajo & Check-In Taller */}
+          {activeTab === 'workorders' && (
+            <WorkOrdersView
+              onSelectQuote={(q) => setSelectedQuoteForPdf(q)}
+            />
+          )}
+
           {/* Pestaña: Catálogo MO */}
           {activeTab === 'catalog' && (
             <CatalogView />
+          )}
+
+          {/* Pestaña: Control de Inventario & Kardex */}
+          {activeTab === 'inventory' && (
+            <InventoryView />
+          )}
+
+          {/* Pestaña: Reportes Ejecutivos & Contabilidad */}
+          {activeTab === 'reports' && (
+            <ReportsView />
           )}
 
           {/* Pestaña: Datos Bancarios & Taller */}
