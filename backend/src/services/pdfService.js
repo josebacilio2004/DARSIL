@@ -642,11 +642,24 @@ async function generateQuotePdf(quote, company) {
     browser = await puppeteer.launch({
       executablePath: process.env.CHROME_PATH || '/usr/bin/chromium',
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-extensions',
+        '--font-render-hinting=none'
+      ]
     });
 
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { 
+      waitUntil: 'domcontentloaded',
+      timeout: 15000 
+    });
 
     const pdfBuffer = await page.pdf({
       format: 'A4',

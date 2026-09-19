@@ -1,4 +1,4 @@
-﻿const Quote = require('../models/Quote');
+const Quote = require('../models/Quote');
 const CompanyConfig = require('../models/CompanyConfig');
 const Client = require('../models/Client');
 const Vehicle = require('../models/Vehicle');
@@ -141,10 +141,16 @@ exports.createQuote = async (req, res) => {
       bankAccountsSnapshot: company.bankAccounts || []
     });
 
-    // Generar PDF con Puppeteer
-    const pdfResult = await generateQuotePdf(newQuote, company);
-    newQuote.pdfUrl = pdfResult.urlPath;
-    await newQuote.save();
+    // Generar PDF con Puppeteer de forma protegida
+    try {
+      const pdfResult = await generateQuotePdf(newQuote, company);
+      newQuote.pdfUrl = pdfResult.urlPath;
+      await newQuote.save();
+    } catch (pdfErr) {
+      console.warn('Aviso: El PDF se generará bajo demanda al consultar la cotización:', pdfErr.message);
+      newQuote.pdfUrl = `/api/quotes/${newQuote._id}/pdf`;
+      await newQuote.save();
+    }
 
     const whatsappInfo = generateWhatsAppShareLink(newQuote, `${req.protocol}://${req.get('host')}`);
 
@@ -192,9 +198,15 @@ exports.updateQuote = async (req, res) => {
       quote.referencePerson = quote.clientName || 'Atención en Taller';
     }
 
-    const pdfResult = await generateQuotePdf(quote, company);
-    quote.pdfUrl = pdfResult.urlPath;
-    await quote.save();
+    try {
+      const pdfResult = await generateQuotePdf(quote, company);
+      quote.pdfUrl = pdfResult.urlPath;
+      await quote.save();
+    } catch (pdfErr) {
+      console.warn('Aviso: El PDF se generará bajo demanda al consultar la cotización:', pdfErr.message);
+      quote.pdfUrl = `/api/quotes/${quote._id}/pdf`;
+      await quote.save();
+    }
 
     const whatsappInfo = generateWhatsAppShareLink(quote, `${req.protocol}://${req.get('host')}`);
 
@@ -249,6 +261,16 @@ exports.downloadPdf = async (req, res) => {
   try {
     const quote = await Quote.findById(req.params.id);
     if (!quote) return res.status(404).json({ success: false, message: 'Cotización no encontrada' });
+
+    const uploadsDir = path.join(__dirname, '../../uploads/quotes');
+    const existingFile = path.join(uploadsDir, `${quote.quoteNumber}.pdf`);
+
+    if (fs.existsSync(existingFile)) {
+      const buffer = fs.readFileSync(existingFile);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${quote.quoteNumber}.pdf"`);
+      return res.send(buffer);
+    }
 
     const company = await CompanyConfig.findOne() || {};
     const pdfResult = await generateQuotePdf(quote, company);
