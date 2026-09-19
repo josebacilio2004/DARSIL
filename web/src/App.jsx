@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import DashboardView from './components/DashboardView';
 import QuoteList from './components/QuoteList';
@@ -63,10 +63,8 @@ export default function App() {
   useEffect(() => {
     fetchQuotes();
     fetchCompany();
-    // Si ya estaba autenticado previamente, ir directo al dashboard
-    if (authUser) {
-      setActiveTab('dashboard');
-    }
+    // Siempre mostrar el Landing Page en primer plano al entrar al enlace
+    setActiveTab('portal');
   }, []);
 
   const handleShareWhatsApp = (q) => {
@@ -110,6 +108,7 @@ export default function App() {
       <>
         <LandingPage
           quotes={quotes}
+          authUser={authUser}
           onSwitchToAdmin={handleSwitchToAdmin}
         />
         {showLoginModal && (

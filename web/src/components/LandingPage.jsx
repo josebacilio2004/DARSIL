@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function LandingPage({ quotes = [], onSwitchToAdmin }) {
+export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [foundQuote, setFoundQuote] = useState(null);
   const [searchError, setSearchError] = useState('');
@@ -116,9 +116,16 @@ export default function LandingPage({ quotes = [], onSwitchToAdmin }) {
               {/* Botón Acceso ERP Interno */}
               <button
                 onClick={onSwitchToAdmin}
-                className="flex items-center space-x-1.5 text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:brightness-110 active:scale-95 transition"
+                className="flex items-center space-x-2 text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:brightness-110 active:scale-95 transition"
               >
-                <span>Acceso ERP Taller</span>
+                {authUser ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                    <span>Panel ERP ({authUser.name || 'Darios Bacilio'})</span>
+                  </>
+                ) : (
+                  <span>Acceso ERP Taller</span>
+                )}
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </nav>
