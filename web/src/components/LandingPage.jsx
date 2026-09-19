@@ -312,7 +312,7 @@ export default function LandingPage({ quotes = [], onSwitchToAdmin }) {
         <footer className="border-t border-white/10 bg-black/80 py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
             <div className="flex items-center space-x-3">
-              <img src="/logo_transparente.png" alt="DARSIL" className="h-7 object-contain opacity-80" />
+              <img src="./logo_transparente.png" alt="DARSIL" className="h-7 object-contain opacity-80" />
               <span>© 2026 DARSIL Automotive Solutions. Todos los derechos reservados.</span>
             </div>
             <div className="flex items-center space-x-4">

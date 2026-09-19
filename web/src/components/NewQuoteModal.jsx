@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Search, Plus, Trash2, CheckCircle2, Loader2, Car, Building2, Wrench, Calendar, Clock, UserCheck } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -170,7 +170,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
         <div className="bg-darsil-obsidian px-6 py-4 flex items-center justify-between border-b border-darsil-border">
           <div className="flex items-center space-x-3">
             <div className="h-10 w-28 flex items-center justify-center bg-black/40 rounded-xl p-1 border border-darsil-border">
-              <img src="/logo.jpg" alt="Logo" className="h-full w-full object-contain" />
+              <img src="./logo_transparente.png" alt="Logo" className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(229,169,60,0.3)]" />
             </div>
             <div>
               <h2 className="text-base font-extrabold text-white">Nueva Cotización Oficial</h2>
@@ -230,7 +230,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                     type="text"
                     value={clientDoc}
                     onChange={(e) => setClientDoc(e.target.value)}
-                    placeholder="Ej. 10418236103 / 72409984"
+                    placeholder="Ej. 20608765432 (RUC) o 72409984 (DNI)"
                     className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
                   />
                   <button
@@ -252,7 +252,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                   required
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  placeholder="Ej. DE LA CRUZ BALDEON ROCIO ELENA"
+                  placeholder="Ej. TRANSPORTES & MAQUINARIAS S.A.C. / Juan Pérez"
                   className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-white font-semibold outline-none focus:border-amber-400"
                 />
               </div>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Phone, Mail, MapPin, Building, CreditCard, Plus, Trash2, Edit2, CheckCircle, Fuel, Save, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -164,9 +164,9 @@ export default function CompanyInfoView() {
       <div className="bg-darsil-card border border-darsil-border p-6 rounded-3xl shadow-card-dark relative overflow-hidden flex flex-col md:flex-row items-center gap-6">
         <div className="w-full md:w-56 h-28 bg-black/60 rounded-2xl flex items-center justify-center p-2 border border-darsil-border overflow-hidden">
           <img
-            src="/logo.jpg"
+            src="./logo_transparente.png"
             alt="DARSIL Logo Oficial"
-            className="w-full h-full object-contain filter drop-shadow-md"
+            className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(229,169,60,0.3)]"
           />
         </div>
 

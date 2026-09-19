@@ -16,9 +16,9 @@ exports.getCatalog = async (req, res) => {
 
     let items = await CatalogItem.find(filter).sort({ code: 1 });
 
-    // Si la colecci坦n est叩 vac鱈a en la BD, auto-poblar inmediatamente
+    // Si la coleccion esta vacia en la BD, auto-poblar inmediatamente
     if (items.length === 0 && !category && !search) {
-      console.log('Cat叩logo vac鱈o en base de datos. Auto-poblando 25 servicios oficiales...');
+      console.log('Catalogo vacio en base de datos. Auto-poblando 25 servicios oficiales...');
       await CatalogItem.insertMany(OFFICIAL_CATALOG);
       items = await CatalogItem.find(filter).sort({ code: 1 });
     }
@@ -39,7 +39,7 @@ exports.seedCatalog = async (req, res) => {
       );
     }
     const all = await CatalogItem.find({ isActive: true }).sort({ code: 1 });
-    res.json({ success: true, message: 'Cat叩logo oficial sincronizado con 辿xito', count: all.length, data: all });
+    res.json({ success: true, message: 'Catalogo oficial sincronizado con exito', count: all.length, data: all });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -51,5 +51,25 @@ exports.createCatalogItem = async (req, res) => {
     res.status(201).json({ success: true, data: item });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.updateCatalogItem = async (req, res) => {
+  try {
+    const item = await CatalogItem.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!item) return res.status(404).json({ success: false, message: 'Item de catalogo no encontrado' });
+    res.json({ success: true, data: item });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.deleteCatalogItem = async (req, res) => {
+  try {
+    const item = await CatalogItem.findByIdAndDelete(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: 'Item de catalogo no encontrado' });
+    res.json({ success: true, message: 'Item de catalogo eliminado exitosamente' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

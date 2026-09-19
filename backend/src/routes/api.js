@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 
 const quoteController = require('../controllers/quoteController');
@@ -24,6 +24,8 @@ router.get('/quotes/:id/pdf', quoteController.downloadPdf);
 // Catálogo (MO01-MO21, Diagnóstico, Impresión 3D)
 router.get('/catalog', catalogController.getCatalog);
 router.post('/catalog', catalogController.createCatalogItem);
+router.put('/catalog/:id', catalogController.updateCatalogItem);
+router.delete('/catalog/:id', catalogController.deleteCatalogItem);
 router.post('/catalog/seed', catalogController.seedCatalog);
 
 // Clientes y Vehículos

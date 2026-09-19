@@ -1,13 +1,19 @@
 export const getApiUrl = () => {
   if (typeof window !== 'undefined') {
-    const saved = window.localStorage.getItem('darsil_api_url');
-    if (saved) return saved.replace(/\/$/, '');
+    let saved = window.localStorage.getItem('darsil_api_url');
+    if (saved) {
+      if (saved.includes('darsil.onrender.com')) {
+        saved = saved.replace('darsil.onrender.com', 'darsil-backend.onrender.com');
+        window.localStorage.setItem('darsil_api_url', saved);
+      }
+      return saved.replace(/\/$/, '');
+    }
     if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL.replace(/\/$/, '');
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return window.location.port === '3005' ? '/api' : 'http://localhost:4000/api';
     }
   }
-  return 'https://darsil.onrender.com/api';
+  return 'https://darsil-backend.onrender.com/api';
 };
 
 export const setApiUrl = (url) => {
@@ -112,6 +118,28 @@ export const api = {
   getCatalog: async (category = '') => {
     const query = category ? `?category=${category}` : '';
     const res = await fetch(`${getApiUrl()}/catalog${query}`);
+    return res.json();
+  },
+  createCatalogItem: async (data) => {
+    const res = await fetch(`${getApiUrl()}/catalog`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  updateCatalogItem: async (id, data) => {
+    const res = await fetch(`${getApiUrl()}/catalog/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  deleteCatalogItem: async (id) => {
+    const res = await fetch(`${getApiUrl()}/catalog/${id}`, {
+      method: 'DELETE',
+    });
     return res.json();
   },
 

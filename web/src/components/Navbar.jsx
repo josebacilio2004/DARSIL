@@ -323,7 +323,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenNewQuote, compan
                 type="text" 
                 value={customApiUrl}
                 onChange={(e) => setCustomApiUrl(e.target.value)}
-                placeholder="https://darsil.onrender.com/api"
+                placeholder="https://darsil-backend.onrender.com/api"
                 className="w-full bg-black/50 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
               />
             </div>
@@ -352,7 +352,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenNewQuote, compan
               <div className="flex space-x-2">
                 <button
                   type="button"
-                  onClick={() => setCustomApiUrl('https://darsil.onrender.com/api')}
+                  onClick={() => setCustomApiUrl('https://darsil-backend.onrender.com/api')}
                   className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
                 >
                   Render Default
