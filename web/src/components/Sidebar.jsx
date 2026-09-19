@@ -103,34 +103,51 @@ export default function Sidebar({
           isOpen ? 'w-64 sm:w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'
         }`}
       >
-        {/* Cabecera del Sidebar con Logo y Botón Colapsar */}
-        <div className="p-4 border-b border-darsil-border flex items-center justify-between">
-          <div 
-            onClick={() => setActiveTab('dashboard')} 
-            className="flex items-center space-x-3 cursor-pointer select-none overflow-hidden"
-          >
-            <div className="h-10 w-28 sm:w-32 flex items-center justify-center p-1 rounded-xl bg-black/40 border border-amber-500/20 shrink-0">
+        {/* Cabecera del Sidebar */}
+        <div className={`border-b border-darsil-border flex items-center transition-all ${
+          isOpen ? 'p-4 justify-between' : 'p-3.5 justify-center'
+        }`}>
+          {isOpen ? (
+            <>
+              <div 
+                onClick={() => setActiveTab('dashboard')} 
+                className="flex items-center space-x-3 cursor-pointer select-none overflow-hidden"
+              >
+                <div className="h-10 w-32 flex items-center justify-center p-1 rounded-xl bg-black/40 border border-amber-500/20 shrink-0">
+                  <img
+                    src="./logo_transparente.png"
+                    alt="DARSIL"
+                    className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(229,169,60,0.3)]"
+                  />
+                </div>
+                <span className="text-[10px] font-black uppercase text-amber-400 tracking-widest hidden sm:inline">
+                  ERP
+                </span>
+              </div>
+
+              {/* Botón contraer en estado expandido */}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-2 rounded-xl bg-darsil-card hover:bg-slate-800 text-slate-400 hover:text-white border border-darsil-border transition"
+                title="Contraer Menú"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            /* Estado colapsado: Solo el ícono DARSIL centrado, sin flechas duplicadas */
+            <div 
+              onClick={() => setIsOpen(true)}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-black/40 border border-amber-500/20 cursor-pointer hover:border-amber-400 transition p-1.5 shadow-sm group"
+              title="Click para expandir Menú"
+            >
               <img
-                src="./logo_transparente.png"
+                src="./icon_app.png"
                 alt="DARSIL"
-                className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(229,169,60,0.3)]"
+                className="w-full h-full object-contain group-hover:scale-110 transition"
               />
             </div>
-            {isOpen && (
-              <span className="text-[10px] font-black uppercase text-amber-400 tracking-widest hidden sm:inline">
-                ERP
-              </span>
-            )}
-          </div>
-
-          {/* Botón cerrar / togglear sidebar */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-xl bg-darsil-card hover:bg-slate-800 text-slate-400 hover:text-white border border-darsil-border transition"
-            title={isOpen ? 'Contraer Menú' : 'Desplegar Menú'}
-          >
-            {isOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          </button>
+          )}
         </div>
 
         {/* Botón Acción Principal: Nueva Cotización */}
