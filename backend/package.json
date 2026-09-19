@@ -1,0 +1,20 @@
+{
+  "name": "darsil-backend",
+  "version": "1.0.0",
+  "description": "API Backend para Cotizaciones y Operaciones de DARSIL Automotive Solutions",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "seed": "node src/scripts/seed.js"
+  },
+  "dependencies": {
+    "axios": "^1.20.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.3.2",
+    "morgan": "^1.10.0",
+    "puppeteer-core": "^22.6.5"
+  }
+}

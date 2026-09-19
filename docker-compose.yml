@@ -1,0 +1,44 @@
+﻿version: '3.8'
+
+services:
+  darsil_backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: darsil_backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - MONGO_URI=mongodb://admin:touchid_secure_2026@touchid_mongo:27017/darsil_db?authSource=admin
+      - CHROME_PATH=/usr/bin/chromium
+      - BASE_URL=http://localhost:4000
+      - NODE_ENV=production
+    volumes:
+      - darsil_uploads:/app/uploads
+    networks:
+      - darsil_net
+      - bases_datos_locales_default
+
+  darsil_web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: darsil_web
+    restart: unless-stopped
+    ports:
+      - "3005:80"
+    depends_on:
+      - darsil_backend
+    networks:
+      - darsil_net
+
+volumes:
+  darsil_uploads:
+
+networks:
+  darsil_net:
+    driver: bridge
+  bases_datos_locales_default:
+    external: true
