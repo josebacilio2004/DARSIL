@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const Quote = require('../models/Quote');
 const CompanyConfig = require('../models/CompanyConfig');
 const Client = require('../models/Client');
