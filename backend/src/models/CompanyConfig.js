@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const CompanyConfigSchema = new mongoose.Schema({
   name: { type: String, default: 'DARSIL AUTOMOTIVE SOLUTIONS' },
@@ -7,7 +7,7 @@ const CompanyConfigSchema = new mongoose.Schema({
   phones: [{ type: String, default: ['934787006'] }],
   emails: [{ type: String, default: ['rubenbasil24@gmail.com'] }],
   coverage: { type: String, default: 'Lima y alrededores / Cobertura nacional para comisiones' },
-  workshopAddress: { type: String, default: 'Av. Los Forestales MZ I1, Villa El Salvador, Lima' },
+  workshopAddress: { type: String, default: 'Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima' },
   workshopCity: { type: String, default: 'Lima' },
   workshopCoords: {
     lng: { type: Number, default: -76.9535 },

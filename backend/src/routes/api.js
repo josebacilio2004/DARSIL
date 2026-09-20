@@ -43,6 +43,7 @@ router.put('/inventory/:id', inventoryController.updateItem);
 router.delete('/inventory/:id', inventoryController.deleteItem);
 router.post('/inventory/movements', inventoryController.registerMovement);
 router.get('/inventory/:id/kardex', inventoryController.getKardexByItem);
+router.post('/inventory/seed', inventoryController.seedInventory);
 
 // Reportes Ejecutivos & Exportación Contable
 router.get('/reports/executive', reportController.getExecutiveStats);

@@ -158,6 +158,10 @@ export const api = {
     const res = await fetch(`${getApiUrl()}/company`);
     return res.json();
   },
+  getCompanyConfig: async () => {
+    const res = await fetch(`${getApiUrl()}/company`);
+    return res.json();
+  },
   updateCompany: async (data) => {
     const res = await fetch(`${getApiUrl()}/company`, {
       method: 'PUT',
@@ -231,6 +235,10 @@ export const api = {
   },
   getKardexByItem: async (id) => {
     const res = await fetch(`${getApiUrl()}/inventory/${id}/kardex`);
+    return res.json();
+  },
+  seedInventory: async () => {
+    const res = await fetch(`${getApiUrl()}/inventory/seed`, { method: 'POST' });
     return res.json();
   },
 

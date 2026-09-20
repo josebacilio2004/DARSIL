@@ -287,7 +287,7 @@ export default function App() {
 
         {/* Footer ERP */}
         <footer className="bg-darsil-obsidian border-t border-darsil-border py-4 px-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-          <span>DARSIL AUTOMOTIVE SOLUTIONS • Sistema de Cotizaciones & Logística de Flotas • 2026</span>
+          <span>DARSIL AUTOMOTIVE SOLUTIONS • Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima • 2026</span>
           <span className="text-amber-400 font-mono text-[10px]">v2.6.0 Enterprise</span>
         </footer>
 

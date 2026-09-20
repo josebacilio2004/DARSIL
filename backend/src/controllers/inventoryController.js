@@ -348,3 +348,39 @@ exports.getInventorySummary = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// POST /api/inventory/seed
+exports.seedInventory = async (req, res) => {
+  try {
+    let count = 0;
+    for (const item of INITIAL_INVENTORY_SEEDS) {
+      const existing = await InventoryItem.findOne({ sku: item.sku });
+      if (!existing) {
+        const created = await InventoryItem.create(item);
+        await KardexMovement.create({
+          itemId: created._id,
+          sku: created.sku,
+          itemName: created.name,
+          type: 'ENTRADA',
+          quantity: created.currentStock,
+          unitCost: created.unitCost,
+          previousStock: 0,
+          newStock: created.currentStock,
+          referenceDoc: 'INVENTARIO INICIAL 2026',
+          performedBy: 'Sistema DARSIL',
+          notes: 'Carga automática de inventario maestro'
+        });
+        count++;
+      }
+    }
+    const all = await InventoryItem.find({ isActive: true });
+    res.json({
+      success: true,
+      message: `Sembrado completado. Se insertaron ${count} nuevos repuestos e insumos.`,
+      data: all
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+

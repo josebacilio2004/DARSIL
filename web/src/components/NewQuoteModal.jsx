@@ -247,7 +247,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                   type="text"
                   value={clientAddress}
                   onChange={(e) => setClientAddress(e.target.value)}
-                  placeholder="Av Los Forestales MZ I1, Villa EL Salvador"
+                  placeholder="Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima"
                   className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
                 />
               </div>

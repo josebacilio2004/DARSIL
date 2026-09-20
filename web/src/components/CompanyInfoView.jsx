@@ -30,7 +30,7 @@ export default function CompanyInfoView() {
       const res = await api.getCompany();
       if (res.success && res.data) {
         setCompany(res.data);
-        setWorkshopAddress(res.data.workshopAddress || 'Av. Los Forestales MZ I1, Villa El Salvador, Lima');
+        setWorkshopAddress(res.data.workshopAddress || 'Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima');
         setPhone(res.data.phones?.[0] || '934787006');
         setEmail(res.data.emails?.[0] || 'rubenbasil24@gmail.com');
         setBaseTransportFee(res.data.baseTransportFee || 35.0);
@@ -291,7 +291,7 @@ export default function CompanyInfoView() {
               required
               value={workshopAddress}
               onChange={(e) => setWorkshopAddress(e.target.value)}
-              placeholder="Av. Los Forestales MZ I1, Villa El Salvador, Lima"
+              placeholder="Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima"
               className="w-full bg-darsil-obsidian border border-darsil-border rounded-xl px-3.5 py-2 text-white font-medium outline-none focus:border-amber-400"
             />
           </div>

@@ -630,7 +630,7 @@ function renderWorkOrderHtml(order, company) {
         <div style="font-weight: 900; color: #0f294a; font-size: 11px; text-align: center; margin-bottom: 2px;">${company?.name || 'DARSIL AUTOMOTIVE SOLUTIONS'}</div>
         <div style="text-align: center;">RUC: ${company?.ruc || '20608779671'} | Telf: ${(company?.phones || ['934787006']).join(' - ')}</div>
         <div style="text-align: center;">Email: ${(company?.emails || ['rubenbasil24@gmail.com']).join(' - ')}</div>
-        <div style="text-align: center;">Sede: ${company?.workshopAddress || 'Av. Los Forestales MZ I1, Villa El Salvador'}</div>
+        <div style="text-align: center;">Sede: ${company?.workshopAddress || 'Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima'}</div>
       </td>
     </tr>
   </table>
@@ -819,7 +819,7 @@ function renderWorkOrderHtml(order, company) {
   </table>
 
   <div style="margin-top: 8px; text-align: center; font-size: 7.5px; color: #94a3b8;">
-    Documento oficial generado por DARSIL ERP AUTOMOTRIZ • Av. Los Forestales MZ I1, Villa El Salvador, Lima • Tel: 934787006
+    Documento oficial generado por DARSIL ERP AUTOMOTRIZ • Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima • Tel: 934787006
   </div>
 
 </body>

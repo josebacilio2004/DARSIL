@@ -36,7 +36,7 @@ const WorkOrderSchema = new mongoose.Schema({
   clientPhone: { type: String, default: '' },
   clientAddress: { type: String, default: '' },
 
-  plate: { type: String, required: true, uppercase: true, trim: true }, // Placa / Matrícula
+  plate: { type: String, default: 'POR ASIGNAR', uppercase: true, trim: true }, // Placa / Matrícula (opcional en despacho)
   vin: { type: String, default: '' },
   model: { type: String, default: '' },
   color: { type: String, default: '' },
@@ -51,7 +51,7 @@ const WorkOrderSchema = new mongoose.Schema({
   // Logística y Trazado de Ruta (Mapbox)
   originLocation: {
     name: { type: String, default: 'Taller Central DARSIL (VES)' },
-    address: { type: String, default: 'Av. Los Forestales MZ I1, Villa El Salvador, Lima' },
+    address: { type: String, default: 'Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima' },
     coords: { type: [Number], default: [-76.9535, -12.2085] } // [lng, lat]
   },
   destinationLocation: {

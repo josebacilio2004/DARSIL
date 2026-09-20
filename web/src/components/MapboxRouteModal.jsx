@@ -10,7 +10,7 @@ mapboxgl.accessToken = MAPBOX_TOKEN;
 // Coordenadas base del taller DARSIL en Villa El Salvador (Av. Los Forestales)
 const DEFAULT_ORIGIN = {
   name: 'Taller Central DARSIL',
-  address: 'Av. Los Forestales MZ I1, Villa El Salvador, Lima',
+  address: 'Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima',
   coords: [-76.9535, -12.2085] // [lng, lat]
 };
 
