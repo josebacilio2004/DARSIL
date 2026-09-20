@@ -294,5 +294,16 @@ export const api = {
       body: JSON.stringify(data),
     });
     return res.json();
+  },
+  generateQuoteFromWorkOrder: async (id, data = {}) => {
+    const res = await fetch(`${getApiUrl()}/work-orders/${id}/generate-quote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  getWorkOrderPdfUrl: (id) => {
+    return `${getApiUrl()}/work-orders/${id}/pdf`;
   }
 };

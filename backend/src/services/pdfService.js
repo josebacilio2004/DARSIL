@@ -52,7 +52,6 @@ function renderTallerHtml(quote, company) {
       <td class="text-left font-mono">${item.code || `MO${String(idx + 1).padStart(2, '0')}`}</td>
       <td class="text-left">${item.description}</td>
       <td class="text-center bg-yellow">${item.quantity}</td>
-      <td class="text-center">${item.stockDisp || 'DISPONIBLE'}</td>
       <td class="text-right">${formatCurrency(item.unitPrice)}</td>
       <td class="text-right">${formatCurrency(item.value)}</td>
     </tr>
@@ -77,8 +76,9 @@ function renderTallerHtml(quote, company) {
     : '';
 
   // Asegurar que ningún campo de fecha/tiempo quede en blanco
+  const validityDays = Number(quote.validityDays) || 15;
   const fechaAlta = formatDate(quote.issueDate);
-  const fechaValidez = formatDate(quote.validUntil, 15);
+  const fechaValidez = formatDate(quote.validUntil, validityDays);
   const plazoEntrega = quote.deliveryTerm && quote.deliveryTerm.trim() !== '' 
     ? quote.deliveryTerm 
     : 'Inmediato / Según programación';
@@ -342,12 +342,11 @@ function renderTallerHtml(quote, company) {
   <table class="items-table">
     <thead>
       <tr>
-        <th style="width: 12%;">Referencia</th>
-        <th style="width: 48%; text-align: left; padding-left: 8px;">Descripción</th>
-        <th style="width: 8%;">Uds.</th>
-        <th style="width: 10%;">Stock Disp.</th>
-        <th style="width: 11%; text-align: right;">Precio Unitario (S/)</th>
-        <th style="width: 11%; text-align: right; padding-right: 8px;">Valor (S/)</th>
+        <th style="width: 14%;">Referencia</th>
+        <th style="width: 50%; text-align: left; padding-left: 8px;">Descripción</th>
+        <th style="width: 10%;">Uds.</th>
+        <th style="width: 13%; text-align: right;">Precio Unitario (S/)</th>
+        <th style="width: 13%; text-align: right; padding-right: 8px;">Valor (S/)</th>
       </tr>
     </thead>
     <tbody>
@@ -376,7 +375,7 @@ function renderTallerHtml(quote, company) {
 
   <!-- Observaciones -->
   <div class="obs-section">
-    <div class="obs-title">Observaciones:</div>
+    <div class="obs-title">Condición de Pago & Observaciones:</div>
     <div class="obs-text">${quote.paymentCondition || 'Condición de pago 07 días despues de realizar el servicio.'}</div>
   </div>
 
@@ -395,7 +394,7 @@ function renderTallerHtml(quote, company) {
   </table>
 
   <!-- Pie de página -->
-  <div class="footer-note">${quote.notes || 'Nota: Cotización válida por 15 días hábiles desde su emisión.'}</div>
+  <div class="footer-note">${quote.notes || `Nota: Cotización válida por ${validityDays} días calendario desde su emisión.`}</div>
   <div class="doc-type-bottom">Cotización</div>
 
 </body>
@@ -403,36 +402,77 @@ function renderTallerHtml(quote, company) {
   `;
 }
 
+let cachedCarDiagramBase64 = null;
+function getCarDiagramDataUri() {
+  if (cachedCarDiagramBase64) return cachedCarDiagramBase64;
+  try {
+    const assetPath = path.join(__dirname, '../../assets/car_views_diagram.png');
+    if (fs.existsSync(assetPath)) {
+      const data = fs.readFileSync(assetPath).toString('base64');
+      cachedCarDiagramBase64 = `data:image/png;base64,${data}`;
+      return cachedCarDiagramBase64;
+    }
+  } catch (err) {
+    console.warn('Could not read car_views_diagram.png:', err.message);
+  }
+  return '';
+}
+
 /**
- * Genera el HTML de la plantilla de Proyectos / Flota (Plantilla 1)
+ * Genera el HTML del Acta de Recepción / Orden de Trabajo (Checklist y Diagnóstico Oficial)
+ * Siguiendo el diseño estructurado de OT.jpeg
  */
-function renderProyectoHtml(quote, company) {
+function renderWorkOrderHtml(order, company) {
   const logoSrc = getLogoDataUri();
-  const fleetRows = (quote.fleetUnits || []).map(u => `
+  const carDiagramSrc = getCarDiagramDataUri();
+
+  const fechaIngreso = formatDate(order.checkInDate || order.createdAt);
+  const horaIngreso = order.checkInDate 
+    ? new Date(order.checkInDate).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) 
+    : '';
+
+  const chk = order.entryChecklist || {};
+
+  const damagesHtml = (order.damageMap && order.damageMap.length > 0)
+    ? order.damageMap.map((d, i) => `
+      <div style="display: inline-block; width: 48%; margin-bottom: 4px; font-size: 8.5px; vertical-align: top;">
+        <span style="display:inline-block; width: 15px; height: 15px; line-height: 15px; text-align:center; background:${d.damageType === 'CHOQUE' ? '#dc2626' : d.damageType === 'ABOLLADURA' ? '#d97706' : d.damageType === 'RAYON' ? '#ea580c' : '#7c3aed'}; color:#fff; border-radius:50%; font-weight:bold; font-size:8px;">${i+1}</span>
+        <b>${d.label || d.part}</b>: <span style="font-weight:bold; color:${d.damageType === 'CHOQUE' ? '#b91c1c' : '#b45309'};">[${d.damageType}]</span> ${d.notes ? `(${d.notes})` : ''}
+      </div>
+    `).join('')
+    : '<div style="font-size: 8.5px; color: #16a34a; font-weight: bold;">✓ Sin daños o abolladuras exteriores reportadas en carrocería</div>';
+
+  const servicesHtml = (order.diagnosticServices || []).map((s, idx) => `
     <tr>
-      <td>${u.unitType}</td>
-      <td class="text-center font-bold" style="color: blue;">${u.quantity}</td>
-      <td class="text-center font-bold" style="color: blue;">${u.itemsPerUnit}</td>
-      <td class="text-center font-bold">${u.totalItems}</td>
-      <td></td>
+      <td class="text-center font-mono">${s.code || `SRV${String(idx + 1).padStart(2, '0')}`}</td>
+      <td>${s.description}</td>
+      <td class="text-center font-bold">${s.quantity || 1}</td>
+      <td class="text-right">${formatCurrency(s.unitPrice)}</td>
+      <td class="text-right font-bold">${formatCurrency(s.value || ((s.quantity || 1) * (s.unitPrice || 0)))}</td>
     </tr>
   `).join('');
 
-  const econRows = (quote.items || []).map(i => `
+  const partsHtml = (order.diagnosticParts || []).map((p, idx) => `
     <tr>
-      <td>${i.description}</td>
-      <td class="text-center ${i.quantity ? 'font-bold' : ''}">${i.quantity}</td>
-      <td class="text-right">S/ ${formatCurrency(i.value)}</td>
-      <td></td>
+      <td class="text-center font-mono">${p.sku || `REP${String(idx + 1).padStart(2, '0')}`}</td>
+      <td>${p.name}</td>
+      <td class="text-center font-bold">${p.quantity || 1}</td>
+      <td class="text-right">${formatCurrency(p.unitPrice)}</td>
+      <td class="text-right font-bold">${formatCurrency(p.value || ((p.quantity || 1) * (p.unitPrice || 0)))}</td>
     </tr>
   `).join('');
 
-  const includesList = (quote.includes || []).map(inc => `<li>• ${inc}</li>`).join('');
-  const notIncludesList = (quote.notIncludes || []).map(ninc => `<li>• ${ninc}</li>`).join('');
-  const commConditions = (quote.commercialConditions || []).map(cc => `<li>• ${cc}</li>`).join('');
+  const totalServices = (order.diagnosticServices || []).reduce((acc, s) => acc + (s.value || ((s.quantity || 1) * (s.unitPrice || 0))), 0);
+  const totalParts = (order.diagnosticParts || []).reduce((acc, p) => acc + (p.value || ((p.quantity || 1) * (p.unitPrice || 0))), 0);
+  const totalPresupuesto = totalServices + totalParts + (order.travelCost || 0);
 
-  const fechaAlta = formatDate(quote.issueDate);
-  const fechaValidez = formatDate(quote.validUntil, 15);
+  const clientSignatureHtml = order.clientSignature 
+    ? `<img src="${order.clientSignature}" style="max-height: 48px; display: block; margin: 0 auto 2px;" />` 
+    : '<div style="height: 48px;"></div>';
+  
+  const advisorSignatureHtml = order.advisorSignature 
+    ? `<img src="${order.advisorSignature}" style="max-height: 48px; display: block; margin: 0 auto 2px;" />` 
+    : '<div style="height: 48px;"></div>';
 
   return `
 <!DOCTYPE html>
@@ -443,187 +483,372 @@ function renderProyectoHtml(quote, company) {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 10px;
-      color: #111;
-      padding: 18px 30px;
-      line-height: 1.3;
+      font-size: 9.5px;
+      color: #0f172a;
+      background: #fff;
+      padding: 14px 22px;
+      line-height: 1.25;
     }
-    .header-center {
+    .header-table {
+      width: 100%;
+      margin-bottom: 6px;
+      border-bottom: 2px solid #0f294a;
+      padding-bottom: 6px;
+    }
+    .main-title-bar {
+      background-color: #0f294a;
+      color: #ffffff;
       text-align: center;
-      margin-bottom: 12px;
-    }
-    .title-main {
-      font-size: 16px;
-      font-weight: 900;
-      color: #1b3f6e;
-      letter-spacing: 0.5px;
-    }
-    .title-sub {
-      font-size: 9.5px;
-      font-style: italic;
-      color: #4b5563;
-      margin-top: 2px;
-    }
-    .meta-box {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 12px;
-    }
-    .meta-box td {
-      border: 1px solid #cbd5e1;
-      padding: 3px 6px;
-      font-size: 9.5px;
-    }
-    .meta-box .lbl {
-      font-weight: bold;
-      width: 20%;
-    }
-    .meta-box .val-highlight {
-      background-color: #ffff00;
-      color: #1d4ed8;
-      font-weight: bold;
-    }
-    .sec-banner {
-      background-color: #1e3a5f;
-      color: #fff;
       font-size: 11px;
-      font-weight: bold;
-      padding: 3px 8px;
-      margin-top: 10px;
-      margin-bottom: 6px;
+      font-weight: 900;
+      padding: 4px;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      border-radius: 2px;
     }
-    .sec-content {
-      padding: 3px 4px 6px 4px;
-      font-size: 9.5px;
+    .section-title {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 3px 6px;
+      border-left: 3px solid #eab308;
+      margin-top: 6px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
     }
-    .tbl {
+    .grid-table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 6px;
     }
-    .tbl th {
-      background-color: #cbd5e1;
-      border: 1px solid #94a3b8;
-      padding: 4px;
-      font-size: 9.5px;
-    }
-    .tbl td {
+    .grid-table td {
       border: 1px solid #cbd5e1;
-      padding: 3px 6px;
-      font-size: 9.5px;
+      padding: 3px 5px;
+      font-size: 9px;
+    }
+    .lbl {
+      background-color: #f8fafc;
+      font-weight: bold;
+      color: #334155;
+      width: 15%;
+    }
+    .val {
+      width: 35%;
+      color: #0f172a;
+    }
+    .checklist-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 6px;
+    }
+    .checklist-table td {
+      border: 1px solid #e2e8f0;
+      padding: 2.5px 5px;
+      font-size: 8.5px;
+      width: 50%;
+    }
+    .chk-box {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border: 1px solid #475569;
+      text-align: center;
+      line-height: 9px;
+      font-size: 8px;
+      font-weight: bold;
+      margin-right: 4px;
+    }
+    .chk-active {
+      background-color: #0f294a;
+      color: #fff;
+      border-color: #0f294a;
+    }
+    .fuel-gauge-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      padding: 4px;
+      margin-bottom: 6px;
+      border-radius: 4px;
+    }
+    .fuel-pill {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 8.5px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+    }
+    .fuel-selected {
+      background-color: #eab308 !important;
+      color: #000 !important;
+      border-color: #ca8a04 !important;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 6px;
+    }
+    .items-table th {
+      background-color: #1e293b;
+      color: #ffffff;
+      border: 1px solid #1e293b;
+      padding: 3px 5px;
+      font-size: 8.5px;
+      font-weight: bold;
+    }
+    .items-table td {
+      border: 1px solid #cbd5e1;
+      padding: 2.5px 5px;
+      font-size: 8.5px;
     }
     .text-center { text-align: center; }
     .text-right { text-align: right; }
+    .font-mono { font-family: monospace; }
     .font-bold { font-weight: bold; }
-    ul { list-style: none; padding-left: 0; }
-    li { margin-bottom: 2px; }
+    .sig-table {
+      width: 100%;
+      margin-top: 10px;
+      border-collapse: collapse;
+    }
+    .sig-table td {
+      width: 50%;
+      text-align: center;
+      vertical-align: bottom;
+      padding: 0 15px;
+    }
+    .sig-line {
+      border-top: 1px solid #000;
+      margin-top: 2px;
+      padding-top: 2px;
+      font-size: 8.5px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <div class="header-center" style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 8px;">
-    ${logoSrc ? `<img src="${logoSrc}" style="height: 48px; object-fit: contain;" />` : ''}
-    <div>
-      <div class="title-main">DARSIL AUTOMOTIVE - COTIZACIÓN</div>
-      <div class="title-sub">Servicio técnico especializado — Diagnóstico • Electricidad • Electrónica • Mantenimiento Automotriz</div>
+
+  <!-- Encabezado con Logo y Datos del Taller -->
+  <table class="header-table">
+    <tr>
+      <td style="width: 50%; vertical-align: middle;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          ${logoSrc ? `<img src="${logoSrc}" style="height: 46px; width: auto; object-fit: contain;" />` : `
+          <div style="font-size: 20px; font-weight: 900; color: #0f294a;">DARSIL</div>`}
+          <div>
+            <div style="font-weight: 900; font-size: 15px; color: #0f294a; letter-spacing: 0.5px;">DARSIL</div>
+            <div style="font-size: 7px; font-weight: bold; color: #64748b;">AUTOMOTIVE SOLUTIONS</div>
+            <div style="font-size: 6px; color: #475569;">DIAGNÓSTICO • ELECTRICIDAD • ELECTRÓNICA • INGENIERÍA</div>
+          </div>
+        </div>
+      </td>
+      <td style="width: 50%; text-align: right; vertical-align: middle; font-size: 8.5px;">
+        <div style="font-weight: 900; color: #0f294a; font-size: 10px;">${company?.name || 'DARSIL AUTOMOTIVE SOLUTIONS'}</div>
+        <div>RUC: ${company?.ruc || '20608779671'} | Telf: ${(company?.phones || ['934787006']).join(' - ')}</div>
+        <div>Email: ${(company?.emails || ['rubenbasil24@gmail.com']).join(' - ')}</div>
+        <div>Sede: ${company?.workshopAddress || 'Av. Los Forestales MZ I1, Villa El Salvador'}</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Título Oficial -->
+  <div class="main-title-bar">
+    CHECKLIST DE INSPECCIÓN VEHICULAR Y ORDEN DE TRABAJO: ${order.orderNumber}
+  </div>
+
+  <!-- Sección 1: Datos de la Unidad y Conductor -->
+  <div class="section-title">1. Datos del Vehículo y Cliente / Conductor</div>
+  <table class="grid-table">
+    <tr>
+      <td class="lbl">Vehículo / Modelo:</td>
+      <td class="val font-bold">${order.model || 'N/A'}</td>
+      <td class="lbl">Cliente / Empresa:</td>
+      <td class="val font-bold">${order.clientName}</td>
+    </tr>
+    <tr>
+      <td class="lbl">Placa / Matrícula:</td>
+      <td class="val font-mono font-bold" style="color: #b45309; font-size: 11px;">${order.plate}</td>
+      <td class="lbl">RUC / DNI:</td>
+      <td class="val font-mono">${order.clientDoc || 'N/A'}</td>
+    </tr>
+    <tr>
+      <td class="lbl">Color / Año:</td>
+      <td class="val">${order.color || 'Plata'} / ${order.year || '2023'}</td>
+      <td class="lbl">Conductor / Chofer:</td>
+      <td class="val">${order.driverName || order.clientName}</td>
+    </tr>
+    <tr>
+      <td class="lbl">VIN / Chasis:</td>
+      <td class="val font-mono">${order.vin || 'N/A'}</td>
+      <td class="lbl">Teléfono Contacto:</td>
+      <td class="val font-mono">${order.driverPhone || order.clientPhone || 'N/A'}</td>
+    </tr>
+    <tr>
+      <td class="lbl">Tipo de Unidad:</td>
+      <td class="val">${order.vehicleType || order.unitType}</td>
+      <td class="lbl">Dirección / Sede:</td>
+      <td class="val">${order.destinationLocation?.address || order.clientAddress || 'Lima, Perú'}</td>
+    </tr>
+  </table>
+
+  <!-- Sección 2: Telemetría, Odómetro y Combustible -->
+  <div class="section-title">2. Registro de Ingreso, Odometría y Niveles</div>
+  <table class="grid-table" style="margin-bottom: 4px;">
+    <tr>
+      <td class="lbl">Fecha y Hora Ingreso:</td>
+      <td class="val font-bold">${fechaIngreso} ${horaIngreso}</td>
+      <td class="lbl">Asesor Técnico:</td>
+      <td class="val font-bold">${order.assignedMechanic || 'Ruben Basil'}</td>
+    </tr>
+    <tr>
+      <td class="lbl">Kilometraje (Odómetro):</td>
+      <td class="val font-mono font-bold">${order.mileage || 'No registrado'}</td>
+      <td class="lbl">Horómetro Maquinaria:</td>
+      <td class="val font-mono font-bold">${order.hourmeter || 'No aplica'}</td>
+    </tr>
+    <tr>
+      <td class="lbl">Voltaje Batería Reposo:</td>
+      <td class="val font-mono font-bold" style="color: #0284c7;">${order.batteryVoltage || '25.4 V'}</td>
+      <td class="lbl">Auxilio en Ruta / Logística:</td>
+      <td class="val">${order.routeDistanceKm > 0 ? `${order.routeDistanceKm.toFixed(1)} km (Viáticos: S/ ${formatCurrency(order.travelCost)})` : 'Recepción en Taller Central'}</td>
+    </tr>
+  </table>
+
+  <!-- Indicador Nivel Combustible -->
+  <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 3px 6px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 8.5px;">
+    <b>NIVEL DE COMBUSTIBLE AL INGRESO:</b>
+    <div style="display: flex; gap: 8px;">
+      <span class="fuel-pill ${order.fuelLevel === 'RESERVA' ? 'fuel-selected' : ''}">RESERVA</span>
+      <span class="fuel-pill ${order.fuelLevel === '1/4' ? 'fuel-selected' : ''}">1/4 TANQUE</span>
+      <span class="fuel-pill ${order.fuelLevel === '1/2' ? 'fuel-selected' : ''}">1/2 TANQUE</span>
+      <span class="fuel-pill ${order.fuelLevel === '3/4' ? 'fuel-selected' : ''}">3/4 TANQUE</span>
+      <span class="fuel-pill ${order.fuelLevel === 'LLENO' ? 'fuel-selected' : ''}">LLENO</span>
     </div>
   </div>
 
-  <table class="meta-box">
+  <!-- Sección 3: Checklist Físico & Eléctrico y Diagrama de Daños -->
+  <div class="section-title">3. Checklist de Componentes & Diagrama de Daños en Carrocería</div>
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 6px;">
     <tr>
-      <td class="lbl">N.º Cotización:</td>
-      <td class="val-highlight">${quote.quoteNumber}</td>
-    </tr>
-    <tr>
-      <td class="lbl">Fecha:</td>
-      <td class="val-highlight">${fechaAlta}</td>
-    </tr>
-    <tr>
-      <td class="lbl">Cliente:</td>
-      <td class="val-highlight">${quote.clientName}</td>
-    </tr>
-    <tr>
-      <td class="lbl">Lugar:</td>
-      <td class="val-highlight">${quote.location || 'Lima'}</td>
-    </tr>
-    <tr>
-      <td class="lbl">Servicio:</td>
-      <td class="val-highlight">${quote.orderType || 'Instalacion de sensores'}</td>
-    </tr>
-    <tr>
-      <td class="lbl">Comisión:</td>
-      <td class="val-highlight">${quote.commissionDays || '4 días'}</td>
+      <!-- Checklist Columna Izquierda -->
+      <td style="width: 52%; vertical-align: top; padding-right: 6px;">
+        <table class="checklist-table">
+          <tr>
+            <td><span class="chk-box ${chk.bancoBaterias === 'BUENO' ? 'chk-active' : ''}">X</span> Baterías (${chk.bancoBaterias || 'BUENO'})</td>
+            <td><span class="chk-box ${chk.arrancador === 'OPERATIVO' ? 'chk-active' : ''}">X</span> Arrancador (${chk.arrancador || 'OPERATIVO'})</td>
+          </tr>
+          <tr>
+            <td><span class="chk-box ${chk.alternador === 'OPERATIVO' ? 'chk-active' : ''}">X</span> Alternador (${chk.alternador || 'OPERATIVO'})</td>
+            <td><span class="chk-box ${chk.lucesYFaros === 'OPERATIVO' ? 'chk-active' : ''}">X</span> Luces & Faros (${chk.lucesYFaros || 'OPERATIVO'})</td>
+          </tr>
+          <tr>
+            <td><span class="chk-box ${chk.ramalElectrico === 'INTEGRO' ? 'chk-active' : ''}">X</span> Ramal Eléctrico (${chk.ramalElectrico || 'INTEGRO'})</td>
+            <td><span class="chk-box ${chk.computadoraEcu === 'SIN_ERRORES' ? 'chk-active' : ''}">X</span> ECU (${chk.computadoraEcu || 'SIN_ERRORES'})</td>
+          </tr>
+          <tr>
+            <td><span class="chk-box ${chk.bocina === 'OPERATIVO' ? 'chk-active' : ''}">X</span> Bocina / Pito</td>
+            <td><span class="chk-box ${chk.plumillas === 'OPERATIVO' ? 'chk-active' : ''}">X</span> Plumillas Limpiaparabrisas</td>
+          </tr>
+          <tr>
+            <td><span class="chk-box ${chk.vidrios === 'OPERATIVO' ? 'chk-active' : ''}">X</span> Vidrios & Lunas</td>
+            <td><span class="chk-box ${chk.llantaRepuesto ? 'chk-active' : ''}">X</span> Llanta de Repuesto</td>
+          </tr>
+          <tr>
+            <td><span class="chk-box ${chk.extintor ? 'chk-active' : ''}">X</span> Extintor de Seguridad</td>
+            <td><span class="chk-box ${chk.herramientas ? 'chk-active' : ''}">X</span> Kit de Herramientas / Gata</td>
+          </tr>
+        </table>
+
+        <!-- Falla Reportada -->
+        <div style="background: #fffbeb; border: 1px solid #fef08a; padding: 4px; border-radius: 3px; font-size: 8.5px; margin-top: 4px;">
+          <b>Falla Reportada por Cliente:</b> ${order.reportedFault}
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px; border-radius: 3px; font-size: 8.5px; margin-top: 3px;">
+          <b>Diagnóstico Técnico:</b> ${order.visualObservations}
+        </div>
+      </td>
+
+      <!-- Diagrama de Carrocería 5 Vistas -->
+      <td style="width: 48%; vertical-align: top; border: 1px solid #cbd5e1; padding: 4px; background: #fafafa; text-align: center;">
+        <div style="font-size: 8px; font-weight: bold; color: #475569; margin-bottom: 2px;">VISTA PERICIAL DE CARROCERÍA (5 ÁNGULOS)</div>
+        ${carDiagramSrc ? `<img src="${carDiagramSrc}" style="max-height: 110px; max-width: 95%; object-fit: contain; margin: 0 auto; display: block;" />` : ''}
+        <div style="margin-top: 4px; text-align: left; padding: 2px 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 3px;">
+          <div style="font-size: 7.5px; font-weight: bold; color: #334155; margin-bottom: 2px;">REGISTRO DE AVERÍAS PREEXISTENTES:</div>
+          ${damagesHtml}
+        </div>
+      </td>
     </tr>
   </table>
 
-  <div class="sec-banner">1. OBJETO</div>
-  <div class="sec-content">${quote.projectObject || 'Instalación de sensores y validación de funcionamiento.'}</div>
-
-  <div class="sec-banner">2. ALCANCE Y CANTIDAD DE UNIDADES</div>
-  <table class="tbl">
+  <!-- Sección 4: Requerimientos Técnicos (Mano de Obra & Repuestos) -->
+  <div class="section-title">4. Servicios de Mano de Obra y Repuestos Requeridos</div>
+  <table class="items-table">
     <thead>
       <tr>
-        <th style="width: 35%;">Tipo de unidad</th>
-        <th style="width: 15%;">Cantidad</th>
-        <th style="width: 25%;">Sensores / bus</th>
-        <th style="width: 25%;">Total sensores</th>
+        <th style="width: 12%;">Código</th>
+        <th style="width: 52%; text-align: left; padding-left: 6px;">Descripción de Trabajos / Repuestos</th>
+        <th style="width: 8%;">Cant.</th>
+        <th style="width: 14%; text-align: right;">P. Unit (S/)</th>
+        <th style="width: 14%; text-align: right; padding-right: 6px;">Subtotal (S/)</th>
       </tr>
     </thead>
     <tbody>
-      ${fleetRows}
+      ${servicesHtml || '<tr><td colspan="5" style="text-align:center; color:#64748b; font-style:italic;">Sin servicios presupuestados</td></tr>'}
+      ${partsHtml}
+      ${order.travelCost > 0 ? `
+        <tr>
+          <td class="text-center font-mono">LOG01</td>
+          <td>DESPLAZAMIENTO Y AUXILIO MECÁNICO EN RUTA (${order.routeDistanceKm.toFixed(1)} KM)</td>
+          <td class="text-center font-bold">1</td>
+          <td class="text-right">${formatCurrency(order.travelCost)}</td>
+          <td class="text-right font-bold">${formatCurrency(order.travelCost)}</td>
+        </tr>
+      ` : ''}
     </tbody>
+    <tfoot>
+      <tr style="background: #e2e8f0; font-weight: 900; font-size: 9.5px;">
+        <td colspan="4" style="text-align: right; padding-right: 8px;">TOTAL ESTIMADO DE TRABAJO (S/):</td>
+        <td style="text-align: right; padding-right: 6px; font-family: monospace; color: #0f294a;">S/ ${formatCurrency(totalPresupuesto)}</td>
+      </tr>
+    </tfoot>
   </table>
 
-  <div class="sec-banner">3. PROPUESTA ECONOMICA</div>
-  <table class="tbl">
-    <thead>
-      <tr>
-        <th style="width: 50%;">Concepto</th>
-        <th style="width: 20%;">Cantidad</th>
-        <th style="width: 30%; text-align: right;">Importe (S/)</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${econRows}
-      <tr style="background-color: #cbd5e1; font-weight: bold;">
-        <td>TOTAL GENERAL</td>
-        <td></td>
-        <td class="text-right">S/ ${formatCurrency(quote.total)}</td>
-      </tr>
-    </tbody>
+  <!-- Sección 5: Firmas de Conformidad -->
+  <div class="section-title">5. Acta de Conformidad y Entrega Técnica</div>
+  <table class="sig-table">
+    <tr>
+      <td>
+        ${clientSignatureHtml}
+        <div class="sig-line">
+          FIRMA DEL CLIENTE / CONDUCTOR<br>
+          <span style="font-size: 7.5px; font-weight: normal; color: #64748b;">DNI / RUC: ${order.clientDoc || '____________________'}</span>
+        </div>
+      </td>
+      <td>
+        ${advisorSignatureHtml}
+        <div class="sig-line">
+          ASESOR / MECÁNICO RESPONSABLE DARSIL<br>
+          <span style="font-size: 7.5px; font-weight: normal; color: #64748b;">${order.assignedMechanic || 'Ruben Basil'} - Especialista Técnico</span>
+        </div>
+      </td>
+    </tr>
   </table>
 
-  <div class="sec-banner">4. TIEMPO DE EJECUCIÓN</div>
-  <div class="sec-content">${quote.executionTime || ''}</div>
-
-  <div class="sec-banner">5. INCLUYE / NO INCLUYE</div>
-  <div class="sec-content">
-    <ul>
-      ${includesList}
-      ${notIncludesList}
-    </ul>
+  <div style="margin-top: 8px; text-align: center; font-size: 7.5px; color: #94a3b8;">
+    Documento oficial generado por DARSIL ERP AUTOMOTRIZ • Av. Los Forestales MZ I1, Villa El Salvador, Lima • Tel: 934787006
   </div>
 
-  <div class="sec-banner">6. CONDICIONES COMERCIALES</div>
-  <div class="sec-content">
-    <ul>
-      ${commConditions}
-    </ul>
-  </div>
-
-  <div style="margin-top: 30px; text-align: center;">
-    <div style="font-weight: bold; color: #1e3a5f;">DARSIL AUTOMOTIVE</div>
-    <div style="font-style: italic; font-size: 8.5px; color: #64748b;">Diagnóstico • Electricidad • Electrónica • Mantenimiento Automotriz</div>
-    <div style="margin-top: 25px; text-align: left; font-size: 9.5px;">
-      Firma y sello: _________________________________________
-    </div>
-  </div>
 </body>
 </html>
   `;
 }
 
 /**
- * Genera el documento PDF usando Chrome Puppeteer
+ * Genera el documento PDF de Cotización usando Chrome Puppeteer
  */
 async function generateQuotePdf(quote, company) {
   const uploadsDir = path.join(__dirname, '../../uploads/quotes');
@@ -631,10 +856,8 @@ async function generateQuotePdf(quote, company) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
 
-  const html = quote.templateType === 'PROYECTO_ESPECIAL'
-    ? renderProyectoHtml(quote, company)
-    : renderTallerHtml(quote, company);
-
+  // Siempre se utiliza la plantilla oficial detallada de taller (Plantilla 1 eliminada)
+  const html = renderTallerHtml(quote, company);
   const outputPath = path.join(uploadsDir, `${quote.quoteNumber}.pdf`);
 
   let browser;
@@ -673,7 +896,7 @@ async function generateQuotePdf(quote, company) {
     });
 
     fs.writeFileSync(outputPath, pdfBuffer);
-    console.log(`PDF generado exitosamente en: ${outputPath}`);
+    console.log(`PDF de Cotización generado exitosamente en: ${outputPath}`);
 
     return {
       filePath: outputPath,
@@ -682,7 +905,73 @@ async function generateQuotePdf(quote, company) {
       urlPath: `/uploads/quotes/${quote.quoteNumber}.pdf`
     };
   } catch (error) {
-    console.error('Error al generar PDF con Puppeteer:', error);
+    console.error('Error al generar PDF de Cotización:', error);
+    throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
+/**
+ * Genera el documento PDF de la Orden de Trabajo (Checklist y Diagnóstico Oficial)
+ */
+async function generateWorkOrderPdf(order, company) {
+  const uploadsDir = path.join(__dirname, '../../uploads/work-orders');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  const html = renderWorkOrderHtml(order, company);
+  const outputPath = path.join(uploadsDir, `${order.orderNumber}.pdf`);
+
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      executablePath: process.env.CHROME_PATH || '/usr/bin/chromium',
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-extensions',
+        '--font-render-hinting=none'
+      ]
+    });
+
+    const page = await browser.newPage();
+    await page.setContent(html, { 
+      waitUntil: 'domcontentloaded',
+      timeout: 15000 
+    });
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '5mm',
+        right: '6mm',
+        bottom: '5mm',
+        left: '6mm'
+      }
+    });
+
+    fs.writeFileSync(outputPath, pdfBuffer);
+    console.log(`PDF de Orden de Trabajo generado exitosamente en: ${outputPath}`);
+
+    return {
+      filePath: outputPath,
+      fileName: `${order.orderNumber}.pdf`,
+      buffer: pdfBuffer,
+      urlPath: `/uploads/work-orders/${order.orderNumber}.pdf`
+    };
+  } catch (error) {
+    console.error('Error al generar PDF de Orden de Trabajo:', error);
     throw error;
   } finally {
     if (browser) {
@@ -693,6 +982,7 @@ async function generateQuotePdf(quote, company) {
 
 module.exports = {
   generateQuotePdf,
+  generateWorkOrderPdf,
   renderTallerHtml,
-  renderProyectoHtml
+  renderWorkOrderHtml
 };

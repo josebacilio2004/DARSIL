@@ -31,8 +31,9 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
 
   // Tiempos y Plazos
   const [issueDate, setIssueDate] = useState(formatInputDate(quote.issueDate));
+  const [validityDays, setValidityDays] = useState(quote.validityDays || 15);
   const [validUntil, setValidUntil] = useState(
-    quote.validUntil ? formatInputDate(quote.validUntil) : new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0]
+    quote.validUntil ? formatInputDate(quote.validUntil) : new Date(Date.now() + (quote.validityDays || 15) * 86400000).toISOString().split('T')[0]
   );
   const [deliveryTerm, setDeliveryTerm] = useState(quote.deliveryTerm || 'Inmediato / Según programación');
   const [orderType, setOrderType] = useState(quote.orderType || 'Taller de Servicios');
@@ -41,7 +42,7 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
 
   // Ítems
   const [items, setItems] = useState(quote.items && quote.items.length > 0 ? quote.items : [
-    { code: 'MO01', description: 'INSTALACIÓN DE RELÉ DE ARRANQUE', quantity: 1, unitPrice: 50.00, stockDisp: 'DISPONIBLE' }
+    { code: 'MO01', description: 'INSTALACIÓN DE RELÉ DE ARRANQUE', quantity: 1, unitPrice: 50.00 }
   ]);
 
   useEffect(() => {
@@ -59,8 +60,7 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
         code: found.code,
         description: found.description,
         quantity: 1,
-        unitPrice: Number(found.defaultPrice) || 0,
-        stockDisp: 'DISPONIBLE'
+        unitPrice: Number(found.defaultPrice) || 0
       }
     ]);
   };
@@ -68,7 +68,7 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
   const handleAddBlankRow = () => {
     setItems([
       ...items,
-      { code: `MO${String(items.length + 1).padStart(2, '0')}`, description: '', quantity: 1, unitPrice: 0, stockDisp: 'DISPONIBLE' }
+      { code: `MO${String(items.length + 1).padStart(2, '0')}`, description: '', quantity: 1, unitPrice: 0 }
     ]);
   };
 
@@ -95,6 +95,7 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
     setLoading(true);
     try {
       const payload = {
+        templateType: 'TALLER_DETALLADO',
         clientDoc,
         clientName,
         clientAddress,
@@ -104,6 +105,7 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
         vin,
         model,
         issueDate,
+        validityDays: Number(validityDays) || 15,
         validUntil,
         deliveryTerm: deliveryTerm || 'Inmediato / Según programación',
         orderType: orderType || 'Taller de Servicios',
@@ -257,9 +259,9 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
               <span>3. Tiempos, Plazos de Entrega y Referencia</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Fecha Alta (Emisión):</label>
+                <label className="block text-slate-400 font-semibold mb-1">Fecha Emisión:</label>
                 <input
                   type="date"
                   required
@@ -270,13 +272,29 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
               </div>
 
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Fecha Validez (15 días):</label>
+                <label className="block text-slate-400 font-semibold mb-1">Días de Validez:</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={validityDays}
+                  onChange={(e) => {
+                    const days = parseInt(e.target.value, 10) || 15;
+                    setValidityDays(days);
+                    setValidUntil(new Date(Date.now() + days * 86400000).toISOString().split('T')[0]);
+                  }}
+                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-amber-300 font-mono font-bold outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Fecha Vencimiento:</label>
                 <input
                   type="date"
                   required
                   value={validUntil}
                   onChange={(e) => setValidUntil(e.target.value)}
-                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-amber-300 font-mono font-bold outline-none focus:border-amber-400"
+                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-white font-mono outline-none focus:border-amber-400"
                 />
               </div>
 
@@ -292,7 +310,7 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-slate-400 font-semibold mb-1">Referencia / Contacto:</label>
                 <input
                   type="text"
@@ -303,17 +321,7 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">Tipo de Pedido:</label>
-                <input
-                  type="text"
-                  value={orderType}
-                  onChange={(e) => setOrderType(e.target.value)}
-                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-slate-400 font-semibold mb-1">Asesor Responsable:</label>
                 <input
                   type="text"
@@ -321,6 +329,35 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
                   onChange={(e) => setAdvisorName(e.target.value)}
                   className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-white font-semibold outline-none focus:border-amber-400"
                 />
+              </div>
+
+              <div className="sm:col-span-4">
+                <label className="block text-slate-400 font-semibold mb-1">Condición de Pago (Impresa en PDF):</label>
+                <input
+                  type="text"
+                  required
+                  value={paymentCondition}
+                  onChange={(e) => setPaymentCondition(e.target.value)}
+                  placeholder="Ej. Condición de pago 07 días despues de realizar el servicio."
+                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-amber-300 font-medium outline-none focus:border-amber-400"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {[
+                    'Contado contra entrega',
+                    'Condición de pago 07 días despues de realizar el servicio.',
+                    'Crédito 15 días calendario',
+                    '50% adelanto y saldo contra entrega'
+                  ].map((p, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setPaymentCondition(p)}
+                      className="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border border-slate-700 transition"
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

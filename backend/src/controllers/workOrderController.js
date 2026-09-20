@@ -1,7 +1,11 @@
+const fs = require('fs');
+const path = require('path');
 const WorkOrder = require('../models/WorkOrder');
 const Quote = require('../models/Quote');
+const CompanyConfig = require('../models/CompanyConfig');
 const InventoryItem = require('../models/InventoryItem');
 const KardexMovement = require('../models/KardexMovement');
+const { generateWorkOrderPdf } = require('../services/pdfService');
 
 async function getNextOrderNumber() {
   const currentYear = new Date().getFullYear();
@@ -216,5 +220,175 @@ exports.addMaterial = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// POST /api/work-orders/:id/generate-quote (Generación Automática de Cotización Oficial)
+exports.generateQuoteFromWorkOrder = async (req, res) => {
+  try {
+    const order = await WorkOrder.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Orden de Trabajo no encontrada' });
+    }
+
+    // Helper para próximo correlativo DA-YYYY-XXX
+    const currentYear = new Date().getFullYear();
+    const prefix = `DA-${currentYear}-`;
+    const lastQuote = await Quote.findOne({ quoteNumber: new RegExp(`^${prefix}`) }).sort({ quoteNumber: -1 });
+    let nextNum = 1;
+    if (lastQuote) {
+      const match = lastQuote.quoteNumber.match(/(\d+)$/);
+      if (match) nextNum = parseInt(match[1], 10) + 1;
+    }
+    const quoteNumber = `${prefix}${String(nextNum).padStart(3, '0')}`;
+
+    // Construir ítems agrupando Servicios (MO) y Repuestos
+    const items = [];
+
+    // 1. Servicios de Mano de Obra
+    if (order.diagnosticServices && order.diagnosticServices.length > 0) {
+      order.diagnosticServices.forEach((s, idx) => {
+        const qty = Number(s.quantity) || 1;
+        const price = Number(s.unitPrice) || 0;
+        items.push({
+          code: s.code || `MO${String(idx + 1).padStart(2, '0')}`,
+          description: s.description,
+          quantity: qty,
+          unitPrice: price,
+          value: qty * price
+        });
+      });
+    } else if (order.tasks && order.tasks.length > 0) {
+      order.tasks.forEach((t, idx) => {
+        items.push({
+          code: `MO${String(idx + 1).padStart(2, '0')}`,
+          description: t.description,
+          quantity: 1,
+          unitPrice: 80,
+          value: 80
+        });
+      });
+    }
+
+    // 2. Repuestos e Insumos de Taller
+    if (order.diagnosticParts && order.diagnosticParts.length > 0) {
+      order.diagnosticParts.forEach((p, idx) => {
+        const qty = Number(p.quantity) || 1;
+        const price = Number(p.unitPrice) || 0;
+        items.push({
+          code: p.sku || `REP${String(idx + 1).padStart(2, '0')}`,
+          description: `REPUESTO: ${p.name}`,
+          quantity: qty,
+          unitPrice: price,
+          value: qty * price
+        });
+      });
+    }
+
+    // 3. Viáticos / Auxilio en Ruta si aplica
+    if (order.travelCost && order.travelCost > 0) {
+      items.push({
+        code: 'LOG01',
+        description: `DESPLAZAMIENTO Y AUXILIO MECÁNICO EN RUTA (${(order.routeDistanceKm || 0).toFixed(1)} KM)`,
+        quantity: 1,
+        unitPrice: order.travelCost,
+        value: order.travelCost
+      });
+    }
+
+    // Si aún no hay ítems, colocar uno por defecto
+    if (items.length === 0) {
+      items.push({
+        code: 'MO01',
+        description: `SERVICIO DIAGNÓSTICO Y REVISIÓN: ${order.reportedFault || 'Inspección técnica general'}`,
+        quantity: 1,
+        unitPrice: 120,
+        value: 120
+      });
+    }
+
+    const subtotal = items.reduce((acc, item) => acc + (item.value || 0), 0);
+    const total = subtotal;
+
+    // Obtener cuentas bancarias de CompanyConfig si existen
+    const company = await CompanyConfig.findOne();
+    const bankAccountsSnapshot = company?.bankAccounts || [];
+
+    const validityDays = req.body.validityDays ? Number(req.body.validityDays) : 15;
+    const validUntilDate = new Date(Date.now() + validityDays * 86400000);
+
+    const quote = new Quote({
+      quoteNumber,
+      templateType: 'TALLER_DETALLADO',
+      status: 'BORRADOR',
+      workOrderId: order._id,
+      originWorkOrderNumber: order.orderNumber,
+      clientName: order.clientName,
+      clientDoc: order.clientDoc,
+      clientPhone: order.clientPhone || order.driverPhone,
+      clientAddress: order.destinationLocation?.address || order.clientAddress || '',
+      plate: order.plate,
+      vin: order.vin || '',
+      model: order.model || '',
+      orderType: 'Taller de Servicios',
+      referencePerson: order.driverName || order.clientName,
+      advisorName: order.assignedMechanic || 'Ruben Basil',
+      validityDays,
+      validUntil: validUntilDate,
+      deliveryTerm: 'Inmediato / Según programación de taller',
+      paymentCondition: req.body.paymentCondition || 'Condición de pago 07 días despues de realizar el servicio.',
+      notes: `Nota: Cotización generada automáticamente a partir de la Orden de Trabajo ${order.orderNumber}. Válida por ${validityDays} días calendario.`,
+      items,
+      subtotal,
+      total,
+      bankAccountsSnapshot,
+      clientSignature: order.clientSignature,
+      advisorSignature: order.advisorSignature
+    });
+
+    await quote.save();
+
+    // Actualizar OT con el vínculo a la cotización
+    order.generatedQuoteId = quote._id;
+    order.generatedQuoteNumber = quote.quoteNumber;
+    order.quoteId = quote._id;
+    order.quoteNumber = quote.quoteNumber;
+    await order.save();
+
+    res.status(201).json({
+      success: true,
+      message: `Cotización oficial ${quoteNumber} generada y vinculada a la OT ${order.orderNumber}`,
+      data: {
+        quote,
+        workOrder: order
+      }
+    });
+  } catch (error) {
+    console.error('Error generando cotización automática desde OT:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// GET /api/work-orders/:id/pdf (Generación y descarga de PDF oficial de OT)
+exports.getWorkOrderPdf = async (req, res) => {
+  try {
+    const order = await WorkOrder.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Orden de trabajo no encontrada' });
+    }
+
+    const company = await CompanyConfig.findOne();
+    const pdfResult = await generateWorkOrderPdf(order, company);
+
+    order.pdfUrl = pdfResult.urlPath;
+    await order.save();
+
+    const stream = fs.createReadStream(pdfResult.filePath);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${pdfResult.fileName}"`);
+    stream.pipe(res);
+  } catch (error) {
+    console.error('Error al generar PDF de OT:', error);
+    res.status(500).json({ success: false, message: 'Error generando PDF: ' + error.message });
   }
 };

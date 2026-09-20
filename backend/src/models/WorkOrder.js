@@ -39,12 +39,35 @@ const WorkOrderSchema = new mongoose.Schema({
   plate: { type: String, required: true, uppercase: true, trim: true }, // Placa / Matrícula
   vin: { type: String, default: '' },
   model: { type: String, default: '' },
+  color: { type: String, default: '' },
+  year: { type: String, default: '' },
   unitType: { type: String, default: 'Tractocamión' }, // Tracto, Mixer, Bus, etc.
+  vehicleType: { 
+    type: String, 
+    enum: ['SEDAN_AUTO', 'CAMIONETA_SUV', 'TRACTO_CAMION', 'BUS', 'MAQUINARIA'], 
+    default: 'SEDAN_AUTO' 
+  },
+
+  // Logística y Trazado de Ruta (Mapbox)
+  originLocation: {
+    name: { type: String, default: 'Taller Central DARSIL (VES)' },
+    address: { type: String, default: 'Av. Los Forestales MZ I1, Villa El Salvador, Lima' },
+    coords: { type: [Number], default: [-76.9535, -12.2085] } // [lng, lat]
+  },
+  destinationLocation: {
+    address: { type: String, default: '' },
+    coords: { type: [Number], default: [] }
+  },
+  routeDistanceKm: { type: Number, default: 0 },
+  routeDurationMin: { type: Number, default: 0 },
+  travelCost: { type: Number, default: 0 },
 
   assignedMechanic: { type: String, default: 'Ruben Basil' },
   status: {
     type: String,
     enum: [
+      'DESPACHADO',
+      'EN_CAMINO',
       'RECEPCIONADO', 
       'EN_DIAGNOSTICO', 
       'EN_PROCESO', 
@@ -76,14 +99,58 @@ const WorkOrderSchema = new mongoose.Schema({
     lucesYFaros: { type: String, default: 'OPERATIVO' }, // OPERATIVO, PARCIAL, DEFICIENTE
     ramalElectrico: { type: String, default: 'INTEGRO' }, // INTEGRO, CORTADO, REPARADO
     computadoraEcu: { type: String, default: 'SIN_ERRORES' }, // SIN_ERRORES, CHECK_ACTIVO
+    bocina: { type: String, default: 'OPERATIVO' },
+    plumillas: { type: String, default: 'OPERATIVO' },
+    vidrios: { type: String, default: 'OPERATIVO' },
     llantaRepuesto: { type: Boolean, default: true },
     extintor: { type: Boolean, default: true },
     herramientas: { type: Boolean, default: true }
   },
 
-  reportedFault: { type: String, required: true }, // Falla reportada por el cliente
-  visualObservations: { type: String, default: 'Unidad ingresa en condiciones habituales de operación.' },
+  reportedFault: { type: String, default: 'Revisión técnica / Diagnóstico general' }, // Falla reportada
+  visualObservations: { type: String, default: 'Unidad inspeccionada.' },
   
+  // Diagrama Interactivo de Daños (5 vistas)
+  damageMap: [{
+    id: { type: String },
+    part: { type: String },
+    label: { type: String },
+    damageType: { 
+      type: String, 
+      enum: ['CHOQUE', 'ABOLLADURA', 'RAYON', 'ROTURA'], 
+      default: 'RAYON' 
+    },
+    view: { 
+      type: String, 
+      enum: ['front', 'rear', 'top', 'left', 'right'], 
+      default: 'top' 
+    },
+    x: { type: Number, default: 50 },
+    y: { type: Number, default: 50 },
+    notes: { type: String, default: '' }
+  }],
+
+  // Servicios de Mano de Obra y Repuestos Requeridos (Diagnóstico)
+  diagnosticServices: [{
+    code: { type: String, default: '' },
+    description: { type: String, required: true },
+    quantity: { type: Number, default: 1 },
+    unitPrice: { type: Number, default: 0 },
+    value: { type: Number, default: 0 }
+  }],
+  diagnosticParts: [{
+    inventoryItemId: { type: mongoose.Schema.Types.ObjectId, ref: 'InventoryItem' },
+    sku: { type: String, default: '' },
+    name: { type: String, required: true },
+    quantity: { type: Number, default: 1 },
+    unitPrice: { type: Number, default: 0 },
+    value: { type: Number, default: 0 }
+  }],
+
+  // Automatización: Cotización Oficial Generada
+  generatedQuoteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quote' },
+  generatedQuoteNumber: { type: String, default: '' },
+
   // Tareas y Materiales
   tasks: [WorkOrderTaskSchema],
   materialsUsed: [WorkOrderMaterialSchema],
@@ -91,7 +158,8 @@ const WorkOrderSchema = new mongoose.Schema({
   // Entrega y Salida
   deliveredTo: { type: String, default: '' },
   deliveredAt: { type: Date },
-  clientSignature: { type: String, default: null }, // Base64 de firma táctil
+  clientSignature: { type: String, default: null }, // Base64 de firma táctil cliente
+  advisorSignature: { type: String, default: null }, // Base64 de firma táctil asesor
   deliveryNotes: { type: String, default: '' },
   pdfUrl: { type: String, default: '' }
 }, { timestamps: true });

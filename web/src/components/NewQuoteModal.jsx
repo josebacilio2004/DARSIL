@@ -28,6 +28,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
 
   // Tiempos y Plazos (Para que NUNCA salgan vacíos en el PDF)
   const [issueDate, setIssueDate] = useState(todayStr);
+  const [validityDays, setValidityDays] = useState(15);
   const [validUntil, setValidUntil] = useState(defaultValidUntil);
   const [deliveryTerm, setDeliveryTerm] = useState('Inmediato / Según programación');
   const [orderType, setOrderType] = useState('Taller de Servicios');
@@ -128,7 +129,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
     setLoading(true);
     try {
       const payload = {
-        templateType,
+        templateType: 'TALLER_DETALLADO',
         clientDoc,
         clientName,
         clientAddress: clientAddress || 'Lima, Perú',
@@ -138,6 +139,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
         vin,
         model,
         issueDate,
+        validityDays: Number(validityDays) || 15,
         validUntil,
         deliveryTerm: deliveryTerm || 'Inmediato / Según programación',
         orderType: orderType || 'Taller de Servicios',
@@ -186,30 +188,10 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
           
-          {/* Selector de Plantilla */}
-          <div className="bg-darsil-obsidian p-1.5 rounded-2xl flex space-x-1.5 border border-darsil-border">
-            <button
-              type="button"
-              onClick={() => setTemplateType('TALLER_DETALLADO')}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
-                templateType === 'TALLER_DETALLADO'
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Plantilla Oficial Taller / Flotas por Ítems (Plantilla 2)
-            </button>
-            <button
-              type="button"
-              onClick={() => setTemplateType('PROYECTO_ESPECIAL')}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
-                templateType === 'PROYECTO_ESPECIAL'
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Plantilla Proyecto Especial / Licitación (Plantilla 1)
-            </button>
+          {/* Plantilla Oficial Única */}
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-2.5 flex items-center justify-between text-xs text-amber-300">
+            <span className="font-bold">📄 Formato Oficial: Taller de Servicios & Flotas Detallado</span>
+            <span className="text-[10px] bg-amber-500/20 px-2 py-0.5 rounded font-mono">DARSIL ERP</span>
           </div>
 
           {/* Sección 1: Cliente con Consulta APIsPerú */}
@@ -333,9 +315,9 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
               <span>3. Tiempos, Validez y Condiciones (Campos Oficiales)</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Fecha Alta (Emisión):</label>
+                <label className="block text-slate-400 font-semibold mb-1">Fecha Emisión:</label>
                 <input
                   type="date"
                   required
@@ -346,13 +328,29 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
               </div>
 
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Fecha Validez (15 días):</label>
+                <label className="block text-slate-400 font-semibold mb-1">Días de Validez:</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={validityDays}
+                  onChange={(e) => {
+                    const days = parseInt(e.target.value, 10) || 15;
+                    setValidityDays(days);
+                    setValidUntil(new Date(Date.now() + days * 86400000).toISOString().split('T')[0]);
+                  }}
+                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-amber-300 font-mono font-bold outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Fecha Vencimiento:</label>
                 <input
                   type="date"
                   required
                   value={validUntil}
                   onChange={(e) => setValidUntil(e.target.value)}
-                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-amber-300 font-mono font-bold outline-none focus:border-amber-400"
+                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-white font-mono outline-none focus:border-amber-400"
                 />
               </div>
 
@@ -368,7 +366,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-slate-400 font-semibold mb-1">Referencia / Contacto:</label>
                 <input
                   type="text"
@@ -379,18 +377,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">Tipo de Pedido:</label>
-                <input
-                  type="text"
-                  value={orderType}
-                  onChange={(e) => setOrderType(e.target.value)}
-                  placeholder="Ej. Taller de Servicios"
-                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-slate-400 font-semibold mb-1">Asesor Técnico Responsable:</label>
                 <input
                   type="text"
@@ -398,6 +385,35 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                   onChange={(e) => setAdvisorName(e.target.value)}
                   className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-white font-semibold outline-none focus:border-amber-400"
                 />
+              </div>
+
+              <div className="sm:col-span-4">
+                <label className="block text-slate-400 font-semibold mb-1">Condición de Pago (Impresa en PDF):</label>
+                <input
+                  type="text"
+                  required
+                  value={paymentCondition}
+                  onChange={(e) => setPaymentCondition(e.target.value)}
+                  placeholder="Ej. Condición de pago 07 días despues de realizar el servicio."
+                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-amber-300 font-medium outline-none focus:border-amber-400"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {[
+                    'Contado contra entrega',
+                    'Condición de pago 07 días despues de realizar el servicio.',
+                    'Crédito 15 días calendario',
+                    '50% adelanto y saldo contra entrega'
+                  ].map((p, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setPaymentCondition(p)}
+                      className="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border border-slate-700 transition"
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

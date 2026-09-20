@@ -36,6 +36,14 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
   const [foundQuote, setFoundQuote] = useState(null);
   const [searchError, setSearchError] = useState('');
 
+  // Playlist secuencial de videos de fondo (FONDO1.mp4 -> video_fondo.mp4 -> loop)
+  const backgroundVideos = ['./FONDO1.mp4', './video_fondo.mp4'];
+  const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
+
+  const handleVideoEnded = () => {
+    setCurrentVideoIdx((prev) => (prev + 1) % backgroundVideos.length);
+  };
+
   // Estados del Cotizador Rápido Interactivo para Clientes
   const [calcVehicle, setCalcVehicle] = useState('tracto');
   const [calcService, setCalcService] = useState('canbus');
@@ -123,13 +131,14 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
       {/* Video de Fondo con Overlay Oscuro y Efecto Granulado */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <video
+          key={backgroundVideos[currentVideoIdx]}
           autoPlay
-          loop
           muted
           playsInline
-          className="w-full h-full object-cover filter brightness-[0.28] contrast-125 scale-105"
+          onEnded={handleVideoEnded}
+          className="w-full h-full object-cover filter brightness-[0.28] contrast-125 scale-105 transition-opacity duration-1000"
         >
-          <source src="./video_fondo.mp4" type="video/mp4" />
+          <source src={backgroundVideos[currentVideoIdx]} type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black"></div>
         <div className="absolute inset-0 bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:24px_24px] opacity-10"></div>

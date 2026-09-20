@@ -32,6 +32,8 @@ router.put('/work-orders/:id', workOrderController.updateWorkOrder);
 router.patch('/work-orders/:id/status', workOrderController.updateStatus);
 router.post('/work-orders/:id/signature', workOrderController.addSignature);
 router.post('/work-orders/:id/materials', workOrderController.addMaterial);
+router.post('/work-orders/:id/generate-quote', workOrderController.generateQuoteFromWorkOrder);
+router.get('/work-orders/:id/pdf', workOrderController.getWorkOrderPdf);
 
 // Control de Inventario & Kardex
 router.get('/inventory', inventoryController.getItems);

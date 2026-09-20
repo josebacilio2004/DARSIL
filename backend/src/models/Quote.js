@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const QuoteItemSchema = new mongoose.Schema({
   code: { type: String, trim: true, default: '' }, // ej. MO01
@@ -50,11 +50,16 @@ const QuoteSchema = new mongoose.Schema({
   advisorPhone: { type: String, default: '934787006' },
   location: { type: String, default: 'Lima' },
   
-  // Fechas
+  // Fechas y Validez
   issueDate: { type: Date, default: Date.now }, // Fecha Alta
+  validityDays: { type: Number, default: 15 }, // Días de validez configurables
   validUntil: { type: Date }, // Fecha Validez
   deliveryTerm: { type: String, default: '' }, // Plazo Entrega
   commissionDays: { type: String, default: '' }, // ej. 4 días
+  
+  // Vinculación con Orden de Trabajo (OT)
+  workOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'WorkOrder' },
+  originWorkOrderNumber: { type: String, default: '' },
   
   // Contenido de la Cotización
   items: [QuoteItemSchema],
