@@ -241,6 +241,7 @@ export default function App() {
               onSelectQuote={(q) => setSelectedQuoteForPdf(q)}
               setActiveTab={setActiveTab}
               onShareWhatsApp={handleShareWhatsApp}
+              onRefreshQuotes={fetchQuotes}
             />
           )}
 

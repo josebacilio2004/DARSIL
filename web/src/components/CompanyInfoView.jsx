@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Phone, Mail, MapPin, Building, CreditCard, Plus, Trash2, Edit2, CheckCircle, Fuel, Save, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
+import InteractiveVisaCard from './InteractiveVisaCard';
 
 export default function CompanyInfoView() {
   const [company, setCompany] = useState(null);
@@ -183,69 +184,92 @@ export default function CompanyInfoView() {
         </div>
       </div>
 
-      {/* CRUD de Cuentas Bancarias */}
-      <div className="bg-darsil-card border border-darsil-border p-6 rounded-3xl shadow-card-dark space-y-4">
+      {/* CRUD de Cuentas Bancarias con Tarjeta VISA Interactiva */}
+      <div className="bg-darsil-card border border-darsil-border p-6 rounded-3xl shadow-card-dark space-y-6">
         
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-white font-bold text-base">
-            <CreditCard className="w-5 h-5 text-darsil-gold" />
-            <span>Cuentas Bancarias Registradas (Impresas en PDF Oficial)</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-darsil-border pb-4">
+          <div>
+            <div className="flex items-center space-x-2 text-white font-bold text-base">
+              <CreditCard className="w-5 h-5 text-darsil-gold" />
+              <span>Banca Corporativa & Pasarela VISA Oficial</span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Visualiza y comparte las cuentas autorizadas para pagos interbancarios y abonos de clientes.
+            </p>
           </div>
 
           <button
             type="button"
             onClick={openAddBank}
-            className="bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 text-slate-950 px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center space-x-1.5 shadow-gold-glow active:scale-95 transition"
+            className="bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 text-slate-950 px-4 py-2 rounded-xl font-black text-xs flex items-center space-x-1.5 shadow-gold-glow active:scale-95 transition shrink-0"
           >
             <Plus className="w-4 h-4 text-slate-950" />
             <span>Nueva Cuenta Bancaria</span>
           </button>
         </div>
 
-        {/* Grid de Cuentas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(company?.bankAccounts || []).map((acc) => (
-            <div
-              key={acc._id}
-              className="bg-darsil-obsidian border border-darsil-border hover:border-amber-500/40 p-4 rounded-2xl space-y-3 transition group"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-mono font-black text-sm text-darsil-gold tracking-wide">
-                  {acc.bank}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-[10px] bg-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded border border-slate-700">
-                    {acc.accountType || 'CTA CTE'}
-                  </span>
-                  <button
-                    onClick={() => openEditBank(acc)}
-                    className="p-1 rounded text-slate-400 hover:text-amber-400 transition"
-                    title="Editar cuenta"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteBank(acc)}
-                    className="p-1 rounded text-slate-500 hover:text-rose-400 transition"
-                    title="Eliminar cuenta"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
+        {/* Tarjeta Interactiva Formato VISA */}
+        <InteractiveVisaCard 
+          bankAccounts={company?.bankAccounts || []} 
+          onEditAccount={openEditBank}
+          onAddAccount={openAddBank}
+        />
 
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between py-1 border-b border-darsil-border/60 text-slate-400">
-                  <span>N° Cuenta:</span>
-                  <span className="font-mono font-bold text-white">{acc.accountNumber}</span>
+        {/* Listado y Administración de Cuentas */}
+        <div className="pt-4 border-t border-darsil-border space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Todas las Cuentas Registradas ({company?.bankAccounts?.length || 0})
+            </span>
+            <span className="text-[11px] text-slate-500">
+              Impresas en el pie de página de la cotización
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {(company?.bankAccounts || []).map((acc) => (
+              <div
+                key={acc._id}
+                className="bg-darsil-obsidian border border-darsil-border hover:border-amber-500/40 p-4 rounded-2xl space-y-2 transition group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-black text-sm text-darsil-gold tracking-wide">
+                    {acc.bank}
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[10px] bg-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded border border-slate-700">
+                      {acc.accountType || 'CTA CTE'}
+                    </span>
+                    <button
+                      onClick={() => openEditBank(acc)}
+                      className="p-1 rounded text-slate-400 hover:text-amber-400 transition"
+                      title="Editar cuenta"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteBank(acc)}
+                      className="p-1 rounded text-slate-500 hover:text-rose-400 transition"
+                      title="Eliminar cuenta"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex justify-between py-1 text-slate-400">
-                  <span>CCI Interbancario:</span>
-                  <span className="font-mono font-bold text-amber-300">{acc.interbankAccount}</span>
+
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between py-1 border-b border-darsil-border/60 text-slate-400">
+                    <span>N° Cuenta:</span>
+                    <span className="font-mono font-bold text-white">{acc.accountNumber}</span>
+                  </div>
+                  <div className="flex justify-between py-1 text-slate-400">
+                    <span>CCI Interbancario:</span>
+                    <span className="font-mono font-bold text-amber-300">{acc.interbankAccount}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
       </div>

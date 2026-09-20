@@ -106,11 +106,12 @@ function renderTallerHtml(quote, company) {
       margin-bottom: 8px;
     }
     .logo-container {
-      width: 45%;
+      width: 32%;
       vertical-align: middle;
+      text-align: left;
     }
     .company-title-container {
-      width: 55%;
+      width: 68%;
       text-align: center;
       vertical-align: middle;
     }
@@ -120,23 +121,13 @@ function renderTallerHtml(quote, company) {
       color: #0f294a;
       letter-spacing: 0.5px;
       margin-bottom: 2px;
+      text-align: center;
     }
     .company-contact {
       font-size: 10px;
       font-weight: bold;
       color: #333;
-    }
-    .logo-text-title {
-      font-weight: 900;
-      font-size: 16px;
-      color: #0f294a;
-      letter-spacing: 1px;
-    }
-    .logo-text-sub {
-      font-size: 6.5px;
-      color: #4a5568;
-      letter-spacing: 0.5px;
-      font-weight: 600;
+      text-align: center;
     }
 
     /* Grid de Metadatos */
@@ -277,23 +268,16 @@ function renderTallerHtml(quote, company) {
   <table class="header-table">
     <tr>
       <td class="logo-container">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          ${logoSrc ? `<img src="${logoSrc}" style="height: 52px; width: auto; object-fit: contain;" />` : `
-          <svg width="42" height="42" viewBox="0 0 100 100">
-            <polygon points="10,5 50,5 30,50 60,50 15,95 35,45 10,45" fill="#eab308" stroke="#0f294a" stroke-width="4"/>
-            <path d="M45 15 L70 15 C85 15 95 25 95 45 C95 65 85 75 70 75 L45 75 Z" fill="none" stroke="#0f294a" stroke-width="12" stroke-linejoin="round"/>
-          </svg>`}
-          <div>
-            <div class="logo-text-title">DARSIL</div>
-            <div style="font-size: 7.5px; font-weight: bold; color: #64748b; letter-spacing: 0.5px;">AUTOMOTIVE SOLUTIONS</div>
-            <div class="logo-text-sub">TECNOLOGÍA • DIAGNÓSTICO • INGENIERÍA • INNOVACIÓN</div>
-          </div>
-        </div>
+        ${logoSrc ? `<img src="${logoSrc}" style="height: 52px; max-width: 170px; object-fit: contain;" />` : `
+        <svg width="46" height="46" viewBox="0 0 100 100">
+          <polygon points="10,5 50,5 30,50 60,50 15,95 35,45 10,45" fill="#eab308" stroke="#0f294a" stroke-width="4"/>
+          <path d="M45 15 L70 15 C85 15 95 25 95 45 C95 65 85 75 70 75 L45 75 Z" fill="none" stroke="#0f294a" stroke-width="12" stroke-linejoin="round"/>
+        </svg>`}
       </td>
-      <td class="company-title-container">
-        <div class="company-main-title">${company?.name || 'DARSIL AUTOMOTIVE SOLUTIONS'}</div>
-        <div class="company-contact">Telefonos: ${(company?.phones || ['934787006']).join(' - ')}</div>
-        <div class="company-contact">Email: ${(company?.emails || ['rubenbasil24@gmail.com']).join(' - ')}</div>
+      <td class="company-title-container" style="text-align: center;">
+        <div class="company-main-title" style="text-align: center;">${company?.name || 'DARSIL AUTOMOTIVE SOLUTIONS'}</div>
+        <div class="company-contact" style="text-align: center;">Telefonos: ${(company?.phones || ['934787006']).join(' - ')}</div>
+        <div class="company-contact" style="text-align: center;">Email: ${(company?.emails || ['rubenbasil24@gmail.com']).join(' - ')}</div>
       </td>
     </tr>
   </table>
@@ -635,22 +619,18 @@ function renderWorkOrderHtml(order, company) {
   <!-- Encabezado con Logo y Datos del Taller -->
   <table class="header-table">
     <tr>
-      <td style="width: 50%; vertical-align: middle;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          ${logoSrc ? `<img src="${logoSrc}" style="height: 46px; width: auto; object-fit: contain;" />` : `
-          <div style="font-size: 20px; font-weight: 900; color: #0f294a;">DARSIL</div>`}
-          <div>
-            <div style="font-weight: 900; font-size: 15px; color: #0f294a; letter-spacing: 0.5px;">DARSIL</div>
-            <div style="font-size: 7px; font-weight: bold; color: #64748b;">AUTOMOTIVE SOLUTIONS</div>
-            <div style="font-size: 6px; color: #475569;">DIAGNÓSTICO • ELECTRICIDAD • ELECTRÓNICA • INGENIERÍA</div>
-          </div>
-        </div>
+      <td style="width: 32%; vertical-align: middle; text-align: left;">
+        ${logoSrc ? `<img src="${logoSrc}" style="height: 50px; max-width: 170px; object-fit: contain;" />` : `
+        <svg width="44" height="44" viewBox="0 0 100 100">
+          <polygon points="10,5 50,5 30,50 60,50 15,95 35,45 10,45" fill="#eab308" stroke="#0f294a" stroke-width="4"/>
+          <path d="M45 15 L70 15 C85 15 95 25 95 45 C95 65 85 75 70 75 L45 75 Z" fill="none" stroke="#0f294a" stroke-width="12" stroke-linejoin="round"/>
+        </svg>`}
       </td>
-      <td style="width: 50%; text-align: right; vertical-align: middle; font-size: 8.5px;">
-        <div style="font-weight: 900; color: #0f294a; font-size: 10px;">${company?.name || 'DARSIL AUTOMOTIVE SOLUTIONS'}</div>
-        <div>RUC: ${company?.ruc || '20608779671'} | Telf: ${(company?.phones || ['934787006']).join(' - ')}</div>
-        <div>Email: ${(company?.emails || ['rubenbasil24@gmail.com']).join(' - ')}</div>
-        <div>Sede: ${company?.workshopAddress || 'Av. Los Forestales MZ I1, Villa El Salvador'}</div>
+      <td style="width: 68%; text-align: center; vertical-align: middle; font-size: 8.5px;">
+        <div style="font-weight: 900; color: #0f294a; font-size: 11px; text-align: center; margin-bottom: 2px;">${company?.name || 'DARSIL AUTOMOTIVE SOLUTIONS'}</div>
+        <div style="text-align: center;">RUC: ${company?.ruc || '20608779671'} | Telf: ${(company?.phones || ['934787006']).join(' - ')}</div>
+        <div style="text-align: center;">Email: ${(company?.emails || ['rubenbasil24@gmail.com']).join(' - ')}</div>
+        <div style="text-align: center;">Sede: ${company?.workshopAddress || 'Av. Los Forestales MZ I1, Villa El Salvador'}</div>
       </td>
     </tr>
   </table>
