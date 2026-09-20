@@ -45,6 +45,8 @@ const DEFAULT_ORIGIN = {
   coords: [-76.9535, -12.2085]
 };
 
+const DEFAULT_CLIENT_DEST = [-76.9385, -12.1960]; // Ubicación inicial sugerida (~2.2 km del taller en Villa El Salvador)
+
 const VEHICLE_TYPES = [
   { id: 'SEDAN_AUTO', label: 'Sedán / Auto Liviano' },
   { id: 'CAMIONETA_SUV', label: 'Camioneta / SUV / Pick-up' },
@@ -131,7 +133,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
   const [originType, setOriginType] = useState('workshop'); // workshop, gps
   const [originCoords, setOriginCoords] = useState(DEFAULT_ORIGIN.coords);
   const [originLabel, setOriginLabel] = useState(DEFAULT_ORIGIN.name);
-  const [destCoords, setDestCoords] = useState(null);
+  const [destCoords, setDestCoords] = useState(DEFAULT_CLIENT_DEST);
   const [routeDistanceKm, setRouteDistanceKm] = useState(0);
   const [routeDurationMin, setRouteDurationMin] = useState(0);
   const [travelCost, setTravelCost] = useState(0);
@@ -142,6 +144,8 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
   const mapInstance = useRef(null);
   const originMarkerRef = useRef(null);
   const destMarkerRef = useRef(null);
+  const originCoordsRef = useRef(DEFAULT_ORIGIN.coords);
+  const destCoordsRef = useRef(DEFAULT_CLIENT_DEST);
 
   // ==========================================
   // ESTADOS FORMULARIO PASO 2: DIAGNÓSTICO EN SITIO
@@ -281,7 +285,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
 
     const timer = setTimeout(() => {
       initDispatchMap();
-    }, 250);
+    }, 150);
 
     return () => clearTimeout(timer);
   }, [showDispatchModal]);
@@ -292,14 +296,17 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
       try { mapInstance.current.remove(); } catch (e) {}
       mapInstance.current = null;
     }
+    destMarkerRef.current = null;
+    originMarkerRef.current = null;
 
-    const currentOrigin = originCoords || DEFAULT_ORIGIN.coords;
+    const currentOrigin = originCoordsRef.current || originCoords || DEFAULT_ORIGIN.coords;
+    const currentDest = destCoordsRef.current || destCoords || DEFAULT_CLIENT_DEST;
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/navigation-night-v1',
       center: currentOrigin,
-      zoom: 11
+      zoom: 12
     });
 
     mapInstance.current = map;
@@ -307,70 +314,121 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
     map.on('load', () => {
       try { map.resize(); } catch (e) {}
 
-      // 1. Marcador Origen (⚡ Taller VES / GPS) - Draggable
-      const elOrigin = document.createElement('div');
-      elOrigin.className = 'w-8 h-8 rounded-full bg-amber-500 border-2 border-white shadow-xl flex items-center justify-center font-bold text-xs text-slate-950 cursor-move transform hover:scale-110 transition';
-      elOrigin.innerHTML = '⚡';
-      elOrigin.title = 'Punto de Salida (Taller VES / GPS) - Haz clic o arrastra para mover';
-      
-      const origMarker = new mapboxgl.Marker({ element: elOrigin, draggable: true })
+      // 1. Marcador Origen (⚡ Taller VES / GPS) - Contenedor neutro para evitar conflictos con Mapbox transform
+      const origWrapper = document.createElement('div');
+      origWrapper.className = 'darsil-marker-origin';
+      origWrapper.style.width = '38px';
+      origWrapper.style.height = '38px';
+      origWrapper.style.cursor = 'grab';
+      origWrapper.style.touchAction = 'none';
+      origWrapper.style.userSelect = 'none';
+      origWrapper.title = 'Punto de Salida DARSIL (Haz clic o arrastra para mover)';
+
+      const origInner = document.createElement('div');
+      origInner.className = 'w-9 h-9 rounded-full bg-amber-500 border-2 border-white shadow-[0_4px_16px_rgba(245,158,11,0.85)] flex items-center justify-center text-sm font-black text-slate-950 select-none pointer-events-none transition-transform hover:scale-110';
+      origInner.innerHTML = '⚡';
+      origWrapper.appendChild(origInner);
+
+      const origMarker = new mapboxgl.Marker({ 
+        element: origWrapper, 
+        draggable: true,
+        anchor: 'center' 
+      })
         .setLngLat(currentOrigin)
         .addTo(map);
 
+      origMarker.on('dragstart', () => {
+        origWrapper.style.cursor = 'grabbing';
+        origInner.style.transform = 'scale(1.2)';
+      });
+
       origMarker.on('dragend', async () => {
+        origWrapper.style.cursor = 'grab';
+        origInner.style.transform = 'scale(1)';
         const pos = origMarker.getLngLat();
         const newCoords = [pos.lng, pos.lat];
         setOriginCoords(newCoords);
+        originCoordsRef.current = newCoords;
         setOriginType('custom');
         setOriginLabel(`Origen Personalizado (${newCoords[1].toFixed(4)}, ${newCoords[0].toFixed(4)})`);
-        if (destCoords) {
-          await updateRouteFromCoords(newCoords, destCoords, mapInstance.current);
+        if (destCoordsRef.current) {
+          await updateRouteFromCoords(newCoords, destCoordsRef.current, mapInstance.current);
         }
       });
 
       originMarkerRef.current = origMarker;
 
-      // 2. Si ya hay destCoords, pintar el marcador Destino
-      if (destCoords) {
-        placeDestMarker(destCoords, map);
-        updateRouteFromCoords(currentOrigin, destCoords, map);
-      }
+      // 2. Colocar el marcador Destino del cliente inmediatamente (para que siempre figure y sea movible)
+      placeDestMarker(currentDest, map);
+      updateRouteFromCoords(currentOrigin, currentDest, map);
 
       // 3. Listener interactivo: El asesor hace clic en cualquier lugar del mapa para fijar el pin exacto del auxilio
       map.on('click', async (e) => {
         const coords = [e.lngLat.lng, e.lngLat.lat];
         setDestCoords(coords);
+        destCoordsRef.current = coords;
         placeDestMarker(coords, map);
-        await updateRouteFromCoords(originCoords, coords, map);
+        await updateRouteFromCoords(originCoordsRef.current || DEFAULT_ORIGIN.coords, coords, map);
       });
     });
   };
 
-
   const placeDestMarker = (coords, map = mapInstance.current) => {
     if (!map) return;
+    
+    // Si ya existe en este mapa, actualizamos posición
     if (destMarkerRef.current) {
       destMarkerRef.current.setLngLat(coords);
-    } else {
-      const elDest = document.createElement('div');
-      elDest.className = 'w-9 h-9 rounded-full bg-blue-600 border-2 border-white shadow-2xl flex items-center justify-center font-bold text-sm text-white cursor-move hover:scale-110 transition animate-bounce';
-      elDest.innerHTML = '🚗';
-      elDest.title = 'Ubicación exacta del cliente / vehículo (Haz clic o arrastra)';
-
-      const marker = new mapboxgl.Marker({ element: elDest, draggable: true })
-        .setLngLat(coords)
-        .addTo(map);
-
-      // Al arrastrar el pin se actualiza la posición y se recalcula la ruta
-      marker.on('dragend', async () => {
-        const pos = marker.getLngLat();
-        const newCoords = [pos.lng, pos.lat];
-        setDestCoords(newCoords);
-        await updateRouteFromCoords(originCoords, newCoords, mapInstance.current);
-      });
-
-      destMarkerRef.current = marker;
+      return;
     }
+
+    // Contenedor neutro para Mapbox GL JS (¡SIN transform ni animate-bounce en elemento raíz!)
+    const wrapper = document.createElement('div');
+    wrapper.className = 'darsil-marker-dest';
+    wrapper.style.width = '42px';
+    wrapper.style.height = '42px';
+    wrapper.style.cursor = 'grab';
+    wrapper.style.touchAction = 'none';
+    wrapper.style.userSelect = 'none';
+    wrapper.title = 'Ubicación del vehículo / cliente (Haz clic o arrastra para mover)';
+
+    // Elemento interno para apariencia visual
+    const inner = document.createElement('div');
+    inner.className = 'w-10 h-10 rounded-full bg-blue-600 border-2 border-white shadow-[0_4px_16px_rgba(37,99,235,0.85)] flex items-center justify-center text-base font-bold text-white select-none pointer-events-none transition-transform hover:scale-110';
+    inner.innerHTML = '🚗';
+    wrapper.appendChild(inner);
+
+    const marker = new mapboxgl.Marker({ 
+      element: wrapper, 
+      draggable: true,
+      anchor: 'center' 
+    })
+      .setLngLat(coords)
+      .addTo(map);
+
+    marker.on('dragstart', () => {
+      wrapper.style.cursor = 'grabbing';
+      inner.style.transform = 'scale(1.25)';
+    });
+
+    marker.on('drag', () => {
+      const pos = marker.getLngLat();
+      setDestCoords([pos.lng, pos.lat]);
+      destCoordsRef.current = [pos.lng, pos.lat];
+    });
+
+    // Al arrastrar el pin se actualiza la posición y se recalcula la ruta
+    marker.on('dragend', async () => {
+      wrapper.style.cursor = 'grab';
+      inner.style.transform = 'scale(1)';
+      const pos = marker.getLngLat();
+      const newCoords = [pos.lng, pos.lat];
+      setDestCoords(newCoords);
+      destCoordsRef.current = newCoords;
+      await updateRouteFromCoords(originCoordsRef.current || DEFAULT_ORIGIN.coords, newCoords, mapInstance.current);
+    });
+
+    destMarkerRef.current = marker;
   };
 
   const updateRouteFromCoords = async (origin, dest, map = mapInstance.current) => {
@@ -437,10 +495,16 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
           });
         }
 
+        try { map.resize(); } catch (e) {}
+
         const bounds = new mapboxgl.LngLatBounds();
         bounds.extend(origin);
         bounds.extend(dest);
-        map.fitBounds(bounds, { padding: 45, maxZoom: 15 });
+        map.fitBounds(bounds, { 
+          padding: { top: 35, bottom: 35, left: 35, right: 35 }, 
+          maxZoom: 15,
+          duration: 600
+        });
       }
     } catch (err) {
       setRoutingError(err.message);
@@ -517,7 +581,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
   };
 
   // Cálculo de Ruta con Mapbox desde texto
-  const calculateMapboxRoute = async (destinationAddress, currentOrigin = originCoords) => {
+  const calculateMapboxRoute = async (destinationAddress, currentOrigin = originCoordsRef.current || originCoords) => {
     if (!destinationAddress || !destinationAddress.trim()) return;
     setRoutingLoading(true);
     setRoutingError('');
@@ -538,6 +602,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
 
       const dest = geoData.features[0].center; // [lng, lat]
       setDestCoords(dest);
+      destCoordsRef.current = dest;
 
       if (mapInstance.current) {
         placeDestMarker(dest, mapInstance.current);
@@ -569,8 +634,10 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
     setDispReportedFault('Auxilio técnico / Diagnóstico general de unidad');
     setOriginType('workshop');
     setOriginCoords(DEFAULT_ORIGIN.coords);
+    originCoordsRef.current = DEFAULT_ORIGIN.coords;
     setOriginLabel(DEFAULT_ORIGIN.name);
-    setDestCoords(null);
+    setDestCoords(DEFAULT_CLIENT_DEST);
+    destCoordsRef.current = DEFAULT_CLIENT_DEST;
     setRouteDistanceKm(0);
     setRouteDurationMin(0);
     setTravelCost(0);
@@ -731,9 +798,9 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
         const createdQuote = res.data.quote;
         setSelectedOrder(res.data.workOrder);
         fetchInitialData();
-        if (window.confirm(`¡Cotización ${createdQuote.quoteNumber} generada exitosamente!\n\n¿Deseas abrir la cotización en este momento?`)) {
-          setShowDiagnosticModal(false);
-          onSelectQuote && onSelectQuote(createdQuote);
+        setShowDiagnosticModal(false);
+        if (onSelectQuote) {
+          onSelectQuote(createdQuote);
         }
       }
     } catch (err) {
@@ -1082,7 +1149,18 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
                       </span>
                       <button
                         type="button"
-                        onClick={() => onSelectQuote && onSelectQuote({ _id: order.generatedQuoteId || order.quoteId, quoteNumber: quoteNum })}
+                        onClick={async () => {
+                          if (onSelectQuote) {
+                            try {
+                              const qRes = await api.getQuoteById(order.generatedQuoteId || order.quoteId);
+                              if (qRes?.success && qRes.data) {
+                                onSelectQuote(qRes.data);
+                                return;
+                              }
+                            } catch (e) {}
+                            onSelectQuote({ _id: order.generatedQuoteId || order.quoteId, quoteNumber: quoteNum });
+                          }
+                        }}
                         className="text-[10px] underline font-semibold hover:text-white"
                       >
                         Ver Propuesta
@@ -1102,15 +1180,14 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
                     <span>Diagnóstico / Check-In</span>
                   </button>
 
-                  <a
-                    href={api.getWorkOrderPdfUrl(order._id)}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => onSelectQuote && onSelectQuote({ ...order, isWorkOrder: true })}
                     className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
-                    title="Descargar Acta de OT Oficial en PDF"
+                    title="Ver Acta Oficial de OT en el Sistema"
                   >
                     <FileText className="w-4 h-4" />
-                  </a>
+                  </button>
                 </div>
               </div>
             );
@@ -1427,15 +1504,18 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
               </div>
 
               <div className="flex items-center space-x-2">
-                <a
-                  href={api.getWorkOrderPdfUrl(selectedOrder._id)}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDiagnosticModal(false);
+                    onSelectQuote && onSelectQuote({ ...selectedOrder, isWorkOrder: true });
+                  }}
                   className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                  title="Ver Acta de OT en PDF dentro del sistema"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>PDF OT</span>
-                </a>
+                  <FileText className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Ver Acta de OT</span>
+                </button>
 
                 <button 
                   type="button" 

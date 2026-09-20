@@ -353,9 +353,15 @@ export default function App() {
           }}
           onRefresh={() => {
             fetchQuotes();
-            api.getQuoteById(selectedQuoteForPdf._id).then(r => {
-              if (r?.data) setSelectedQuoteForPdf(r.data);
-            });
+            if (selectedQuoteForPdf?.isWorkOrder || selectedQuoteForPdf?.orderNumber) {
+              api.getWorkOrderById(selectedQuoteForPdf._id).then(r => {
+                if (r?.data) setSelectedQuoteForPdf({ ...r.data, isWorkOrder: true });
+              });
+            } else {
+              api.getQuoteById(selectedQuoteForPdf._id).then(r => {
+                if (r?.data) setSelectedQuoteForPdf(r.data);
+              });
+            }
           }}
         />
       )}
