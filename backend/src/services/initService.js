@@ -1,4 +1,4 @@
-﻿const CatalogItem = require('../models/CatalogItem');
+const CatalogItem = require('../models/CatalogItem');
 const CompanyConfig = require('../models/CompanyConfig');
 const User = require('../models/User');
 
@@ -72,19 +72,20 @@ async function initializeSystemDefaults() {
     }
 
     // 3. Usuario Administrador: Darios Bacilio
-    const existingUser = await User.findOne({ username: 'darios' });
-    if (!existingUser) {
+    let admin = await User.findOne({ username: 'darios' });
+    if (!admin) {
       console.log('👤 Creando cuenta de administrador para Darios Bacilio...');
-      const admin = new User({
+      admin = new User({
         name: 'Darios Bacilio',
         username: 'darios',
         email: 'darios.bacilio@darsil.com',
         role: 'ADMIN'
       });
-      admin.setPassword('Darsil#2026*Titanium');
-      await admin.save();
-      console.log('✅ Usuario Darios Bacilio creado exitosamente.');
     }
+    admin.setPassword('DarioBacilio#2026*Darsil');
+    await admin.save();
+    console.log('✅ Usuario Darios Bacilio sincronizado con contraseña segura.');
+
 
   } catch (err) {
     console.error('⚠️ Advertencia en initializeSystemDefaults:', err.message);

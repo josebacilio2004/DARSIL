@@ -1,4 +1,4 @@
-﻿const User = require('../models/User');
+const User = require('../models/User');
 
 const MASTER_USER = {
   name: 'Darios Bacilio',
@@ -6,23 +6,23 @@ const MASTER_USER = {
   email: 'darios.bacilio@darsil.com',
   role: 'ADMIN_DARSIL'
 };
-const MASTER_PASSWORD = 'Darsil#2026*Titanium';
+const MASTER_PASSWORD = 'DarioBacilio#2026*Darsil';
 
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Usuario y contrase単a requeridos' });
+      return res.status(400).json({ success: false, message: 'Usuario y contraseña requeridos' });
     }
 
     const cleanUser = username.trim().toLowerCase();
     const cleanPass = password.trim();
 
-    // 1. Verificaci坦n con Master Credentials (Fail-safe para alta disponibilidad)
-    if (
-      (cleanUser === 'darios' || cleanUser === 'darios.bacilio' || cleanUser === 'darios@darsil.com' || cleanUser === 'dariosbacilio') &&
-      cleanPass === MASTER_PASSWORD
-    ) {
+    // 1. Verificación con Master Credentials (Seguridad y Resiliencia para Darios Bacilio)
+    const isMasterUser = cleanUser === 'darios' || cleanUser === 'darios.bacilio' || cleanUser === 'darios@darsil.com' || cleanUser === 'dariosbacilio' || cleanUser === 'dariobacilio';
+    const isMasterPass = cleanPass === MASTER_PASSWORD || cleanPass === 'Darsil#2026*Titanium';
+
+    if (isMasterUser && isMasterPass) {
       // Sincronizar o crear en base de datos si est叩 disponible
       try {
         let dbUser = await User.findOne({ username: 'darios' });

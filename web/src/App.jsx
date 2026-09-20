@@ -15,7 +15,7 @@ import InventoryView from './components/InventoryView';
 import ReportsView from './components/ReportsView';
 import LoginModal from './components/LoginModal';
 import { api } from './services/api';
-import { Menu, PlusCircle, Radio, Sparkles } from 'lucide-react';
+import { Menu, PlusCircle, Radio, Sparkles, ClipboardList } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('portal'); // Iniciar en el portal público de clientes
@@ -40,6 +40,7 @@ export default function App() {
   const [selectedQuoteForPdf, setSelectedQuoteForPdf] = useState(null);
   const [editingQuote, setEditingQuote] = useState(null);
   const [mappingQuote, setMappingQuote] = useState(null);
+  const [triggerNewWorkOrder, setTriggerNewWorkOrder] = useState(null);
 
   const fetchQuotes = async () => {
     try {
@@ -108,6 +109,15 @@ export default function App() {
     }
   };
 
+  const handleOpenNewWorkOrder = () => {
+    if (!authUser) {
+      setShowLoginModal(true);
+      return;
+    }
+    setActiveTab('workorders');
+    setTriggerNewWorkOrder(Date.now());
+  };
+
   // 1. Si está en el Portal / Landing Page de Clientes
   if (activeTab === 'portal') {
     return (
@@ -155,6 +165,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={handleNavClickTab}
         onOpenNewQuote={() => setShowNewQuoteModal(true)}
+        onOpenNewWorkOrder={handleOpenNewWorkOrder}
         quotes={quotes}
         authUser={authUser}
         onLogout={handleLogout}
@@ -204,13 +215,15 @@ export default function App() {
               <span>Render Cloud & Atlas Conectado</span>
             </div>
 
-            {/* Botón Acción Rápida: Nueva Cotización */}
+            {/* Botón Acción Rápida: Nueva Orden de Trabajo */}
             <button
-              onClick={() => setShowNewQuoteModal(true)}
+              onClick={handleOpenNewWorkOrder}
               className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
+              title="Crear Nueva Orden de Trabajo y Check-In Taller"
             >
-              <PlusCircle className="w-3.5 h-3.5 text-slate-950" />
-              <span className="hidden md:inline">+ Nueva Cotización</span>
+              <ClipboardList className="w-3.5 h-3.5 text-slate-950" />
+              <span className="hidden sm:inline">+ Nueva Orden de Trabajo</span>
+              <span className="sm:hidden">+ Nueva OT</span>
             </button>
 
             {/* Perfil Rápido */}
@@ -259,6 +272,7 @@ export default function App() {
           {/* Pestaña: Órdenes de Trabajo & Check-In Taller */}
           {activeTab === 'workorders' && (
             <WorkOrdersView
+              triggerNewOrder={triggerNewWorkOrder}
               onSelectQuote={(q) => setSelectedQuoteForPdf(q)}
             />
           )}

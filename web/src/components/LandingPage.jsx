@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Search, 
   FileText, 
@@ -39,6 +39,48 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
   // Playlist secuencial de videos de fondo (FONDO1.mp4 -> video_fondo.mp4 -> loop)
   const backgroundVideos = ['./FONDO1.mp4', './video_fondo.mp4'];
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
+  const videoRef = useRef(null);
+
+  // Asegurar reproducción automática forzada y continua en móviles (iOS Safari / Android)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', 'true');
+
+    const tryPlay = () => {
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // El navegador pausó el video por política de ahorro de batería
+        });
+      }
+    };
+
+    tryPlay();
+
+    // Despertador automático en primera interacción táctil o scroll
+    const handleInteraction = () => {
+      if (video && video.paused) {
+        video.muted = true;
+        video.play().catch(() => {});
+      }
+    };
+
+    window.addEventListener('touchstart', handleInteraction, { once: true, passive: true });
+    window.addEventListener('click', handleInteraction, { once: true, passive: true });
+    window.addEventListener('scroll', handleInteraction, { once: true, passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleInteraction);
+      window.removeEventListener('click', handleInteraction);
+      window.removeEventListener('scroll', handleInteraction);
+    };
+  }, [currentVideoIdx]);
 
   const handleVideoEnded = () => {
     setCurrentVideoIdx((prev) => (prev + 1) % backgroundVideos.length);
@@ -128,21 +170,23 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
   return (
     <div className="relative min-h-screen bg-black text-white font-sans selection:bg-amber-500 selection:text-black overflow-x-hidden">
       
-      {/* Video de Fondo con Overlay Oscuro y Efecto Granulado */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+      {/* Video de Fondo con Overlay Oscuro, Gradiente de Respaldo y Efecto Granulado */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-gradient-to-b from-slate-950 via-black to-slate-950">
         <video
-          key={backgroundVideos[currentVideoIdx]}
+          ref={videoRef}
+          src={backgroundVideos[currentVideoIdx]}
           autoPlay
           muted
           playsInline
+          webkit-playsinline="true"
+          preload="auto"
           onEnded={handleVideoEnded}
           className="w-full h-full object-cover filter brightness-[0.28] contrast-125 scale-105 transition-opacity duration-1000"
-        >
-          <source src={backgroundVideos[currentVideoIdx]} type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:24px_24px] opacity-10"></div>
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none"></div>
       </div>
+
 
       {/* Contenido Foreground */}
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -225,16 +269,16 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
         {/* Sección HERO de Alto Impacto */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16 flex flex-col justify-center items-center text-center">
           
-          <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/30 backdrop-blur-md text-amber-300 text-xs font-bold tracking-widest uppercase mb-6 shadow-inner animate-pulse">
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
-            <span>TECNOLOGÍA DE VANGUARDIA • DIAGNÓSTICO DIGITAL DE FLOTAS & MANUFACTURA 3D</span>
+          <div className="inline-flex items-center space-x-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-amber-500/10 border border-amber-400/30 backdrop-blur-md text-amber-300 text-[10px] sm:text-xs font-bold tracking-wider sm:tracking-widest uppercase mb-4 sm:mb-6 shadow-inner animate-pulse max-w-full">
+            <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span className="truncate sm:whitespace-normal">TECNOLOGÍA DE VANGUARDIA • DIAGNÓSTICO DIGITAL & MANUFACTURA 3D</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400 tracking-tight max-w-5xl leading-none sm:leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400 tracking-tight max-w-5xl leading-tight sm:leading-none break-words">
             INGENIERÍA AUTOMOTRIZ DE PRECISIÓN Y SOLUCIONES EN CAMPO
           </h1>
 
-          <p className="mt-6 text-base sm:text-lg text-slate-300 max-w-3xl leading-relaxed font-normal">
+          <p className="mt-4 sm:mt-6 text-sm sm:text-lg text-slate-300 max-w-3xl leading-relaxed font-normal">
             Especialistas en electrónica pesada, reparación de sistemas de arranque de 24V, diagnóstico computarizado con escáner oficial y fabricación de componentes descontinuados mediante impresión 3D industrial.
           </p>
 
@@ -513,17 +557,19 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
               <div className="lg:col-span-6">
                 <div className="relative p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-amber-500/40 shadow-[0_0_40px_rgba(245,158,11,0.15)] space-y-6">
                   
-                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></div>
-                      <span className="text-xs font-black tracking-widest text-slate-300 uppercase">DARSIL 3D LAB • VIRTUAL CAD SCAN</span>
+                  <div className="flex items-center justify-between border-b border-white/10 pb-4 gap-2">
+                    <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping shrink-0"></div>
+                      <span className="text-[10px] sm:text-xs font-black tracking-wider sm:tracking-widest text-slate-300 uppercase truncate">
+                        DARSIL 3D LAB • VIRTUAL CAD SCAN
+                      </span>
                     </div>
-                    <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                      ISO 9001 COMPLIANT
+                    <span className="text-[9px] sm:text-[10px] font-mono px-2 py-0.5 sm:px-2.5 sm:py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+                      ISO 9001
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="p-4 rounded-2xl bg-black/60 border border-red-500/30 text-left space-y-2">
                       <div className="text-[11px] font-bold text-red-400 flex items-center space-x-1.5">
                         <span className="w-2 h-2 rounded-full bg-red-500"></span>

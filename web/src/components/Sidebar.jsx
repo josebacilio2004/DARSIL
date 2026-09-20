@@ -27,6 +27,7 @@ export default function Sidebar({
   activeTab, 
   setActiveTab, 
   onOpenNewQuote, 
+  onOpenNewWorkOrder,
   quotes = [], 
   authUser, 
   onLogout,
@@ -72,8 +73,8 @@ export default function Sidebar({
       title: 'OPERACIONES & TALLER',
       items: [
         { id: 'dashboard', label: 'Dashboard General', icon: LayoutDashboard, badge: null },
-        { id: 'quotes', label: 'Cotizaciones', icon: FileText, badge: quotes.length ? String(quotes.length) : null },
         { id: 'workorders', label: 'Órdenes de Trabajo & OT', icon: ClipboardList, badge: 'Taller' },
+        { id: 'quotes', label: 'Cotizaciones', icon: FileText, badge: quotes.length ? String(quotes.length) : null },
         { id: 'catalog', label: 'Catálogo MO', icon: Wrench, badge: '25' }
       ]
     },
@@ -114,7 +115,7 @@ export default function Sidebar({
           isOpen ? 'w-64 sm:w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'
         }`}
       >
-        {/* Cabecera del Sidebar */}
+        {/* Cabecera del Sidebar: DARSIL ERP */}
         <div className={`border-b border-darsil-border flex items-center transition-all ${
           isOpen ? 'p-4 justify-between' : 'p-3.5 justify-center'
         }`}>
@@ -122,18 +123,23 @@ export default function Sidebar({
             <>
               <div 
                 onClick={() => setActiveTab('dashboard')} 
-                className="flex items-center space-x-3 cursor-pointer select-none overflow-hidden"
+                className="flex items-center space-x-2.5 cursor-pointer select-none overflow-hidden group"
               >
-                <div className="h-10 w-32 flex items-center justify-center p-1 rounded-xl bg-black/40 border border-amber-500/20 shrink-0">
+                <div className="h-9 w-9 flex items-center justify-center p-1 rounded-xl bg-black/50 border border-amber-500/30 group-hover:border-amber-400 shrink-0 transition shadow-inner">
                   <img
-                    src="./logo_transparente.png"
-                    alt="DARSIL"
-                    className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(229,169,60,0.3)]"
+                    src="./icon_app.png"
+                    alt="DARSIL ERP"
+                    className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(229,169,60,0.4)]"
                   />
                 </div>
-                <span className="text-[10px] font-black uppercase text-amber-400 tracking-widest hidden sm:inline">
-                  ERP
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-base font-black tracking-wider text-white leading-none">
+                    DARSIL <span className="text-amber-400 font-extrabold">ERP</span>
+                  </span>
+                  <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest mt-1">
+                    Taller & Operaciones
+                  </span>
+                </div>
               </div>
 
               {/* Botón contraer en estado expandido */}
@@ -146,34 +152,35 @@ export default function Sidebar({
               </button>
             </>
           ) : (
-            /* Estado colapsado: Solo el ícono DARSIL centrado, sin flechas duplicadas */
+            /* Estado colapsado: Solo el ícono DARSIL centrado con tooltip DARSIL ERP */
             <div 
               onClick={() => setIsOpen(true)}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-black/40 border border-amber-500/20 cursor-pointer hover:border-amber-400 transition p-1.5 shadow-sm group"
-              title="Click para expandir Menú"
+              title="DARSIL ERP - Click para expandir Menú"
             >
               <img
                 src="./icon_app.png"
-                alt="DARSIL"
+                alt="DARSIL ERP"
                 className="w-full h-full object-contain group-hover:scale-110 transition"
               />
             </div>
           )}
         </div>
 
-        {/* Botón Acción Principal: Nueva Cotización */}
+        {/* Botón Acción Principal: Nueva Orden de Trabajo */}
         <div className="p-3 border-b border-darsil-border/60">
           <button
-            onClick={onOpenNewQuote}
+            onClick={onOpenNewWorkOrder || onOpenNewQuote}
             className={`w-full flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl font-black text-xs bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition ${
               !isOpen && 'lg:px-0'
             }`}
-            title="Crear Nueva Cotización"
+            title="Crear Nueva Orden de Trabajo (Despacho)"
           >
-            <PlusCircle className="w-4 h-4 shrink-0 text-slate-950" />
-            {isOpen && <span>+ Nueva Cotización</span>}
+            <ClipboardList className="w-4 h-4 shrink-0 text-slate-950" />
+            {isOpen && <span>+ Nueva Orden de Trabajo</span>}
           </button>
         </div>
+
 
         {/* Grupos de Navegación */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">

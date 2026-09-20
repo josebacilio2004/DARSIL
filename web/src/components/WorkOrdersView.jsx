@@ -92,7 +92,7 @@ const FALLBACK_INVENTORY = [
   { _id: 'seed-8', sku: 'SEN-NOX-CAN-24V', name: 'Sensor NOx Digital Entrada/Salida Bus CAN 24V', category: 'SENSORES_ACTUADORES', unit: 'Uds.', currentStock: 4, salePrice: 1150.00 }
 ];
 
-export default function WorkOrdersView({ onSelectQuote }) {
+export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
   const [orders, setOrders] = useState([]);
   const [catalog, setCatalog] = useState(FALLBACK_CATALOG);
   const [inventoryItems, setInventoryItems] = useState(FALLBACK_INVENTORY);
@@ -260,6 +260,12 @@ export default function WorkOrdersView({ onSelectQuote }) {
   useEffect(() => {
     fetchInitialData();
   }, [statusFilter]);
+
+  useEffect(() => {
+    if (triggerNewOrder) {
+      handleOpenDispatch();
+    }
+  }, [triggerNewOrder]);
 
   // Inicializar mapa interactivo al abrir el modal de Despacho (Paso 1)
   useEffect(() => {

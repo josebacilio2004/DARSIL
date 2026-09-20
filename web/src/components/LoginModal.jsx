@@ -1,9 +1,9 @@
-﻿import React, { useState } from 'react';
-import { Lock, User, KeyRound, ShieldAlert, CheckCircle2, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Lock, User, KeyRound, ShieldAlert, CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function LoginModal({ onLoginSuccess, onCancel }) {
-  const [username, setUsername] = useState('darios');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -31,12 +31,6 @@ export default function LoginModal({ onLoginSuccess, onCancel }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleUseDemoCreds = () => {
-    setUsername('darios');
-    setPassword('Darsil#2026*Titanium');
-    setErrorMsg('');
   };
 
   return (
@@ -125,20 +119,17 @@ export default function LoginModal({ onLoginSuccess, onCancel }) {
           </button>
         </form>
 
-        {/* Credenciales Rápidas para el Dueño */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80 text-center space-y-2">
-          <div className="text-[11px] text-slate-400">
-            Cuenta configurada para el dueño: <strong className="text-amber-300">Darios Bacilio</strong>
+        {/* Pie de seguridad institucional */}
+        <div className="mt-6 pt-4 border-t border-slate-800/80 text-center space-y-1">
+          <div className="flex items-center justify-center space-x-1.5 text-[11px] text-slate-400">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Acceso Seguro Cifrado • DARSIL ERP</span>
           </div>
-          <button
-            type="button"
-            onClick={handleUseDemoCreds}
-            className="text-[11px] text-amber-400 hover:text-amber-300 hover:underline flex items-center justify-center gap-1 mx-auto transition"
-          >
-            <Sparkles className="w-3 h-3 text-amber-400" />
-            Autocompletar credenciales maestras
-          </button>
+          <p className="text-[10px] text-slate-500">
+            Exclusivo para administración y asesores técnicos autorizados
+          </p>
         </div>
+
 
         {/* Botón para volver a la Landing Pública */}
         {onCancel && (
