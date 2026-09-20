@@ -94,7 +94,7 @@ const FALLBACK_INVENTORY = [
   { _id: 'seed-8', sku: 'SEN-NOX-CAN-24V', name: 'Sensor NOx Digital Entrada/Salida Bus CAN 24V', category: 'SENSORES_ACTUADORES', unit: 'Uds.', currentStock: 4, salePrice: 1150.00 }
 ];
 
-export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
+export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefreshQuotes }) {
   const [orders, setOrders] = useState([]);
   const [catalog, setCatalog] = useState(FALLBACK_CATALOG);
   const [inventoryItems, setInventoryItems] = useState(FALLBACK_INVENTORY);
@@ -798,6 +798,9 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
         const createdQuote = res.data.quote;
         setSelectedOrder(res.data.workOrder);
         fetchInitialData();
+        if (onRefreshQuotes) {
+          onRefreshQuotes();
+        }
         setShowDiagnosticModal(false);
         if (onSelectQuote) {
           onSelectQuote(createdQuote);
@@ -810,14 +813,26 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
     }
   };
 
-  // Métodos de Firma Táctil
+  // Métodos de Firma Táctil con Sincronización 1:1 entre Cursor y Trazo
+  const getCanvasCoordinates = (e) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY;
+    const scaleX = rect.width > 0 ? (canvas.width / rect.width) : 1;
+    const scaleY = rect.height > 0 ? (canvas.height / rect.height) : 1;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  };
+
   const handleStartDraw = (e) => {
     const canvas = signatureCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
-    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+    const { x, y } = getCanvasCoordinates(e);
     ctx.beginPath();
     ctx.moveTo(x, y);
     setIsSigning(true);
@@ -828,12 +843,11 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
     const canvas = signatureCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
-    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+    const { x, y } = getCanvasCoordinates(e);
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#f59e0b';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#0f294a';
     ctx.lineTo(x, y);
     ctx.stroke();
     setHasSignatureData(true);
@@ -849,6 +863,29 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     setHasSignatureData(false);
+  };
+
+  // CRUD: Eliminar Orden de Trabajo
+  const handleDeleteOrder = async (order) => {
+    if (!order) return;
+    const confirmMsg = `¿Estás seguro de que deseas eliminar permanentemente la Orden de Trabajo ${order.orderNumber} del cliente "${order.clientName}"?\n\nEsta acción quitará el registro del módulo de taller.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await api.deleteWorkOrder(order._id);
+      if (res?.success) {
+        alert(`Orden de Trabajo ${order.orderNumber} eliminada con éxito.`);
+        if (selectedOrder?._id === order._id) {
+          setShowDiagnosticModal(false);
+          setSelectedOrder(null);
+        }
+        fetchInitialData();
+      } else {
+        alert(res?.message || 'Error al eliminar la Orden de Trabajo');
+      }
+    } catch (err) {
+      alert('Error al eliminar: ' + err.message);
+    }
   };
 
   const handleSaveSignature = async () => {
@@ -1187,6 +1224,15 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder }) {
                     title="Ver Acta Oficial de OT en el Sistema"
                   >
                     <FileText className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteOrder(order)}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/40 transition"
+                    title="Eliminar Orden de Trabajo (CRUD)"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>

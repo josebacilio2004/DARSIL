@@ -273,7 +273,11 @@ export default function App() {
           {activeTab === 'workorders' && (
             <WorkOrdersView
               triggerNewOrder={triggerNewWorkOrder}
-              onSelectQuote={(q) => setSelectedQuoteForPdf(q)}
+              onSelectQuote={(q) => {
+                fetchQuotes();
+                setSelectedQuoteForPdf(q);
+              }}
+              onRefreshQuotes={fetchQuotes}
             />
           )}
 

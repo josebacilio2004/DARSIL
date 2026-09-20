@@ -332,7 +332,7 @@ exports.generateQuoteFromWorkOrder = async (req, res) => {
       model: order.model || '',
       orderType: 'Taller de Servicios',
       referencePerson: order.driverName || order.clientName,
-      advisorName: order.assignedMechanic || 'Ruben Basil',
+      advisorName: order.assignedMechanic || 'Darios Bacilio',
       validityDays,
       validUntil: validUntilDate,
       deliveryTerm: 'Inmediato / Según programación de taller',
@@ -390,5 +390,23 @@ exports.getWorkOrderPdf = async (req, res) => {
   } catch (error) {
     console.error('Error al generar PDF de OT:', error);
     res.status(500).json({ success: false, message: 'Error generando PDF: ' + error.message });
+  }
+};
+
+// DELETE /api/work-orders/:id (Eliminar Orden de Trabajo)
+exports.deleteWorkOrder = async (req, res) => {
+  try {
+    const order = await WorkOrder.findByIdAndDelete(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Orden de trabajo no encontrada' });
+    }
+    res.json({
+      success: true,
+      message: `Orden de trabajo ${order.orderNumber} eliminada exitosamente`,
+      data: order
+    });
+  } catch (error) {
+    console.error('Error eliminando orden de trabajo:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };

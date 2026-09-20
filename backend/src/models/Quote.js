@@ -46,7 +46,7 @@ const QuoteSchema = new mongoose.Schema({
   // Metadatos
   orderType: { type: String, default: 'Taller de Servicios' }, // Tipo Pedido
   referencePerson: { type: String, default: '' }, // Referencia / Contacto
-  advisorName: { type: String, default: 'Ruben Basil' },
+  advisorName: { type: String, default: 'Darios Bacilio' },
   advisorPhone: { type: String, default: '934787006' },
   location: { type: String, default: 'Lima' },
   

@@ -314,5 +314,11 @@ export const api = {
   },
   getWorkOrderPdfUrl: (id) => {
     return `${getApiUrl()}/work-orders/${id}/pdf`;
+  },
+  deleteWorkOrder: async (id) => {
+    const res = await fetch(`${getApiUrl()}/work-orders/${id}`, {
+      method: 'DELETE',
+    });
+    return res.json();
   }
 };

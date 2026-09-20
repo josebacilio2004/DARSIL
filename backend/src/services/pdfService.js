@@ -47,15 +47,21 @@ function formatDate(date, fallbackAddDays = 0) {
  */
 function renderTallerHtml(quote, company) {
   const logoSrc = getLogoDataUri();
-  const itemsHtml = (quote.items || []).map((item, idx) => `
-    <tr>
-      <td class="text-left font-mono">${item.code || `MO${String(idx + 1).padStart(2, '0')}`}</td>
-      <td class="text-left">${item.description}</td>
-      <td class="text-center bg-yellow">${item.quantity}</td>
-      <td class="text-right">${formatCurrency(item.unitPrice)}</td>
-      <td class="text-right">${formatCurrency(item.value)}</td>
-    </tr>
-  `).join('');
+  const isPartItem = (item) => {
+    const code = (item.code || '').toUpperCase().trim();
+    const desc = (item.description || '').toUpperCase().trim();
+    const cat = (item.category || '').toUpperCase().trim();
+    return code.startsWith('REP') || code.startsWith('CAB') || code.startsWith('CON') || 
+           code.startsWith('FIL') || code.startsWith('FAR') || code.startsWith('SEN') ||
+           desc.startsWith('REPUESTO') || desc.startsWith('ACCESORIO') || desc.startsWith('REP-') ||
+           cat.includes('REPUESTO') || cat.includes('INSUMO') || cat.includes('PARTE');
+  };
+
+  const serviceItems = (quote.items || []).filter(item => !isPartItem(item));
+  const partItems = (quote.items || []).filter(item => isPartItem(item));
+
+  const subtotalServices = serviceItems.reduce((acc, it) => acc + (Number(it.value) || 0), 0);
+  const subtotalParts = partItems.reduce((acc, it) => acc + (Number(it.value) || 0), 0);
 
   const banksHtml = (quote.bankAccountsSnapshot && quote.bankAccountsSnapshot.length > 0 
     ? quote.bankAccountsSnapshot 
@@ -305,14 +311,20 @@ function renderTallerHtml(quote, company) {
     <tr>
       <td class="meta-label">Cliente</td>
       <td class="meta-val font-bold">${quote.clientName}</td>
+      <td class="meta-label">DNI / RUC</td>
+      <td class="meta-val font-bold font-mono" style="color: #0f294a;">${quote.clientDoc || '---'}</td>
+    </tr>
+    <tr>
       <td class="meta-label">Teléfono</td>
       <td class="meta-val font-mono">${quote.clientPhone || ''}</td>
+      <td class="meta-label">Asesor Técnico</td>
+      <td class="meta-val font-bold" style="color: #b45309;">${quote.advisorName || 'Darios Bacilio'}</td>
     </tr>
     <tr>
       <td class="meta-label">Dirección</td>
       <td class="meta-val">${quote.clientAddress || 'Lima, Perú'}</td>
       <td class="meta-label">Matrícula</td>
-      <td class="meta-val font-bold font-mono">${quote.plate || ''}</td>
+      <td class="meta-val font-bold font-mono" style="color: #b45309;">${quote.plate || ''}</td>
     </tr>
     <tr>
       <td class="meta-label">VIN</td>
@@ -322,23 +334,77 @@ function renderTallerHtml(quote, company) {
     </tr>
   </table>
 
-  <!-- Tabla de Ítems / Mano de Obra -->
+  <!-- Tabla 1: Servicios & Mano de Obra Especializada -->
+  ${serviceItems.length > 0 ? `
+  <div style="font-size: 10px; font-weight: bold; color: #0f294a; margin-top: 4px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">
+    ⚡ 1. Servicios Técnicos & Mano de Obra Especializada
+  </div>
   <table class="items-table">
     <thead>
       <tr>
         <th style="width: 14%;">Referencia</th>
-        <th style="width: 50%; text-align: left; padding-left: 8px;">Descripción</th>
+        <th style="width: 50%; text-align: left; padding-left: 8px;">Descripción del Servicio</th>
         <th style="width: 10%;">Uds.</th>
         <th style="width: 13%; text-align: right;">Precio Unitario (S/)</th>
         <th style="width: 13%; text-align: right; padding-right: 8px;">Valor (S/)</th>
       </tr>
     </thead>
     <tbody>
-      ${itemsHtml}
+      ${serviceItems.map((item, idx) => `
+        <tr>
+          <td class="text-left font-mono font-bold">${item.code || `MO${String(idx + 1).padStart(2, '0')}`}</td>
+          <td class="text-left">${item.description}</td>
+          <td class="text-center bg-yellow">${item.quantity}</td>
+          <td class="text-right">${formatCurrency(item.unitPrice)}</td>
+          <td class="text-right font-bold">${formatCurrency(item.value)}</td>
+        </tr>
+      `).join('')}
+      ${partItems.length > 0 ? `
+        <tr style="background-color: #f8fafc; font-weight: bold;">
+          <td colspan="4" class="text-right" style="padding-right: 8px; color: #475569;">SUBTOTAL SERVICIOS (S/):</td>
+          <td class="text-right font-mono" style="padding-right: 8px; color: #0f294a;">${formatCurrency(subtotalServices)}</td>
+        </tr>
+      ` : ''}
     </tbody>
   </table>
+  ` : ''}
 
-  <!-- Barra de Total -->
+  <!-- Tabla 2: Repuestos, Accesorios & Insumos de Taller (Tabla paralela debajo de la tabla de servicios) -->
+  ${partItems.length > 0 ? `
+  <div style="font-size: 10px; font-weight: bold; color: #0f294a; margin-top: 6px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">
+    🔩 2. Repuestos, Accesorios & Insumos de Taller
+  </div>
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th style="width: 14%;">Código / SKU</th>
+        <th style="width: 50%; text-align: left; padding-left: 8px;">Descripción del Repuesto / Accesorio</th>
+        <th style="width: 10%;">Cant.</th>
+        <th style="width: 13%; text-align: right;">Precio Unitario (S/)</th>
+        <th style="width: 13%; text-align: right; padding-right: 8px;">Valor (S/)</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${partItems.map((item, idx) => `
+        <tr>
+          <td class="text-left font-mono font-bold">${item.code || `REP${String(idx + 1).padStart(2, '0')}`}</td>
+          <td class="text-left">${item.description}</td>
+          <td class="text-center bg-yellow">${item.quantity}</td>
+          <td class="text-right">${formatCurrency(item.unitPrice)}</td>
+          <td class="text-right font-bold">${formatCurrency(item.value)}</td>
+        </tr>
+      `).join('')}
+      ${serviceItems.length > 0 ? `
+        <tr style="background-color: #f8fafc; font-weight: bold;">
+          <td colspan="4" class="text-right" style="padding-right: 8px; color: #475569;">SUBTOTAL REPUESTOS & ACCESORIOS (S/):</td>
+          <td class="text-right font-mono" style="padding-right: 8px; color: #0f294a;">${formatCurrency(subtotalParts)}</td>
+        </tr>
+      ` : ''}
+    </tbody>
+  </table>
+  ` : ''}
+
+  <!-- Barra de Total General -->
   <div class="total-bar">
     TOTAL COTIZACIÓN (S/) <span class="total-amount">${formatCurrency(quote.total)}</span>
   </div>
@@ -369,10 +435,12 @@ function renderTallerHtml(quote, company) {
       <td>
         ${clientSignatureHtml}
         Firma del Cliente: <span class="sig-line"></span>
+        <div style="font-size: 8px; color: #475569; margin-top: 2px;">${quote.clientDoc ? `Doc: ${quote.clientDoc} • ` : ''}${quote.clientName}</div>
       </td>
       <td>
         ${advisorSignatureHtml}
         Firma del Asesor: <span class="sig-line"></span>
+        <div style="font-size: 8px; color: #475569; margin-top: 2px;">${quote.advisorName || 'Darios Bacilio'} - Asesor Técnico Responsable</div>
       </td>
     </tr>
   </table>
@@ -682,7 +750,7 @@ function renderWorkOrderHtml(order, company) {
       <td class="lbl">Fecha y Hora Ingreso:</td>
       <td class="val font-bold">${fechaIngreso} ${horaIngreso}</td>
       <td class="lbl">Asesor Técnico:</td>
-      <td class="val font-bold">${order.assignedMechanic || 'Ruben Basil'}</td>
+      <td class="val font-bold">${order.assignedMechanic || 'Darios Bacilio'}</td>
     </tr>
     <tr>
       <td class="lbl">Kilometraje (Odómetro):</td>
@@ -812,7 +880,7 @@ function renderWorkOrderHtml(order, company) {
         ${advisorSignatureHtml}
         <div class="sig-line">
           ASESOR / MECÁNICO RESPONSABLE DARSIL<br>
-          <span style="font-size: 7.5px; font-weight: normal; color: #64748b;">${order.assignedMechanic || 'Ruben Basil'} - Especialista Técnico</span>
+          <span style="font-size: 7.5px; font-weight: normal; color: #64748b;">${order.assignedMechanic || 'Darios Bacilio'} - Especialista Técnico</span>
         </div>
       </td>
     </tr>
