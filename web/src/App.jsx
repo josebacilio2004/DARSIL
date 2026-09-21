@@ -323,7 +323,7 @@ Quedamos a su entera disposición para coordinar la atención técnica.
         {/* Footer ERP */}
         <footer className="bg-darsil-obsidian border-t border-darsil-border py-4 px-3 sm:px-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 pb-20 lg:pb-4 w-full max-w-full overflow-hidden">
           <span className="text-[10px] sm:text-xs text-slate-500 text-center sm:text-left break-words max-w-full leading-relaxed">
-            DARSIL AUTOMOTIVE SOLUTIONS • Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima • 2026
+            DARSIL AUTOMOTIVE SOLUTIONS • Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima
           </span>
           <span className="text-amber-400 font-mono text-[10px] shrink-0">v2.6.0 Enterprise</span>
         </footer>
