@@ -66,6 +66,7 @@ router.post('/catalog/seed', catalogController.seedCatalog);
 // Clientes y Vehículos
 router.get('/clients', clientController.getClients);
 router.get('/vehicles', clientController.getVehicles);
+router.get('/vehicles/validate-plate', clientController.validateVehiclePlate);
 
 // Integraciones SUNAT / RENIEC / SUNARP
 router.get('/integrations/ruc/:ruc', clientController.lookupRuc);

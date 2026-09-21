@@ -144,6 +144,19 @@ export const api = {
     return res.json();
   },
 
+  // Vehículos y Validación de Placa Única
+  getVehicles: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const res = await fetch(`${getApiUrl()}/vehicles?${query}`);
+    return res.json();
+  },
+  validateVehiclePlate: async (plate, model = '') => {
+    if (!plate) return { success: true, valid: true };
+    const query = new URLSearchParams({ plate, model }).toString();
+    const res = await fetch(`${getApiUrl()}/vehicles/validate-plate?${query}`);
+    return res.json();
+  },
+
   // Integraciones SUNAT / RENIEC / SUNARP
   lookupRuc: async (ruc) => {
     const res = await fetch(`${getApiUrl()}/integrations/ruc/${ruc}`);
@@ -371,6 +384,24 @@ export const api = {
       method: 'DELETE',
     });
     return res.json();
+  },
+  validateVehiclePlate: async (plate, model = '') => {
+    try {
+      const query = new URLSearchParams({ plate, model }).toString();
+      const res = await fetch(`${getApiUrl()}/vehicles/validate-plate?${query}`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  getVehicles: async (params = {}) => {
+    try {
+      const query = new URLSearchParams(params).toString();
+      const res = await fetch(`${getApiUrl()}/vehicles?${query}`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
   }
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Plus, Trash2, CheckCircle2, Loader2, Car, Building2, Wrench, Calendar, Clock, UserCheck, Boxes, ClipboardList } from 'lucide-react';
+import { X, Search, Plus, Trash2, CheckCircle2, Loader2, Car, Building2, Wrench, Calendar, Clock, UserCheck, Boxes, ClipboardList, AlertCircle, Check } from 'lucide-react';
 import { api } from '../services/api';
 import CatalogSearchModal from './CatalogSearchModal';
 
@@ -28,6 +28,7 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
   const [plate, setPlate] = useState('');
   const [vin, setVin] = useState('');
   const [model, setModel] = useState('');
+  const [plateConflict, setPlateConflict] = useState(null);
 
   // Tiempos y Plazos
   const [issueDate, setIssueDate] = useState(todayStr);
@@ -55,6 +56,35 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
       if (res?.data) setWorkOrders(res.data);
     });
   }, []);
+
+  const verifyPlateConsistency = async (p = plate, m = model) => {
+    const cleanPlate = (p || '').trim();
+    if (!cleanPlate) {
+      setPlateConflict(null);
+      return { valid: true };
+    }
+    try {
+      const res = await api.validateVehiclePlate(cleanPlate, m);
+      if (res && res.success) {
+        if (!res.valid) {
+          const conflictData = {
+            message: res.message,
+            existingModel: res.existingModel,
+            registeredVehicle: res.vehicle
+          };
+          setPlateConflict(conflictData);
+          return { valid: false, conflict: conflictData };
+        } else {
+          setPlateConflict(null);
+          if (!m && res.existingModel) setModel(res.existingModel);
+          return { valid: true, existingModel: res.existingModel };
+        }
+      }
+    } catch (e) {
+      console.warn('Error verificando placa:', e);
+    }
+    return { valid: true };
+  };
 
   // Extracción automática desde una Orden de Trabajo existente
   const handleSelectWorkOrder = (otId) => {
@@ -240,6 +270,14 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
     if (!clientName) {
       alert('Por favor ingresa la Razón Social o Nombre del cliente');
       return;
+    }
+
+    if (plate && plate.trim()) {
+      const check = await verifyPlateConsistency(plate, model);
+      if (!check.valid) {
+        alert(`No se puede generar la cotización: ${check.conflict?.message || 'Conflicto de placa y modelo'}.\n\nEn el sistema vehicular del Perú cada placa pertenece a un único vehículo físico.`);
+        return;
+      }
     }
 
     setLoading(true);
@@ -441,15 +479,47 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
               <span>2. Datos del Vehículo / Maquinaria</span>
             </div>
 
+            {plateConflict && (
+              <div className="bg-red-950/80 border border-red-500/60 text-red-200 p-3 rounded-xl text-xs flex items-start justify-between gap-3 shadow-lg animate-fade-in">
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-red-300">¡Inconsistencia de Placa y Modelo!</span>
+                    <p className="text-[11px] text-red-200/90 mt-0.5 leading-relaxed">{plateConflict.message}</p>
+                    {plateConflict.existingModel && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModel(plateConflict.existingModel);
+                          setPlateConflict(null);
+                        }}
+                        className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-amber-300 border border-red-500/40 rounded-lg text-[11px] font-semibold transition"
+                      >
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Corregir a: "{plateConflict.existingModel}"</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <button type="button" onClick={() => setPlateConflict(null)} className="text-red-400 hover:text-white p-1 text-xs">✕</button>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div>
                 <label className="block text-slate-400 font-semibold mb-1">Matrícula / Placa:</label>
                 <input
                   type="text"
                   value={plate}
-                  onChange={(e) => setPlate(e.target.value.toUpperCase())}
+                  onChange={(e) => {
+                    setPlate(e.target.value.toUpperCase());
+                    if (plateConflict) setPlateConflict(null);
+                  }}
+                  onBlur={() => verifyPlateConsistency(plate, model)}
                   placeholder="Ej. ABG890"
-                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-amber-400 font-mono font-bold outline-none focus:border-amber-400"
+                  className={`w-full bg-darsil-card border rounded-xl px-3 py-2 text-amber-400 font-mono font-bold outline-none ${
+                    plateConflict ? 'border-red-500 focus:border-red-400 ring-1 ring-red-500/50' : 'border-darsil-border focus:border-amber-400'
+                  }`}
                 />
               </div>
 
@@ -469,9 +539,15 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                 <input
                   type="text"
                   value={model}
-                  onChange={(e) => setModel(e.target.value)}
+                  onChange={(e) => {
+                    setModel(e.target.value);
+                    if (plateConflict) setPlateConflict(null);
+                  }}
+                  onBlur={() => verifyPlateConsistency(plate, model)}
                   placeholder="Ej. Camc Mixer / Bus 12m"
-                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
+                  className={`w-full bg-darsil-card border rounded-xl px-3 py-2 text-white outline-none ${
+                    plateConflict ? 'border-red-500 focus:border-red-400 ring-1 ring-red-500/50' : 'border-darsil-border focus:border-amber-400'
+                  }`}
                 />
               </div>
             </div>

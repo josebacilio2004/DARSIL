@@ -6,22 +6,8 @@ const CompanyConfig = require('../models/CompanyConfig');
 const InventoryItem = require('../models/InventoryItem');
 const KardexMovement = require('../models/KardexMovement');
 const { generateWorkOrderPdf } = require('../services/pdfService');
-
-async function getNextOrderNumber() {
-  const currentYear = new Date().getFullYear();
-  const prefix = `OT-${currentYear}-`;
-
-  const lastOrder = await WorkOrder.findOne({ orderNumber: new RegExp(`^${prefix}`) })
-    .sort({ orderNumber: -1 });
-
-  if (!lastOrder) {
-    return `${prefix}001`;
-  }
-
-  const match = lastOrder.orderNumber.match(/(\d+)$/);
-  const nextNum = match ? parseInt(match[1], 10) + 1 : 1;
-  return `${prefix}${String(nextNum).padStart(3, '0')}`;
-}
+const { getNextAtomicOrderNumber } = require('../services/sequenceService');
+const { validatePlateAndModel, syncVehicleRecord } = require('../services/vehicleValidationService');
 
 // GET /api/work-orders
 exports.getWorkOrders = async (req, res) => {
@@ -73,7 +59,27 @@ exports.getWorkOrderById = async (req, res) => {
 // POST /api/work-orders (Check-In Digital Inicial)
 exports.createWorkOrder = async (req, res) => {
   try {
-    const orderNumber = req.body.orderNumber || await getNextOrderNumber();
+    // 1. Validación estricta de Placa vs Modelo en Perú
+    if (req.body.plate && req.body.plate !== 'POR ASIGNAR') {
+      const plateValidation = await validatePlateAndModel(req.body.plate, req.body.model);
+      if (!plateValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          code: plateValidation.code || 'PLATE_MODEL_MISMATCH',
+          message: plateValidation.message,
+          existingModel: plateValidation.existingModel
+        });
+      }
+      // Si el modelo vino vacío, auto-completar con el modelo registrado
+      if (plateValidation.existingModel && !req.body.model) {
+        req.body.model = plateValidation.existingModel;
+      }
+    }
+
+    let orderNumber = req.body.orderNumber;
+    if (!orderNumber) {
+      orderNumber = await getNextAtomicOrderNumber();
+    }
 
     let tasks = req.body.tasks || [];
 
@@ -110,11 +116,33 @@ exports.createWorkOrder = async (req, res) => {
       status: req.body.status || 'RECEPCIONADO'
     });
 
-    await order.save();
+    try {
+      await order.save();
+    } catch (saveErr) {
+      // Reintento atómico automático si ocurriera colisión E11000 bajo alta concurrencia
+      if (saveErr.code === 11000 && !req.body.orderNumber) {
+        order.orderNumber = await getNextAtomicOrderNumber();
+        await order.save();
+      } else {
+        throw saveErr;
+      }
+    }
+
+    // Sincronizar o registrar vehículo en la base de datos
+    if (order.plate && order.plate !== 'POR ASIGNAR') {
+      syncVehicleRecord({
+        plate: order.plate,
+        model: order.model,
+        vin: order.vin,
+        color: order.color,
+        year: order.year,
+        clientId: order.clientId
+      }).catch(err => console.warn('Aviso sincronizando vehículo:', err.message));
+    }
 
     res.status(201).json({
       success: true,
-      message: `Orden de Trabajo ${orderNumber} generada exitosamente (Check-In completado)`,
+      message: `Orden de Trabajo ${order.orderNumber} generada exitosamente (Check-In completado)`,
       data: order
     });
   } catch (error) {
@@ -128,8 +156,35 @@ exports.updateWorkOrder = async (req, res) => {
     const order = await WorkOrder.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: 'Orden de trabajo no encontrada' });
 
+    // Validar coherencia de placa vs modelo si se modifica la unidad
+    const targetPlate = req.body.plate || order.plate;
+    const targetModel = req.body.model !== undefined ? req.body.model : order.model;
+    if (targetPlate && targetPlate !== 'POR ASIGNAR') {
+      const plateValidation = await validatePlateAndModel(targetPlate, targetModel);
+      if (!plateValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          code: plateValidation.code || 'PLATE_MODEL_MISMATCH',
+          message: plateValidation.message,
+          existingModel: plateValidation.existingModel
+        });
+      }
+    }
+
     Object.assign(order, req.body);
     await order.save();
+
+    // Sincronizar vehículo
+    if (order.plate && order.plate !== 'POR ASIGNAR') {
+      syncVehicleRecord({
+        plate: order.plate,
+        model: order.model,
+        vin: order.vin,
+        color: order.color,
+        year: order.year,
+        clientId: order.clientId
+      }).catch(err => console.warn('Aviso sincronizando vehículo:', err.message));
+    }
 
     res.json({ success: true, message: 'Orden de trabajo actualizada', data: order });
   } catch (error) {

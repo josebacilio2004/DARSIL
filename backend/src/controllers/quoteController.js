@@ -6,22 +6,8 @@ const Client = require('../models/Client');
 const Vehicle = require('../models/Vehicle');
 const { generateQuotePdf } = require('../services/pdfService');
 const { generateWhatsAppShareLink } = require('../services/integrationService');
-
-async function getNextQuoteNumber() {
-  const currentYear = new Date().getFullYear();
-  const prefix = `DA-${currentYear}-`;
-  
-  const lastQuote = await Quote.findOne({ quoteNumber: new RegExp(`^${prefix}`) })
-    .sort({ quoteNumber: -1 });
-
-  if (!lastQuote) {
-    return `${prefix}001`;
-  }
-
-  const match = lastQuote.quoteNumber.match(/(\d+)$/);
-  const nextNum = match ? parseInt(match[1], 10) + 1 : 1;
-  return `${prefix}${String(nextNum).padStart(3, '0')}`;
-}
+const { getNextAtomicQuoteNumber } = require('../services/sequenceService');
+const { validatePlateAndModel, syncVehicleRecord } = require('../services/vehicleValidationService');
 
 exports.getQuotes = async (req, res) => {
   try {
@@ -63,7 +49,27 @@ exports.getQuoteById = async (req, res) => {
 exports.createQuote = async (req, res) => {
   try {
     const company = await CompanyConfig.findOne() || {};
-    const quoteNumber = req.body.quoteNumber || await getNextQuoteNumber();
+
+    // 1. Validación estricta de Placa vs Modelo en Perú
+    if (req.body.plate && req.body.plate !== 'POR ASIGNAR') {
+      const plateValidation = await validatePlateAndModel(req.body.plate, req.body.model);
+      if (!plateValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          code: plateValidation.code || 'PLATE_MODEL_MISMATCH',
+          message: plateValidation.message,
+          existingModel: plateValidation.existingModel
+        });
+      }
+      if (plateValidation.existingModel && !req.body.model) {
+        req.body.model = plateValidation.existingModel;
+      }
+    }
+
+    let quoteNumber = req.body.quoteNumber;
+    if (!quoteNumber) {
+      quoteNumber = await getNextAtomicQuoteNumber();
+    }
 
     const items = (req.body.items || []).map(i => ({
       ...i,
@@ -113,12 +119,13 @@ exports.createQuote = async (req, res) => {
 
     // Guardar o vincular vehículo si viene placa
     let vehicleId = req.body.vehicleId;
-    if (!vehicleId && req.body.plate) {
-      let vehicle = await Vehicle.findOne({ plate: req.body.plate.toUpperCase().trim() });
+    if (!vehicleId && req.body.plate && req.body.plate !== 'POR ASIGNAR') {
+      const formattedPlate = req.body.plate.toUpperCase().trim();
+      let vehicle = await Vehicle.findOne({ plate: formattedPlate });
       if (!vehicle) {
         vehicle = await Vehicle.create({
           clientId,
-          plate: req.body.plate.toUpperCase().trim(),
+          plate: formattedPlate,
           vin: req.body.vin,
           model: req.body.model
         });
@@ -143,6 +150,18 @@ exports.createQuote = async (req, res) => {
       bankAccountsSnapshot: company.bankAccounts || []
     });
 
+    try {
+      await newQuote.save();
+    } catch (saveErr) {
+      // Reintento atómico automático ante colisión E11000 bajo alta concurrencia
+      if (saveErr.code === 11000 && !req.body.quoteNumber) {
+        newQuote.quoteNumber = await getNextAtomicQuoteNumber();
+        await newQuote.save();
+      } else {
+        throw saveErr;
+      }
+    }
+
     // Generar PDF con Puppeteer de forma protegida
     try {
       const pdfResult = await generateQuotePdf(newQuote, company);
@@ -152,6 +171,16 @@ exports.createQuote = async (req, res) => {
       console.warn('Aviso: El PDF se generará bajo demanda al consultar la cotización:', pdfErr.message);
       newQuote.pdfUrl = `/api/quotes/${newQuote._id}/pdf`;
       await newQuote.save();
+    }
+
+    // Sincronizar vehículo en la base de datos
+    if (newQuote.plate && newQuote.plate !== 'POR ASIGNAR') {
+      syncVehicleRecord({
+        plate: newQuote.plate,
+        model: newQuote.model,
+        vin: newQuote.vin,
+        clientId: newQuote.clientId
+      }).catch(err => console.warn('Aviso sincronizando vehículo:', err.message));
     }
 
     const whatsappInfo = generateWhatsAppShareLink(newQuote, `${req.protocol}://${req.get('host')}`);
@@ -174,6 +203,21 @@ exports.updateQuote = async (req, res) => {
     const quote = await Quote.findById(req.params.id);
     if (!quote) {
       return res.status(404).json({ success: false, message: 'Cotización no encontrada' });
+    }
+
+    // Validar coherencia de placa vs modelo
+    const targetPlate = req.body.plate || quote.plate;
+    const targetModel = req.body.model !== undefined ? req.body.model : quote.model;
+    if (targetPlate && targetPlate !== 'POR ASIGNAR') {
+      const plateValidation = await validatePlateAndModel(targetPlate, targetModel);
+      if (!plateValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          code: plateValidation.code || 'PLATE_MODEL_MISMATCH',
+          message: plateValidation.message,
+          existingModel: plateValidation.existingModel
+        });
+      }
     }
 
     Object.assign(quote, req.body);
@@ -208,6 +252,16 @@ exports.updateQuote = async (req, res) => {
       console.warn('Aviso: El PDF se generará bajo demanda al consultar la cotización:', pdfErr.message);
       quote.pdfUrl = `/api/quotes/${quote._id}/pdf`;
       await quote.save();
+    }
+
+    // Sincronizar vehículo
+    if (quote.plate && quote.plate !== 'POR ASIGNAR') {
+      syncVehicleRecord({
+        plate: quote.plate,
+        model: quote.model,
+        vin: quote.vin,
+        clientId: quote.clientId
+      }).catch(err => console.warn('Aviso sincronizando vehículo:', err.message));
     }
 
     const whatsappInfo = generateWhatsAppShareLink(quote, `${req.protocol}://${req.get('host')}`);

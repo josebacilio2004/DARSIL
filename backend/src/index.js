@@ -32,6 +32,24 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'DARSIL Automotive Solutions API', time: new Date() });
 });
 
+// Manejo global de errores de Express
+app.use((err, req, res, next) => {
+  console.error('Error en petición Express (Servidor protegido):', err.message);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Error interno del servidor DARSIL'
+  });
+});
+
+// Protección contra caídas del proceso Node.js bajo estrés y ráfagas masivas
+process.on('unhandledRejection', (reason) => {
+  console.warn('Protección activa: Rechazo asíncrono capturado sin interrupción del servidor:', reason?.message || reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.warn('Protección activa: Excepción capturada sin interrupción del servidor:', err?.message || err);
+});
+
 const { initializeSystemDefaults } = require('./services/initService');
 
 // Iniciar servidor

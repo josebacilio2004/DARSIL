@@ -1,6 +1,7 @@
 const Client = require('../models/Client');
 const Vehicle = require('../models/Vehicle');
 const { searchRuc, searchDni, searchSunarpPlate } = require('../services/integrationService');
+const { validatePlateAndModel, findExistingVehicleByPlate } = require('../services/vehicleValidationService');
 
 exports.getClients = async (req, res) => {
   try {
@@ -18,6 +19,24 @@ exports.getVehicles = async (req, res) => {
     if (plate) filter.plate = new RegExp(plate, 'i');
     const vehicles = await Vehicle.find(filter).populate('clientId');
     res.json({ success: true, data: vehicles });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.validateVehiclePlate = async (req, res) => {
+  try {
+    const { plate, model } = req.query;
+    if (!plate) {
+      return res.status(400).json({ success: false, message: 'La placa es requerida' });
+    }
+    const result = await validatePlateAndModel(plate, model);
+    const existing = await findExistingVehicleByPlate(plate);
+    res.json({
+      success: true,
+      ...result,
+      vehicle: existing || null
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

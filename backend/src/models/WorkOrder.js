@@ -44,7 +44,7 @@ const WorkOrderSchema = new mongoose.Schema({
   unitType: { type: String, default: 'Tractocamión' }, // Tracto, Mixer, Bus, etc.
   vehicleType: { 
     type: String, 
-    enum: ['SEDAN_AUTO', 'CAMIONETA_SUV', 'TRACTO_CAMION', 'BUS', 'MAQUINARIA'], 
+    enum: ['SEDAN_AUTO', 'CAMIONETA_PICKUP', 'CAMIONETA_SUV', 'TRACTO_CAMION', 'TRACTOCAMION', 'MIXER', 'BUS', 'MAQUINARIA'], 
     default: 'SEDAN_AUTO' 
   },
 

@@ -119,6 +119,8 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
   const [searchingDoc, setSearchingDoc] = useState(false);
   const [searchingSunarp, setSearchingSunarp] = useState(false);
   const [sunarpToast, setSunarpToast] = useState(null);
+  const [dispPlateConflict, setDispPlateConflict] = useState(null);
+  const [diagPlateConflict, setDiagPlateConflict] = useState(null);
 
   // Placa, color y año opcionales en despacho
   const [dispPlate, setDispPlate] = useState('');
@@ -605,6 +607,45 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
     }
   };
 
+  // ==========================================
+  // VALIDACIÓN DE COHERENCIA PLACA / MODELO (PERÚ)
+  // ==========================================
+  const verifyPlateConsistency = async (plate, model, mode = 'disp') => {
+    const cleanPlate = (plate || '').trim();
+    if (!cleanPlate || cleanPlate.toUpperCase() === 'POR ASIGNAR') {
+      if (mode === 'disp') setDispPlateConflict(null);
+      else setDiagPlateConflict(null);
+      return { valid: true };
+    }
+    try {
+      const res = await api.validateVehiclePlate(cleanPlate, model);
+      if (res && res.success) {
+        if (!res.valid) {
+          const conflictData = {
+            message: res.message,
+            existingModel: res.existingModel,
+            registeredVehicle: res.vehicle
+          };
+          if (mode === 'disp') setDispPlateConflict(conflictData);
+          else setDiagPlateConflict(conflictData);
+          return { valid: false, conflict: conflictData };
+        } else {
+          if (mode === 'disp') {
+            setDispPlateConflict(null);
+            if (!model && res.existingModel) setDispModel(res.existingModel);
+          } else {
+            setDiagPlateConflict(null);
+            if (!model && res.existingModel) setDiagModel(res.existingModel);
+          }
+          return { valid: true, existingModel: res.existingModel };
+        }
+      }
+    } catch (e) {
+      console.warn('Error verificando placa:', e);
+    }
+    return { valid: true };
+  };
+
   // Detectar GPS del Asesor
   const handleDetectGps = () => {
     if (!navigator.geolocation) {
@@ -700,6 +741,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
     setRouteDistanceKm(0);
     setRouteDurationMin(0);
     setTravelCost(0);
+    setDispPlateConflict(null);
     setShowDispatchModal(true);
   };
 
@@ -709,6 +751,14 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
     if (!dispClientName || !dispClientName.trim()) {
       alert('Por favor ingresa el nombre o razón social del cliente.');
       return;
+    }
+
+    if (dispPlate && dispPlate.trim() && dispPlate.trim().toUpperCase() !== 'POR ASIGNAR') {
+      const check = await verifyPlateConsistency(dispPlate, dispModel, 'disp');
+      if (!check.valid) {
+        alert(`No se puede generar Despacho: ${check.conflict?.message || 'Conflicto de placa y modelo'}.\n\nEn el sistema vehicular peruano cada placa pertenece a una única unidad física.`);
+        return;
+      }
     }
 
     try {
@@ -761,6 +811,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
   // ==========================================
   const handleOpenDiagnostic = (order) => {
     setSelectedOrder(order);
+    setDiagPlateConflict(null);
     setDiagPlate(order.plate === 'POR ASIGNAR' ? '' : (order.plate || ''));
     setDiagModel(order.model === 'No especificado' ? '' : (order.model || ''));
     setDiagVehicleType(order.vehicleType || 'SEDAN_AUTO');
@@ -805,6 +856,16 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
   // Guardar Diagnóstico (incluyendo datos de la unidad confirmados en sitio)
   const handleSaveDiagnostic = async () => {
     if (!selectedOrder) return;
+    const checkPlate = (diagPlate || selectedOrder.plate || '').trim();
+    const checkModel = (diagModel || selectedOrder.model || '').trim();
+    if (checkPlate && checkPlate.toUpperCase() !== 'POR ASIGNAR') {
+      const check = await verifyPlateConsistency(checkPlate, checkModel, 'diag');
+      if (!check.valid) {
+        alert(`No se puede guardar: ${check.conflict?.message || 'Conflicto con la placa'}.\n\nEn el sistema vehicular del Perú cada placa pertenece a un único vehículo.`);
+        return;
+      }
+    }
+
     try {
       const payload = {
         plate: (diagPlate || selectedOrder.plate || 'POR ASIGNAR').toUpperCase().trim(),
@@ -844,6 +905,15 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
   // Generar Cotización Automática en 1 Clic
   const handleGenerateQuote = async () => {
     if (!selectedOrder) return;
+    const checkPlate = (diagPlate || selectedOrder.plate || '').trim();
+    const checkModel = (diagModel || selectedOrder.model || '').trim();
+    if (checkPlate && checkPlate.toUpperCase() !== 'POR ASIGNAR') {
+      const check = await verifyPlateConsistency(checkPlate, checkModel, 'diag');
+      if (!check.valid) {
+        alert(`No se puede cotizar: ${check.conflict?.message || 'Conflicto con la placa'}.\n\nEn el sistema vehicular del Perú cada placa pertenece a un único vehículo.`);
+        return;
+      }
+    }
     setAutoQuoteLoading(true);
     try {
       // Guardar primero el diagnóstico actual y datos del vehículo confirmados
@@ -1487,6 +1557,32 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   </div>
                 )}
 
+                {dispPlateConflict && (
+                  <div className="bg-red-950/80 border border-red-500/60 text-red-200 p-3 rounded-xl text-xs flex items-start justify-between gap-3 shadow-lg animate-fade-in">
+                    <div className="flex items-start gap-2.5">
+                      <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold text-red-300">¡Inconsistencia de Placa y Modelo!</span>
+                        <p className="text-[11px] text-red-200/90 mt-0.5 leading-relaxed">{dispPlateConflict.message}</p>
+                        {dispPlateConflict.existingModel && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDispModel(dispPlateConflict.existingModel);
+                              setDispPlateConflict(null);
+                            }}
+                            className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-amber-300 border border-red-500/40 rounded-lg text-[11px] font-semibold transition"
+                          >
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Corregir a: "{dispPlateConflict.existingModel}"</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => setDispPlateConflict(null)} className="text-red-400 hover:text-white p-1 text-xs">✕</button>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3 text-xs">
                   <div>
                     <label className="block text-slate-400 font-semibold mb-1 text-[11px]">Placa (Opcional):</label>
@@ -1494,10 +1590,16 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                       <input
                         type="text"
                         value={dispPlate}
-                        onChange={(e) => setDispPlate(e.target.value.toUpperCase())}
+                        onChange={(e) => {
+                          setDispPlate(e.target.value.toUpperCase());
+                          if (dispPlateConflict) setDispPlateConflict(null);
+                        }}
+                        onBlur={() => verifyPlateConsistency(dispPlate, dispModel, 'disp')}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleLookupSunarp('disp'); } }}
                         placeholder="Ej. ABC-123"
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-3 pr-8 py-1.5 text-amber-300 font-mono font-black outline-none focus:border-amber-400 uppercase tracking-wider"
+                        className={`w-full bg-slate-900 border rounded-xl pl-3 pr-8 py-1.5 text-amber-300 font-mono font-black outline-none uppercase tracking-wider ${
+                          dispPlateConflict ? 'border-red-500 focus:border-red-400 ring-1 ring-red-500/50' : 'border-slate-700 focus:border-amber-400'
+                        }`}
                       />
                       <button
                         type="button"
@@ -1520,9 +1622,15 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                     <input
                       type="text"
                       value={dispModel}
-                      onChange={(e) => setDispModel(e.target.value)}
+                      onChange={(e) => {
+                        setDispModel(e.target.value);
+                        if (dispPlateConflict) setDispPlateConflict(null);
+                      }}
+                      onBlur={() => verifyPlateConsistency(dispPlate, dispModel, 'disp')}
                       placeholder="Ej. Toyota Yaris / Volvo FH"
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white outline-none focus:border-amber-400"
+                      className={`w-full bg-slate-900 border rounded-xl px-3 py-1.5 text-white outline-none ${
+                        dispPlateConflict ? 'border-red-500 focus:border-red-400 ring-1 ring-red-500/50' : 'border-slate-700 focus:border-amber-400'
+                      }`}
                     />
                   </div>
 
@@ -1866,6 +1974,32 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                 </div>
               )}
 
+              {diagPlateConflict && (
+                <div className="bg-red-950/80 border border-red-500/60 text-red-200 p-3 rounded-xl text-xs flex items-start justify-between gap-3 shadow-lg animate-fade-in mb-2">
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-red-300">¡Inconsistencia de Placa y Modelo!</span>
+                      <p className="text-[11px] text-red-200/90 mt-0.5 leading-relaxed">{diagPlateConflict.message}</p>
+                      {diagPlateConflict.existingModel && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDiagModel(diagPlateConflict.existingModel);
+                            setDiagPlateConflict(null);
+                          }}
+                          className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-amber-300 border border-red-500/40 rounded-lg text-[11px] font-semibold transition"
+                        >
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Corregir a: "{diagPlateConflict.existingModel}"</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => setDiagPlateConflict(null)} className="text-red-400 hover:text-white p-1 text-xs">✕</button>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 mb-1">
@@ -1876,9 +2010,15 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                       type="text"
                       placeholder="Ej. ABC-123"
                       value={diagPlate}
-                      onChange={(e) => setDiagPlate(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        setDiagPlate(e.target.value.toUpperCase());
+                        if (diagPlateConflict) setDiagPlateConflict(null);
+                      }}
+                      onBlur={() => verifyPlateConsistency(diagPlate, diagModel, 'diag')}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleLookupSunarp('diag'); } }}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-2.5 pr-8 py-1.5 text-xs text-amber-300 font-mono font-bold outline-none focus:border-amber-400 uppercase tracking-wider"
+                      className={`w-full bg-slate-900 border rounded-xl pl-2.5 pr-8 py-1.5 text-xs text-amber-300 font-mono font-bold outline-none uppercase tracking-wider ${
+                        diagPlateConflict ? 'border-red-500 focus:border-red-400 ring-1 ring-red-500/50' : 'border-slate-700 focus:border-amber-400'
+                      }`}
                     />
                     <button
                       type="button"
@@ -1904,8 +2044,14 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                     type="text"
                     placeholder="Ej. Volvo FH 540 / Hilux"
                     value={diagModel}
-                    onChange={(e) => setDiagModel(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-amber-400"
+                    onChange={(e) => {
+                      setDiagModel(e.target.value);
+                      if (diagPlateConflict) setDiagPlateConflict(null);
+                    }}
+                    onBlur={() => verifyPlateConsistency(diagPlate, diagModel, 'diag')}
+                    className={`w-full bg-slate-900 border rounded-xl px-2.5 py-1.5 text-xs text-white outline-none ${
+                      diagPlateConflict ? 'border-red-500 focus:border-red-400 ring-1 ring-red-500/50' : 'border-slate-700 focus:border-amber-400'
+                    }`}
                   />
                 </div>
 
