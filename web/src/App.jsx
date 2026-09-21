@@ -76,7 +76,7 @@ export default function App() {
     const totalStr = 'S/ ' + Number(q.total || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 });
     const rawPhone = q.clientPhone ? String(q.clientPhone).replace(/\D/g, '') : '934787006';
     const phone = rawPhone.startsWith('51') ? rawPhone : `51${rawPhone}`;
-    const pdfLink = `${getApiUrl()}/quotes/${q._id}/pdf`;
+    const pdfLink = api.getPdfUrl(q._id);
     const msg = `⚡ *DARSIL AUTOMOTIVE SOLUTIONS* ⚡
 _Tecnología • Diagnóstico • Ingeniería • Innovación_
 

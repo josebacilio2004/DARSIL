@@ -2105,7 +2105,7 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
                 {/* Acciones de Cliente */}
                 <div className="pt-3 border-t border-white/10 flex flex-wrap gap-2 justify-end">
                   <a
-                    href={`/api/quotes/${foundQuote._id}/pdf`}
+                    href={api.getPdfUrl(foundQuote._id)}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-white/20 transition"

@@ -17,8 +17,7 @@ export default function PdfViewerModal({ quote, onClose, onRefresh, onOpenMap })
   const handleWhatsAppRedirect = () => {
     const rawPhone = (quote.clientPhone || quote.driverPhone) ? String(quote.clientPhone || quote.driverPhone).replace(/\D/g, '') : '';
     const phone = rawPhone ? (rawPhone.startsWith('51') ? rawPhone : `51${rawPhone}`) : '';
-    const origin = window.location.origin;
-    const pdfLink = isWorkOrder ? `${origin}/api/work-orders/${docId}/pdf` : `${origin}/api/quotes/${docId}/pdf`;
+    const pdfLink = isWorkOrder ? api.getWorkOrderPdfUrl(docId) : api.getPdfUrl(docId);
     const formattedTotal = Number(quote.total || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 });
 
     const message = isWorkOrder ? 
@@ -41,7 +40,7 @@ Quedamos a su entera disposición para coordinar los trabajos en taller.
 _Tecnología • Diagnóstico • Ingeniería • Innovación_
 
 Estimado/a *${clientName}*,
-Le compartimos la cotización oficial solicitada:
+Le hacemos llegar la cotización solicitada:
 
 📋 *N° Cotización:* ${docNumber}
 ${vehicleDesc ? `🚗 *Vehículo:* ${vehicleDesc}\n` : ''}💰 *Total:* S/ ${formattedTotal}

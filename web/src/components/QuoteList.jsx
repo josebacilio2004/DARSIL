@@ -55,7 +55,7 @@ export default function QuoteList({ quotes, onSelectQuote, onEditQuote, onOpenMa
     const rawPhone = quote.clientPhone ? String(quote.clientPhone).replace(/\D/g, '') : '';
     const phone = rawPhone ? (rawPhone.startsWith('51') ? rawPhone : `51${rawPhone}`) : '';
 
-    const pdfLink = `${getApiUrl()}/quotes/${quote._id}/pdf`;
+    const pdfLink = api.getPdfUrl(quote._id);
     const formattedTotal = Number(quote.total || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 });
 
     const message = 

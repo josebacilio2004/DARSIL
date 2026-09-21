@@ -26,6 +26,16 @@ export const setApiUrl = (url) => {
   }
 };
 
+export const getPublicPdfUrl = (type, id) => {
+  let base = getApiUrl();
+  // Si base es relativo (/api), localhost, 127.0.0.1 o github.io, usar el backend oficial de Render para que clientes en WhatsApp o web siempre puedan abrir el PDF
+  if (!base || base.startsWith('/') || base.includes('localhost') || base.includes('127.0.0.1') || base.includes('github.io')) {
+    base = 'https://darsil-backend.onrender.com/api';
+  }
+  const endpoint = (type === 'work-order' || type === 'workorders' || type === 'workOrder') ? 'work-orders' : 'quotes';
+  return `${base}/${endpoint}/${id}/pdf`;
+};
+
 export const api = {
   // Autenticación ERP
   login: async (credentials) => {
@@ -113,7 +123,7 @@ export const api = {
     });
     return res.json();
   },
-  getPdfUrl: (id) => `${getApiUrl()}/quotes/${id}/pdf`,
+  getPdfUrl: (id) => getPublicPdfUrl('quotes', id),
 
   // Catálogo
   getCatalog: async (category = '') => {
@@ -377,7 +387,7 @@ export const api = {
     return res.json();
   },
   getWorkOrderPdfUrl: (id) => {
-    return `${getApiUrl()}/work-orders/${id}/pdf`;
+    return getPublicPdfUrl('work-orders', id);
   },
   deleteWorkOrder: async (id) => {
     const res = await fetch(`${getApiUrl()}/work-orders/${id}`, {
