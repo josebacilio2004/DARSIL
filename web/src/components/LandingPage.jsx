@@ -958,9 +958,9 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
   };
 
   // =========================================================================
-  // LAS 4 CARTILLAS / CATEGORÍAS VEHICULARES
-  // Deportivos (video: deportivo.mp4), Pickups (video: pickupcamioneta.mp4),
-  // Mixer (imagen MIXER.jfif) y Tractocamiones (imagen TRACTO.jfif)
+  // LAS 4 CARTILLAS / CATEGORÍAS VEHICULARES (VIDEOS EN VIVO EN TODAS LAS CARTILLAS)
+  // Deportivos (deportivo.mp4), Pickups (pickupcamioneta.mp4),
+  // Mixer (mixer.mp4) y Tractocamiones (tractocamion.mp4)
   // =========================================================================
   const vehicleCategories = [
     {
@@ -995,11 +995,12 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
       id: 'mixer',
       title: 'Mixer',
       subtitle: 'Construimos el futuro juntos.',
-      type: 'image',
-      mediaSrc: './MIXER.jfif',
+      type: 'video',
+      mediaSrc: './mixer.mp4',
       badge: 'Construcción & Minería',
-      details: 'Sistemas de 24V de servicio pesado, accionamiento de trompos, diagnóstico de sensores de presión hidráulica, arrancadores reforzados y cableado ignífugo para entornos hostiles.',
+      details: 'Especialistas en camiones chinos, americanos, europeos, sistemas de 24V de servicio pesado, accionamiento de trompos, diagnóstico de sensores de presión hidráulica, arrancadores reforzados y cableado ignífugo para entornos hostiles.',
       specs: [
+        'Especialistas en camiones chinos, americanos y europeos',
         'Sistemas eléctricos de 24V en carga continua',
         'Mantenimiento preventivo en obra/taller',
         'Cableado automotriz industrial ignífugo'
@@ -1009,8 +1010,8 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
       id: 'tractocamiones',
       title: 'Tractocamiones',
       subtitle: 'Potencia que impulsa tu negocio.',
-      type: 'image',
-      mediaSrc: './TRACTO.jfif',
+      type: 'video',
+      mediaSrc: './tractocamion.mp4',
       badge: 'Transporte Pesado',
       details: 'Especialistas en Volvo FH, Scania, Shacman, Sinotruk. Redes multiplexadas CAN Bus, emuladores y reprogramación de sistemas NOx/AdBlue, prueba dinámica en banco y auxilio en carretera.',
       specs: [
@@ -1284,7 +1285,7 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
 
             {/* Subtítulo Técnico Oficial Solicitado */}
             <p className="text-sm sm:text-base lg:text-lg text-slate-200/90 max-w-2xl leading-relaxed font-normal">
-              Especialistas en electrónica pesada, reparación de sistemas de arranque de 24V, diagnóstico computarizado con escáner oficial y fabricación de componentes descontinuados mediante impresión 3D industrial.
+              Especialistas en electrónica pesada, reparación de sistemas de arranque de 24V, diagnóstico computarizado con escáner oficial y diseño y fabricación de piezas automotrices en 3D.
             </p>
 
             {/* Botones de Acción */}
