@@ -322,13 +322,13 @@ function renderTallerHtml(quote, company) {
       <td class="meta-label">Teléfono</td>
       <td class="meta-val font-mono">${quote.clientPhone || ''}</td>
       <td class="meta-label">Asesor Técnico</td>
-      <td class="meta-val font-bold" style="color: #b45309;">${advisorClean}</td>
+      <td class="meta-val font-bold" style="color: #000000;">${advisorClean}</td>
     </tr>
     <tr>
       <td class="meta-label">Dirección</td>
       <td class="meta-val">${quote.clientAddress || 'Lima, Perú'}</td>
       <td class="meta-label">Matrícula</td>
-      <td class="meta-val font-bold font-mono" style="color: #b45309;">${quote.plate || ''}</td>
+      <td class="meta-val font-bold font-mono" style="color: #000000;">${quote.plate || ''}</td>
     </tr>
     <tr>
       <td class="meta-label">VIN</td>
@@ -743,7 +743,7 @@ function renderWorkOrderHtml(order, company) {
     </tr>
     <tr>
       <td class="lbl">Placa / Matrícula:</td>
-      <td class="val font-mono font-bold" style="color: #b45309; font-size: 11px;">${order.plate}</td>
+      <td class="val font-mono font-bold" style="color: #000000; font-size: 10px;">${order.plate}</td>
       <td class="lbl">RUC / DNI:</td>
       <td class="val font-mono">${order.clientDoc || 'N/A'}</td>
     </tr>
@@ -774,7 +774,7 @@ function renderWorkOrderHtml(order, company) {
       <td class="lbl">Fecha y Hora Ingreso:</td>
       <td class="val font-bold">${fechaIngreso} ${horaIngreso}</td>
       <td class="lbl">Asesor Técnico:</td>
-      <td class="val font-bold">${advisorClean}</td>
+      <td class="val font-bold" style="color: #000000;">${advisorClean}</td>
     </tr>
     <tr>
       <td class="lbl">Kilometraje (Odómetro):</td>
