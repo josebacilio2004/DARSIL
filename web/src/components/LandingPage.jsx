@@ -176,9 +176,12 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
           ref={videoRef}
           src={backgroundVideos[currentVideoIdx]}
           autoPlay
+          loop
           muted
+          defaultMuted
           playsInline
           webkit-playsinline="true"
+          x5-playsinline="true"
           preload="auto"
           onEnded={handleVideoEnded}
           className="w-full h-full object-cover filter brightness-[0.28] contrast-125 scale-105 transition-opacity duration-1000"

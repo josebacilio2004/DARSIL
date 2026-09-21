@@ -238,6 +238,44 @@ export const api = {
     const res = await fetch(`${getApiUrl()}/inventory/${id}/kardex`);
     return res.json();
   },
+  // Categorías de Inventario CRUD
+  getInventoryCategories: async () => {
+    const res = await fetch(`${getApiUrl()}/inventory/categories`);
+    return res.json();
+  },
+  createInventoryCategory: async (data) => {
+    const res = await fetch(`${getApiUrl()}/inventory/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  deleteInventoryCategory: async (id) => {
+    const res = await fetch(`${getApiUrl()}/inventory/categories/${id}`, {
+      method: 'DELETE',
+    });
+    return res.json();
+  },
+  // Unidades de Medida CRUD
+  getInventoryUnits: async () => {
+    const res = await fetch(`${getApiUrl()}/inventory/units`);
+    return res.json();
+  },
+  createInventoryUnit: async (data) => {
+    const res = await fetch(`${getApiUrl()}/inventory/units`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  deleteInventoryUnit: async (id) => {
+    const res = await fetch(`${getApiUrl()}/inventory/units/${id}`, {
+      method: 'DELETE',
+    });
+    return res.json();
+  },
   seedInventory: async () => {
     const res = await fetch(`${getApiUrl()}/inventory/seed`, { method: 'POST' });
     return res.json();

@@ -205,7 +205,7 @@ export default function DashboardView({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1.5">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Taller & Terreno</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">TALLER Y SERVICIOS</span>
             </div>
             <div className="p-1.5 rounded-xl bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition">
               <Wrench className="w-4 h-4" />
@@ -225,7 +225,7 @@ export default function DashboardView({
           className="bg-darsil-card p-4 rounded-2xl border border-darsil-border hover:border-purple-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Stock & Kardex</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">STOCK DE REPUESTOS</span>
             <div className="p-1.5 rounded-xl bg-purple-500/10 text-purple-400 group-hover:scale-110 transition">
               <Boxes className="w-4 h-4" />
             </div>

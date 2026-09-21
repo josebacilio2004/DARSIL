@@ -15,15 +15,8 @@ const InventoryItemSchema = new mongoose.Schema({
   }, // ej. Relé de arranque 24V 70A
   category: { 
     type: String, 
-    enum: [
-      'REPUESTO_ELECTRICO', 
-      'CABLEADO_CONECTORES', 
-      'FILAMENTO_3D', 
-      'ILUMINACION_FAROS', 
-      'SENSORES_ACTUADORES',
-      'CONSUMIBLES_TALLER'
-    ],
-    default: 'REPUESTO_ELECTRICO'
+    default: 'REPUESTO_ELECTRICO',
+    trim: true
   },
   unit: { 
     type: String, 

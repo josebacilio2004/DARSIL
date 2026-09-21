@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AlertCircle, Trash2, Plus, Check, ShieldAlert, Sparkles, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertCircle, Trash2, Plus, Check, ShieldAlert, Sparkles, X, Car, Truck, Boxes } from 'lucide-react';
 
 const DAMAGE_TYPES = [
   { id: 'CHOQUE', label: 'Choque / Colisión', color: 'bg-red-500', text: 'text-red-400', border: 'border-red-500', hex: '#ef4444' },
@@ -8,34 +8,103 @@ const DAMAGE_TYPES = [
   { id: 'ROTURA', label: 'Fisura / Roto', color: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500', hex: '#a855f7' },
 ];
 
-const PRESET_PARTS = [
-  { part: 'puerta_conductor', label: 'Puerta Conductor (Izq)', view: 'left', x: 42, y: 72 },
-  { part: 'puerta_pasajero_izq', label: 'Puerta Pasajero Izq', view: 'left', x: 62, y: 72 },
-  { part: 'parachoques_delantero', label: 'Parachoques Delantero', view: 'front', x: 22, y: 22 },
-  { part: 'capo', label: 'Capó / Capot', view: 'front', x: 22, y: 15 },
-  { part: 'parabrisas_delantero', label: 'Parabrisas Delantero', view: 'front', x: 22, y: 8 },
-  { part: 'parachoques_posterior', label: 'Parachoques Posterior', view: 'rear', x: 74, y: 22 },
-  { part: 'maletera', label: 'Maletera / Compuerta', view: 'rear', x: 74, y: 14 },
-  { part: 'techo', label: 'Techo / Cabina', view: 'top', x: 19, y: 55 },
-  { part: 'guardabarro_del_izq', label: 'Guardabarro Del. Izq', view: 'left', x: 25, y: 70 },
-  { part: 'guardabarro_post_izq', label: 'Guardabarro Post. Izq', view: 'left', x: 80, y: 70 },
-  { part: 'puerta_copiloto', label: 'Puerta Copiloto (Der)', view: 'right', x: 62, y: 86 },
-  { part: 'puerta_pasajero_der', label: 'Puerta Pasajero Der', view: 'right', x: 42, y: 86 },
-  { part: 'guardabarro_del_der', label: 'Guardabarro Del. Der', view: 'right', x: 80, y: 86 },
-  { part: 'guardabarro_post_der', label: 'Guardabarro Post. Der', view: 'right', x: 25, y: 86 },
-  { part: 'faros_delanteros', label: 'Faros Delanteros', view: 'front', x: 15, y: 18 },
-  { part: 'faros_posteriores', label: 'Faros Posteriores', view: 'rear', x: 83, y: 16 },
-  { part: 'espejos_retrovisores', label: 'Espejos Retrovisores', view: 'top', x: 19, y: 48 },
-  { part: 'lunas_vidrios', label: 'Lunas / Vidrios', view: 'left', x: 50, y: 65 }
+const VEHICLE_TEMPLATES = [
+  { id: 'SEDAN_AUTO', label: 'Sedán / Auto Liviano', icon: '🚗' },
+  { id: 'CAMIONETA_SUV', label: 'Camioneta / SUV / Pick-up', icon: '🛻' },
+  { id: 'TRACTO_CAMION', label: 'Tractocamión / Volquete', icon: '🚛' },
+  { id: 'BUS', label: 'Bus Pasajeros / Urbano', icon: '🚌' },
+  { id: 'MAQUINARIA', label: 'Maquinaria / Línea Amarilla', icon: '🚜' }
 ];
 
-export default function InteractiveCarDamage({ damages = [], onChange, readOnly = false }) {
+const VEHICLE_PRESETS = {
+  SEDAN_AUTO: [
+    { part: 'puerta_conductor', label: 'Puerta Conductor (Izq)', view: 'left', x: 42, y: 72 },
+    { part: 'puerta_pasajero_izq', label: 'Puerta Pasajero Izq', view: 'left', x: 62, y: 72 },
+    { part: 'parachoques_delantero', label: 'Parachoques Delantero', view: 'front', x: 22, y: 22 },
+    { part: 'capo', label: 'Capó / Capot', view: 'front', x: 22, y: 15 },
+    { part: 'parabrisas_delantero', label: 'Parabrisas Delantero', view: 'front', x: 22, y: 8 },
+    { part: 'parachoques_posterior', label: 'Parachoques Posterior', view: 'rear', x: 74, y: 22 },
+    { part: 'maletera', label: 'Maletera / Compuerta', view: 'rear', x: 74, y: 14 },
+    { part: 'techo', label: 'Techo / Cabina', view: 'top', x: 19, y: 55 },
+    { part: 'guardabarro_del_izq', label: 'Guardabarro Del. Izq', view: 'left', x: 25, y: 70 },
+    { part: 'guardabarro_post_izq', label: 'Guardabarro Post. Izq', view: 'left', x: 80, y: 70 },
+    { part: 'puerta_copiloto', label: 'Puerta Copiloto (Der)', view: 'right', x: 62, y: 86 },
+    { part: 'puerta_pasajero_der', label: 'Puerta Pasajero Der', view: 'right', x: 42, y: 86 },
+    { part: 'faros_delanteros', label: 'Faros Delanteros', view: 'front', x: 15, y: 18 },
+    { part: 'faros_posteriores', label: 'Faros Posteriores', view: 'rear', x: 83, y: 16 },
+    { part: 'espejos_retrovisores', label: 'Espejos Retrovisores', view: 'top', x: 19, y: 48 },
+    { part: 'lunas_vidrios', label: 'Lunas / Vidrios', view: 'left', x: 50, y: 65 }
+  ],
+  CAMIONETA_SUV: [
+    { part: 'parachoques_delantero_suv', label: 'Parachoques Delantero / Barra', view: 'front', x: 22, y: 22 },
+    { part: 'capo_suv', label: 'Capó Reforzado', view: 'front', x: 22, y: 15 },
+    { part: 'parabrisas_suv', label: 'Parabrisas Frontal', view: 'front', x: 22, y: 8 },
+    { part: 'puerta_delantera_izq', label: 'Puerta Delantera Conductor', view: 'left', x: 40, y: 72 },
+    { part: 'puerta_trasera_izq', label: 'Puerta Trasera Izq', view: 'left', x: 60, y: 72 },
+    { part: 'tolva_cajon', label: 'Tolva / Platón / Cajón', view: 'left', x: 80, y: 70 },
+    { part: 'compuerta_tolva', label: 'Compuerta de Tolva / Portón', view: 'rear', x: 74, y: 18 },
+    { part: 'estribos_laterales', label: 'Estribo Lateral Izq/Der', view: 'left', x: 50, y: 82 },
+    { part: 'barra_antivuelco', label: 'Rollbar / Barra Antivuelco', view: 'top', x: 25, y: 62 },
+    { part: 'techo_suv', label: 'Techo / Rieles de Carga', view: 'top', x: 19, y: 55 },
+    { part: 'faros_neblineros', label: 'Faros y Neblineros Delanteros', view: 'front', x: 15, y: 18 },
+    { part: 'espejos_suv', label: 'Espejos Retrovisores Eléctricos', view: 'top', x: 19, y: 48 }
+  ],
+  TRACTO_CAMION: [
+    { part: 'cabina_frontal', label: 'Máscara / Calandra Frontal', view: 'front', x: 22, y: 20 },
+    { part: 'parachoques_metalico', label: 'Parachoques Metálico Pesado', view: 'front', x: 22, y: 26 },
+    { part: 'parabrisas_dividido', label: 'Parabrisas Panorámico Tracto', view: 'front', x: 22, y: 10 },
+    { part: 'deflector_rompevientos', label: 'Deflector de Techo / Aerodinámico', view: 'top', x: 19, y: 48 },
+    { part: 'puerta_conductor_tracto', label: 'Puerta Conductor & Peldaños', view: 'left', x: 38, y: 70 },
+    { part: 'litera_dormitorio', label: 'Sector Litera / Dormitorio', view: 'left', x: 55, y: 70 },
+    { part: 'tanque_combustible_izq', label: 'Tanque Petróleo Diésel Izq', view: 'left', x: 55, y: 82 },
+    { part: 'tanque_combustible_der', label: 'Tanque Petróleo Diésel Der', view: 'right', x: 55, y: 82 },
+    { part: 'quinta_rueda', label: 'Quinta Rueda / Enganche Plato', view: 'rear', x: 74, y: 20 },
+    { part: 'caja_baterias_tracto', label: 'Caja de Baterías 24V Tracto', view: 'left', x: 70, y: 80 },
+    { part: 'guardabarros_metalicos', label: 'Guardabarros Metálicos Ejes', view: 'rear', x: 74, y: 14 },
+    { part: 'faros_faena_techo', label: 'Faros Pirata / Faena Trasera', view: 'rear', x: 80, y: 10 }
+  ],
+  BUS: [
+    { part: 'parabrisas_panoramico_bus', label: 'Parabrisas Panorámico Doble', view: 'front', x: 22, y: 10 },
+    { part: 'mascara_bus', label: 'Máscara Delantera & Logo Bus', view: 'front', x: 22, y: 20 },
+    { part: 'puerta_pasajeros', label: 'Puerta Principal de Pasajeros', view: 'right', x: 32, y: 85 },
+    { part: 'puerta_conductor_bus', label: 'Puerta / Ventana Conductor', view: 'left', x: 30, y: 70 },
+    { part: 'bodegas_laterales_izq', label: 'Bodegas / Maleteros Izq', view: 'left', x: 55, y: 80 },
+    { part: 'bodegas_laterales_der', label: 'Bodegas / Maleteros Der', view: 'right', x: 55, y: 80 },
+    { part: 'ventanales_laterales', label: 'Ventanales Panorámicos Salón', view: 'left', x: 55, y: 65 },
+    { part: 'parachoques_delantero_bus', label: 'Parachoques Delantero Bus', view: 'front', x: 22, y: 25 },
+    { part: 'tapa_compartimiento_motor', label: 'Tapa Compartimiento Motor Posterior', view: 'rear', x: 74, y: 20 },
+    { part: 'parachoques_posterior_bus', label: 'Parachoques Posterior Bus', view: 'rear', x: 74, y: 25 },
+    { part: 'espejos_cuerno_bus', label: 'Espejos Panorámicos Tipo Cuerno', view: 'front', x: 15, y: 12 },
+    { part: 'techo_acondicionado_bus', label: 'Techo / Equipo Aire Acondicionado', view: 'top', x: 19, y: 52 }
+  ],
+  MAQUINARIA: [
+    { part: 'cucharon_pala', label: 'Cucharón / Pala Frontal / Lampón', view: 'front', x: 15, y: 24 },
+    { part: 'brazo_pluma', label: 'Pluma / Brazo / Cilindros Levante', view: 'front', x: 22, y: 15 },
+    { part: 'cabina_rops', label: 'Cabina Blindada ROP/FOPS', view: 'top', x: 22, y: 50 },
+    { part: 'orugas_rodado', label: 'Orugas Metálicas / Rodado OTR', view: 'left', x: 50, y: 82 },
+    { part: 'contrapeso_posterior', label: 'Contrapeso Posterior Maquinaria', view: 'rear', x: 74, y: 20 },
+    { part: 'capot_compartimiento_motor', label: 'Capot Motor Diésel / Enfriador', view: 'rear', x: 74, y: 12 },
+    { part: 'cilindros_hidraulicos', label: 'Cilindros Hidráulicos y Sellos', view: 'front', x: 28, y: 18 },
+    { part: 'faros_faena_cabina', label: 'Faros LED de Faena / Girofaro', view: 'top', x: 19, y: 45 },
+    { part: 'tanque_hidraulico', label: 'Tanque de Aceite Hidráulico', view: 'left', x: 65, y: 72 }
+  ]
+};
+
+export default function InteractiveCarDamage({ damages = [], onChange, readOnly = false, vehicleType = 'SEDAN_AUTO' }) {
+  const [currentType, setCurrentType] = useState(vehicleType || 'SEDAN_AUTO');
   const [selectedPart, setSelectedPart] = useState('');
   const [damageType, setDamageType] = useState('RAYON');
   const [damageNotes, setDamageNotes] = useState('');
-  const [activeView, setActiveView] = useState('all'); // all, front, rear, top, left, right
   const [showAddModal, setShowAddModal] = useState(false);
   const [clickCoords, setClickCoords] = useState(null);
+
+  useEffect(() => {
+    if (vehicleType && VEHICLE_PRESETS[vehicleType]) {
+      setCurrentType(vehicleType);
+    }
+  }, [vehicleType]);
+
+  const activePresets = VEHICLE_PRESETS[currentType] || VEHICLE_PRESETS.SEDAN_AUTO;
 
   const handleContainerClick = (e) => {
     if (readOnly) return;
@@ -48,19 +117,19 @@ export default function InteractiveCarDamage({ damages = [], onChange, readOnly 
     let inferredView = 'top';
 
     if (x < 45 && y < 35) {
-      inferredPart = 'Frontal / Parachoques Delantero';
+      inferredPart = 'Sector Frontal / Delantero';
       inferredView = 'front';
     } else if (x > 55 && y < 35) {
-      inferredPart = 'Posterior / Maletera / Parachoques';
+      inferredPart = 'Sector Posterior / Trasero';
       inferredView = 'rear';
     } else if (x < 40 && y >= 35) {
-      inferredPart = 'Vista Superior / Techo';
+      inferredPart = 'Vista Superior / Techo / Cabina';
       inferredView = 'top';
     } else if (y >= 45 && y < 75) {
-      inferredPart = 'Lateral Izquierdo (Lado Conductor)';
+      inferredPart = 'Lateral Izquierdo (Conductor)';
       inferredView = 'left';
     } else {
-      inferredPart = 'Lateral Derecho (Lado Copiloto)';
+      inferredPart = 'Lateral Derecho (Copiloto)';
       inferredView = 'right';
     }
 
@@ -105,52 +174,112 @@ export default function InteractiveCarDamage({ damages = [], onChange, readOnly 
     onChange && onChange(updated);
   };
 
+  const currentTemplate = VEHICLE_TEMPLATES.find(t => t.id === currentType) || VEHICLE_TEMPLATES[0];
+
   return (
     <div className="space-y-4">
-      {/* Barra Superior con Resumen y Leyenda */}
+      {/* Barra Superior con Selector de Tipo de Vehículo y Resumen */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center space-x-2">
           <ShieldAlert className="w-4 h-4 text-amber-400" />
           <span className="font-bold text-slate-200">
-            Peritaje Visual de Carrocería (5 Ángulos)
+            Peritaje Visual de Daños
           </span>
           <span className="bg-amber-500/20 text-amber-300 font-mono px-2 py-0.5 rounded-full font-bold">
             {damages.length} {damages.length === 1 ? 'avería' : 'averías'}
           </span>
         </div>
 
+        {/* Selector de plantilla de vehículo interactuable */}
+        <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 overflow-x-auto">
+          {VEHICLE_TEMPLATES.map(vt => (
+            <button
+              key={vt.id}
+              type="button"
+              onClick={() => setCurrentType(vt.id)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center space-x-1 transition ${
+                currentType === vt.id
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title={vt.label}
+            >
+              <span>{vt.icon}</span>
+              <span className="hidden sm:inline">{vt.label.split(' ')[0]}</span>
+            </button>
+          ))}
+        </div>
+
         {/* Leyenda de Daños */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           {DAMAGE_TYPES.map(t => (
-            <div key={t.id} className="flex items-center space-x-1.5 bg-black/40 px-2 py-1 rounded-lg border border-slate-800">
-              <span className={`w-2.5 h-2.5 rounded-full ${t.color}`}></span>
-              <span className="text-[11px] font-semibold text-slate-300">{t.label}</span>
+            <div key={t.id} className="flex items-center space-x-1.5 bg-black/40 px-2 py-0.5 rounded-lg border border-slate-800">
+              <span className={`w-2 h-2 rounded-full ${t.color}`}></span>
+              <span className="text-[10px] font-semibold text-slate-300">{t.label.split(' ')[0]}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Contenedor Interactivo de las 5 Vistas del Auto */}
+      {/* Contenedor Interactivo según el Tipo de Vehículo */}
       <div className="relative bg-slate-950 border border-slate-800 rounded-2xl p-4 overflow-hidden shadow-2xl">
         <div className="text-[11px] text-slate-400 mb-2 flex items-center justify-between">
-          <span>👆 <b>Haz clic en cualquier sector del auto</b> o selecciona un botón rápido para registrar un daño:</span>
+          <div className="flex items-center space-x-2">
+            <span className="text-amber-400 font-black text-sm">{currentTemplate.icon}</span>
+            <span>Plantilla activa: <b className="text-white">{currentTemplate.label}</b> (Haz clic para fijar pin de avería)</span>
+          </div>
           {!readOnly && (
-            <span className="text-amber-400 font-medium">Toque / Clic directo habilitado</span>
+            <span className="text-amber-400 font-semibold text-[10px]">Puntos interactivos habilitados</span>
           )}
         </div>
 
-        {/* Área Visual con la imagen de 5 vistas y pines interactivos */}
+        {/* Área Visual con la plantilla correspondiente */}
         <div 
           onClick={handleContainerClick}
-          className="relative w-full max-w-2xl mx-auto rounded-xl overflow-hidden bg-white/95 cursor-crosshair border-2 border-dashed border-amber-500/30 hover:border-amber-500 transition select-none"
-          style={{ minHeight: '320px' }}
+          className="relative w-full max-w-2xl mx-auto rounded-xl overflow-hidden bg-slate-900/90 cursor-crosshair border-2 border-dashed border-amber-500/30 hover:border-amber-500 transition select-none flex items-center justify-center"
+          style={{ minHeight: '330px' }}
         >
-          {/* Imagen de base con las 5 vistas */}
-          <img 
-            src="./car_views_diagram.png" 
-            alt="5 Vistas de Carrocería" 
-            className="w-full h-auto object-contain mx-auto pointer-events-none filter contrast-125"
-          />
+          {/* Si es SEDAN_AUTO, muestra la imagen de 5 vistas */}
+          {currentType === 'SEDAN_AUTO' ? (
+            <img 
+              src="./car_views_diagram.png" 
+              alt="5 Vistas de Carrocería Sedán" 
+              className="w-full h-auto object-contain mx-auto pointer-events-none filter contrast-125 bg-white/95 rounded-lg"
+            />
+          ) : (
+            /* Plantilla vectorial / blueprint para Camioneta, Tractocamión, Bus o Maquinaria */
+            <div className="w-full h-full p-4 flex flex-col items-center justify-center relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-400">
+              {/* Cuadrícula de ingeniería */}
+              <div className="absolute inset-0 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:20px_20px] opacity-15 pointer-events-none"></div>
+
+              <div className="text-center z-10 space-y-2 pointer-events-none py-6">
+                <div className="text-6xl drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+                  {currentTemplate.icon}
+                </div>
+                <div className="font-mono font-black text-white text-base tracking-wider uppercase">
+                  ESQUEMA TÉCNICO • {currentTemplate.label}
+                </div>
+                <p className="text-[11px] text-amber-300 max-w-md mx-auto">
+                  Haz clic en cualquier sector del diagrama o selecciona un componente rápido abajo para registrar el peritaje.
+                </p>
+
+                <div className="grid grid-cols-3 gap-3 text-[10px] font-mono text-slate-400 pt-3">
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-lg p-2">
+                    <span className="text-amber-400 block font-bold">ZONA FRONTAL</span>
+                    <span>Capó / Parachoques / Luces</span>
+                  </div>
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-lg p-2">
+                    <span className="text-cyan-400 block font-bold">CABINA Y LATERALES</span>
+                    <span>Puertas / Tolva / Tanques</span>
+                  </div>
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-lg p-2">
+                    <span className="text-purple-400 block font-bold">ZONA POSTERIOR</span>
+                    <span>Compuerta / Ejes / 5ta Rueda</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Pines de Daño Registrados */}
           {damages.map((d, index) => {
@@ -183,16 +312,19 @@ export default function InteractiveCarDamage({ damages = [], onChange, readOnly 
         </div>
       </div>
 
-      {/* Botones de Selección Rápida de Piezas (Ideal para Móvil y Táctil) */}
+      {/* Botones de Selección Rápida de Piezas según Tipo de Vehículo */}
       {!readOnly && (
         <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-3">
-          <div className="text-xs font-bold text-slate-300 mb-2 flex items-center space-x-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Marcado Rápido por Pieza / Componente de Carrocería:</span>
+          <div className="text-xs font-bold text-slate-300 mb-2 flex items-center justify-between">
+            <div className="flex items-center space-x-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Piezas y Componentes Rápidos ({currentTemplate.label}):</span>
+            </div>
+            <span className="text-[10px] text-slate-400">Clic en cualquier pieza para marcar de inmediato</span>
           </div>
 
           <div className="flex flex-wrap gap-1.5">
-            {PRESET_PARTS.map((p, idx) => (
+            {activePresets.map((p, idx) => (
               <button
                 key={idx}
                 type="button"
@@ -210,7 +342,7 @@ export default function InteractiveCarDamage({ damages = [], onChange, readOnly 
       {damages.length > 0 && (
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3">
           <div className="text-xs font-bold text-slate-300 mb-2">
-            Detalle de Averías Preexistentes Inspeccionadas ({damages.length}):
+            Detalle de Averías Inspeccionadas ({damages.length}):
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

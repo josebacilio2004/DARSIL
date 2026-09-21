@@ -73,7 +73,7 @@ exports.createWorkOrder = async (req, res) => {
         tasks = quote.items.map(item => ({
           description: `${item.code ? item.code + ' - ' : ''}${item.description}`,
           isCompleted: false,
-          mechanic: req.body.assignedMechanic || 'Ruben Basil'
+          mechanic: req.body.assignedMechanic || 'Darios Bacilio'
         }));
       }
     }
@@ -83,7 +83,7 @@ exports.createWorkOrder = async (req, res) => {
       tasks.push({
         description: `Inspección inicial y escaneo digital CAN Bus: ${req.body.reportedFault || 'Revisión general'}`,
         isCompleted: false,
-        mechanic: req.body.assignedMechanic || 'Ruben Basil'
+        mechanic: req.body.assignedMechanic || 'Darios Bacilio'
       });
     }
 
@@ -314,7 +314,7 @@ exports.generateQuoteFromWorkOrder = async (req, res) => {
     const company = await CompanyConfig.findOne();
     const bankAccountsSnapshot = company?.bankAccounts || [];
 
-    const validityDays = req.body.validityDays ? Number(req.body.validityDays) : 15;
+    const validityDays = req.body.validityDays ? Number(req.body.validityDays) : (order.validityDays || 15);
     const validUntilDate = new Date(Date.now() + validityDays * 86400000);
 
     const quote = new Quote({
@@ -336,7 +336,7 @@ exports.generateQuoteFromWorkOrder = async (req, res) => {
       validityDays,
       validUntil: validUntilDate,
       deliveryTerm: 'Inmediato / Según programación de taller',
-      paymentCondition: req.body.paymentCondition || 'Condición de pago 07 días despues de realizar el servicio.',
+      paymentCondition: req.body.paymentCondition || order.paymentCondition || 'Condición de pago 07 días despues de realizar el servicio.',
       notes: `Nota: Cotización generada automáticamente a partir de la Orden de Trabajo ${order.orderNumber}. Válida por ${validityDays} días calendario.`,
       items,
       subtotal,

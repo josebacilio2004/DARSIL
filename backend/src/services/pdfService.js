@@ -744,7 +744,7 @@ function renderWorkOrderHtml(order, company) {
   </table>
 
   <!-- Sección 2: Telemetría, Odómetro y Combustible -->
-  <div class="section-title">2. Registro de Ingreso, Odometría y Niveles</div>
+  <div class="section-title">2. REGISTRO DE INGRESO</div>
   <table class="grid-table" style="margin-bottom: 4px;">
     <tr>
       <td class="lbl">Fecha y Hora Ingreso:</td>
@@ -757,12 +757,6 @@ function renderWorkOrderHtml(order, company) {
       <td class="val font-mono font-bold">${order.mileage || 'No registrado'}</td>
       <td class="lbl">Horómetro Maquinaria:</td>
       <td class="val font-mono font-bold">${order.hourmeter || 'No aplica'}</td>
-    </tr>
-    <tr>
-      <td class="lbl">Voltaje Batería Reposo:</td>
-      <td class="val font-mono font-bold" style="color: #0284c7;">${order.batteryVoltage || '25.4 V'}</td>
-      <td class="lbl">Auxilio en Ruta / Logística:</td>
-      <td class="val">${order.routeDistanceKm > 0 ? `${order.routeDistanceKm.toFixed(1)} km (Viáticos: S/ ${formatCurrency(order.travelCost)})` : 'Recepción en Taller Central'}</td>
     </tr>
   </table>
 
@@ -832,41 +826,8 @@ function renderWorkOrderHtml(order, company) {
     </tr>
   </table>
 
-  <!-- Sección 4: Requerimientos Técnicos (Mano de Obra & Repuestos) -->
-  <div class="section-title">4. Servicios de Mano de Obra y Repuestos Requeridos</div>
-  <table class="items-table">
-    <thead>
-      <tr>
-        <th style="width: 12%;">Código</th>
-        <th style="width: 52%; text-align: left; padding-left: 6px;">Descripción de Trabajos / Repuestos</th>
-        <th style="width: 8%;">Cant.</th>
-        <th style="width: 14%; text-align: right;">P. Unit (S/)</th>
-        <th style="width: 14%; text-align: right; padding-right: 6px;">Subtotal (S/)</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${servicesHtml || '<tr><td colspan="5" style="text-align:center; color:#64748b; font-style:italic;">Sin servicios presupuestados</td></tr>'}
-      ${partsHtml}
-      ${order.travelCost > 0 ? `
-        <tr>
-          <td class="text-center font-mono">LOG01</td>
-          <td>DESPLAZAMIENTO Y AUXILIO MECÁNICO EN RUTA (${order.routeDistanceKm.toFixed(1)} KM)</td>
-          <td class="text-center font-bold">1</td>
-          <td class="text-right">${formatCurrency(order.travelCost)}</td>
-          <td class="text-right font-bold">${formatCurrency(order.travelCost)}</td>
-        </tr>
-      ` : ''}
-    </tbody>
-    <tfoot>
-      <tr style="background: #e2e8f0; font-weight: 900; font-size: 9.5px;">
-        <td colspan="4" style="text-align: right; padding-right: 8px;">TOTAL ESTIMADO DE TRABAJO (S/):</td>
-        <td style="text-align: right; padding-right: 6px; font-family: monospace; color: #0f294a;">S/ ${formatCurrency(totalPresupuesto)}</td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <!-- Sección 5: Firmas de Conformidad -->
-  <div class="section-title">5. Acta de Conformidad y Entrega Técnica</div>
+  <!-- Sección 4: Firmas de Conformidad -->
+  <div class="section-title">4. Acta de Conformidad y Entrega Técnica</div>
   <table class="sig-table">
     <tr>
       <td>

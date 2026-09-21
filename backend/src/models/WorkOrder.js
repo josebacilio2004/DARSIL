@@ -62,7 +62,9 @@ const WorkOrderSchema = new mongoose.Schema({
   routeDurationMin: { type: Number, default: 0 },
   travelCost: { type: Number, default: 0 },
 
-  assignedMechanic: { type: String, default: 'Ruben Basil' },
+  validityDays: { type: Number, default: 15 },
+  paymentCondition: { type: String, default: 'Condición de pago 07 días despues de realizar el servicio.' },
+  assignedMechanic: { type: String, default: 'Darios Bacilio' },
   status: {
     type: String,
     enum: [

@@ -1,5 +1,7 @@
 const InventoryItem = require('../models/InventoryItem');
 const KardexMovement = require('../models/KardexMovement');
+const InventoryCategory = require('../models/InventoryCategory');
+const InventoryUnit = require('../models/InventoryUnit');
 
 const INITIAL_INVENTORY_SEEDS = [
   {
@@ -383,4 +385,132 @@ exports.seedInventory = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// ==========================================
+// CRUD CATEGORÍAS DE INVENTARIO
+// ==========================================
+const DEFAULT_CATEGORIES = [
+  { code: 'REPUESTO_ELECTRICO', name: 'Repuestos Eléctricos 24V', color: 'amber' },
+  { code: 'CABLEADO_CONECTORES', name: 'Cableado Ignífugo & Conectores', color: 'blue' },
+  { code: 'FILAMENTO_3D', name: 'Filamentos Técnicos 3D', color: 'purple' },
+  { code: 'ILUMINACION_FAROS', name: 'Iluminación & Faros LED', color: 'yellow' },
+  { code: 'SENSORES_ACTUADORES', name: 'Sensores & Actuadores', color: 'emerald' },
+  { code: 'CONSUMIBLES_TALLER', name: 'Consumibles & Químicos', color: 'slate' },
+  { code: 'MECANICA_LIGERA', name: 'Mecánica Ligera & Accesorios', color: 'rose' }
+];
+
+// GET /api/inventory/categories
+exports.getCategories = async (req, res) => {
+  try {
+    let categories = await InventoryCategory.find().sort({ name: 1 });
+    if (!categories || categories.length === 0) {
+      await InventoryCategory.insertMany(DEFAULT_CATEGORIES);
+      categories = await InventoryCategory.find().sort({ name: 1 });
+    }
+    res.json({ success: true, data: categories });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /api/inventory/categories
+exports.createCategory = async (req, res) => {
+  try {
+    const { code, name, description, color } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'El nombre de la categoría es obligatorio' });
+    }
+    const cleanCode = (code || name).toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+    const existing = await InventoryCategory.findOne({ code: cleanCode });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Ya existe una categoría con ese código/nombre' });
+    }
+    const category = await InventoryCategory.create({
+      code: cleanCode,
+      name: name.trim(),
+      description: description || '',
+      color: color || 'amber'
+    });
+    res.status(201).json({ success: true, message: 'Categoría creada con éxito', data: category });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// DELETE /api/inventory/categories/:id
+exports.deleteCategory = async (req, res) => {
+  try {
+    const category = await InventoryCategory.findByIdAndDelete(req.params.id);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Categoría no encontrada' });
+    }
+    res.json({ success: true, message: 'Categoría eliminada con éxito' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ==========================================
+// CRUD UNIDADES DE MEDIDA DE INVENTARIO
+// ==========================================
+const DEFAULT_UNITS = [
+  { code: 'UDS', name: 'Unidades', abbreviation: 'Uds.' },
+  { code: 'METROS', name: 'Metros Lineales', abbreviation: 'Metros' },
+  { code: 'KITS', name: 'Kits / Juegos', abbreviation: 'Kits' },
+  { code: 'ROLLOS', name: 'Rollos', abbreviation: 'Rollos' },
+  { code: 'GRAMOS', name: 'Gramos', abbreviation: 'g' },
+  { code: 'KILOS', name: 'Kilogramos', abbreviation: 'kg' },
+  { code: 'LITROS', name: 'Litros / Galones', abbreviation: 'Lt.' }
+];
+
+// GET /api/inventory/units
+exports.getUnits = async (req, res) => {
+  try {
+    let units = await InventoryUnit.find().sort({ name: 1 });
+    if (!units || units.length === 0) {
+      await InventoryUnit.insertMany(DEFAULT_UNITS);
+      units = await InventoryUnit.find().sort({ name: 1 });
+    }
+    res.json({ success: true, data: units });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /api/inventory/units
+exports.createUnit = async (req, res) => {
+  try {
+    const { code, name, abbreviation } = req.body;
+    if (!name || !abbreviation) {
+      return res.status(400).json({ success: false, message: 'El nombre y la abreviatura son obligatorios' });
+    }
+    const cleanCode = (code || abbreviation).toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+    const existing = await InventoryUnit.findOne({ code: cleanCode });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Ya existe una unidad con ese código/abreviatura' });
+    }
+    const unit = await InventoryUnit.create({
+      code: cleanCode,
+      name: name.trim(),
+      abbreviation: abbreviation.trim()
+    });
+    res.status(201).json({ success: true, message: 'Unidad de medida creada con éxito', data: unit });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// DELETE /api/inventory/units/:id
+exports.deleteUnit = async (req, res) => {
+  try {
+    const unit = await InventoryUnit.findByIdAndDelete(req.params.id);
+    if (!unit) {
+      return res.status(404).json({ success: false, message: 'Unidad no encontrada' });
+    }
+    res.json({ success: true, message: 'Unidad de medida eliminada con éxito' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 

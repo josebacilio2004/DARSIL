@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
-import { Search, Eye, Edit3, MapPin, Share2, Trash2, Car, Calendar, DollarSign, Filter, Building2 } from 'lucide-react';
-import { api } from '../services/api';
+import React, { useState } from 'react';
+import { Search, Eye, Edit3, MapPin, Share2, Trash2, Car, Calendar, DollarSign, Filter, Building2, PlusCircle } from 'lucide-react';
+import { api, getApiUrl } from '../services/api';
 
 const STATUS_CONFIG = {
   'BORRADOR': { label: 'Borrador', bg: 'bg-slate-800 text-slate-300 border-slate-700' },
@@ -11,7 +11,7 @@ const STATUS_CONFIG = {
   'RECHAZADA': { label: 'Rechazada', bg: 'bg-rose-950/60 text-rose-300 border-rose-800/50' }
 };
 
-export default function QuoteList({ quotes, onSelectQuote, onEditQuote, onOpenMap, onRefresh }) {
+export default function QuoteList({ quotes, onSelectQuote, onEditQuote, onOpenMap, onRefresh, onOpenNewQuote }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
 
@@ -55,8 +55,7 @@ export default function QuoteList({ quotes, onSelectQuote, onEditQuote, onOpenMa
     const rawPhone = quote.clientPhone ? String(quote.clientPhone).replace(/\D/g, '') : '';
     const phone = rawPhone ? (rawPhone.startsWith('51') ? rawPhone : `51${rawPhone}`) : '';
 
-    const origin = window.location.origin;
-    const pdfLink = `${origin}/api/quotes/${quote._id}/pdf`;
+    const pdfLink = `${getApiUrl()}/quotes/${quote._id}/pdf`;
     const formattedTotal = Number(quote.total || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 });
 
     const message = 
@@ -75,7 +74,7 @@ ${quote.plate ? `🚗 *Vehículo:* ${quote.plate} (${quote.model || 'Sin modelo'
 ${pdfLink}
 
 Quedamos a su entera disposición para coordinar la atención técnica.
-📞 Asesor: ${quote.advisorName || 'Ruben Basil'} (${quote.advisorPhone || '934787006'})`;
+📞 Asesor: ${quote.advisorName || 'Darios Bacilio'} (${quote.advisorPhone || '934787006'})`;
 
     const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
@@ -84,46 +83,60 @@ Quedamos a su entera disposición para coordinar la atención técnica.
   return (
     <div className="space-y-4">
       
-      {/* Barra de Filtros y Búsqueda */}
+      {/* Barra de Filtros, Búsqueda y Botón Nueva Cotización */}
       <div className="bg-darsil-card p-4 rounded-2xl shadow-card-dark border border-darsil-border flex flex-col sm:flex-row items-center justify-between gap-3">
         
         {/* Input de Búsqueda */}
-        <div className="relative w-full sm:w-96">
+        <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             type="text"
-            placeholder="Buscar por placa, N° cotización, cliente o dirección..."
+            placeholder="Buscar por placa, N° cotización, cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 text-xs bg-darsil-obsidian border border-darsil-border rounded-xl text-slate-100 placeholder-slate-500 focus:border-amber-400 outline-none"
           />
         </div>
 
-        {/* Filtros por Estado */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 text-xs">
-          <button
-            onClick={() => setFilterStatus('ALL')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition ${
-              filterStatus === 'ALL' 
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow' 
-                : 'bg-darsil-obsidian text-slate-400 hover:text-white border border-darsil-border'
-            }`}
-          >
-            Todas ({quotes.length})
-          </button>
-          {['APROBADA', 'EN_TALLER', 'ENVIADA', 'BORRADOR'].map(st => (
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+          {/* Filtros por Estado */}
+          <div className="flex items-center space-x-1.5 overflow-x-auto text-xs">
             <button
-              key={st}
-              onClick={() => setFilterStatus(st)}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition border ${
-                filterStatus === st 
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-400' 
-                  : 'bg-darsil-obsidian text-slate-400 border-darsil-border hover:text-white'
+              onClick={() => setFilterStatus('ALL')}
+              className={`px-3 py-1.5 rounded-lg font-bold transition ${
+                filterStatus === 'ALL' 
+                  ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow' 
+                  : 'bg-darsil-obsidian text-slate-400 hover:text-white border border-darsil-border'
               }`}
             >
-              {STATUS_CONFIG[st]?.label || st}
+              Todas ({quotes.length})
             </button>
-          ))}
+            {['APROBADA', 'EN_TALLER', 'ENVIADA', 'BORRADOR'].map(st => (
+              <button
+                key={st}
+                onClick={() => setFilterStatus(st)}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition border ${
+                  filterStatus === st 
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-400' 
+                    : 'bg-darsil-obsidian text-slate-400 border-darsil-border hover:text-white'
+                }`}
+              >
+                {STATUS_CONFIG[st]?.label || st}
+              </button>
+            ))}
+          </div>
+
+          {/* Botón Superior Derecho: Nueva Cotización */}
+          {onOpenNewQuote && (
+            <button
+              onClick={onOpenNewQuote}
+              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition shrink-0"
+              title="Crear Nueva Cotización Oficial"
+            >
+              <PlusCircle className="w-4 h-4 text-slate-950" />
+              <span>+ Nueva Cotización</span>
+            </button>
+          )}
         </div>
 
       </div>

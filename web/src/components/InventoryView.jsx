@@ -39,6 +39,16 @@ export default function InventoryView() {
   const [kardexHistory, setKardexHistory] = useState([]);
   const [kardexItem, setKardexItem] = useState(null);
 
+  // CRUD Categorías & Unidades
+  const [categories, setCategories] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showUnitModal, setShowUnitModal] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatDesc, setNewCatDesc] = useState('');
+  const [newUnitName, setNewUnitName] = useState('');
+  const [newUnitAbbr, setNewUnitAbbr] = useState('');
+
   // Formulario Ítem
   const [formSku, setFormSku] = useState('');
   const [formName, setFormName] = useState('');
@@ -58,6 +68,85 @@ export default function InventoryView() {
   const [moveRefDoc, setMoveRefDoc] = useState('');
   const [moveUnitCost, setMoveUnitCost] = useState('');
   const [moveNotes, setMoveNotes] = useState('');
+
+  const fetchCategoriesAndUnits = async () => {
+    try {
+      const [resCat, resUnit] = await Promise.allSettled([
+        api.getInventoryCategories(),
+        api.getInventoryUnits()
+      ]);
+      if (resCat.status === 'fulfilled' && resCat.value?.success && resCat.value.data) {
+        setCategories(resCat.value.data);
+      }
+      if (resUnit.status === 'fulfilled' && resUnit.value?.success && resUnit.value.data) {
+        setUnits(resUnit.value.data);
+      }
+    } catch (err) {
+      console.warn('Error cargando categorías o unidades:', err);
+    }
+  };
+
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+    try {
+      const res = await api.createInventoryCategory({
+        name: newCatName.trim(),
+        description: newCatDesc.trim()
+      });
+      if (res?.success) {
+        setNewCatName('');
+        setNewCatDesc('');
+        fetchCategoriesAndUnits();
+        alert('Categoría creada exitosamente.');
+      }
+    } catch (err) {
+      alert('Error creando categoría: ' + err.message);
+    }
+  };
+
+  const handleDeleteCategory = async (id, name) => {
+    if (!window.confirm(`¿Deseas eliminar la categoría "${name}"?`)) return;
+    try {
+      const res = await api.deleteInventoryCategory(id);
+      if (res?.success) {
+        fetchCategoriesAndUnits();
+      }
+    } catch (err) {
+      alert('Error eliminando categoría: ' + err.message);
+    }
+  };
+
+  const handleCreateUnit = async (e) => {
+    e.preventDefault();
+    if (!newUnitName.trim() || !newUnitAbbr.trim()) return;
+    try {
+      const res = await api.createInventoryUnit({
+        name: newUnitName.trim(),
+        abbreviation: newUnitAbbr.trim()
+      });
+      if (res?.success) {
+        setNewUnitName('');
+        setNewUnitAbbr('');
+        fetchCategoriesAndUnits();
+        alert('Unidad de medida creada exitosamente.');
+      }
+    } catch (err) {
+      alert('Error creando unidad de medida: ' + err.message);
+    }
+  };
+
+  const handleDeleteUnit = async (id, name) => {
+    if (!window.confirm(`¿Deseas eliminar la unidad de medida "${name}"?`)) return;
+    try {
+      const res = await api.deleteInventoryUnit(id);
+      if (res?.success) {
+        fetchCategoriesAndUnits();
+      }
+    } catch (err) {
+      alert('Error eliminando unidad de medida: ' + err.message);
+    }
+  };
 
   const fetchInventory = async () => {
     try {
@@ -80,6 +169,11 @@ export default function InventoryView() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchInventory();
+    fetchCategoriesAndUnits();
+  }, []);
 
   useEffect(() => {
     fetchInventory();
@@ -223,7 +317,25 @@ export default function InventoryView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setShowCategoryModal(true)}
+            className="flex items-center space-x-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-darsil-card hover:bg-slate-800 text-amber-400 border border-amber-500/30 transition active:scale-95 shadow-sm"
+            title="Administrar Categorías de Inventario"
+          >
+            <Tag className="w-3.5 h-3.5" />
+            <span>Categorías</span>
+          </button>
+
+          <button
+            onClick={() => setShowUnitModal(true)}
+            className="flex items-center space-x-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-darsil-card hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 transition active:scale-95 shadow-sm"
+            title="Administrar Unidades de Medida"
+          >
+            <Boxes className="w-3.5 h-3.5" />
+            <span>Unidades</span>
+          </button>
+
           <button
             onClick={() => handleOpenMovement(items[0] || null)}
             className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-darsil-card hover:bg-slate-800 text-slate-200 border border-darsil-border transition active:scale-95"
@@ -311,12 +423,20 @@ export default function InventoryView() {
             className="text-xs bg-darsil-obsidian border border-darsil-border text-slate-200 rounded-xl px-3 py-2 outline-none focus:border-amber-400 font-semibold"
           >
             <option value="ALL">Todas las Categorías</option>
-            <option value="REPUESTO_ELECTRICO">Repuestos Eléctricos</option>
-            <option value="CABLEADO_CONECTORES">Cableado & Conectores</option>
-            <option value="FILAMENTO_3D">Filamento Impresión 3D</option>
-            <option value="ILUMINACION_FAROS">Iluminación & Faros</option>
-            <option value="SENSORES_ACTUADORES">Sensores & CAN Bus</option>
-            <option value="CONSUMIBLES_TALLER">Consumibles Taller</option>
+            {categories && categories.length > 0 ? (
+              categories.map(c => (
+                <option key={c._id || c.code} value={c.code || c.name}>{c.name}</option>
+              ))
+            ) : (
+              <>
+                <option value="REPUESTO_ELECTRICO">Repuestos Eléctricos</option>
+                <option value="CABLEADO_CONECTORES">Cableado & Conectores</option>
+                <option value="FILAMENTO_3D">Filamento Impresión 3D</option>
+                <option value="ILUMINACION_FAROS">Iluminación & Faros</option>
+                <option value="SENSORES_ACTUADORES">Sensores & CAN Bus</option>
+                <option value="CONSUMIBLES_TALLER">Consumibles Taller</option>
+              </>
+            )}
           </select>
 
           <label className="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer select-none bg-darsil-obsidian px-3 py-2 rounded-xl border border-darsil-border">
@@ -473,12 +593,20 @@ export default function InventoryView() {
                     onChange={(e) => setFormCategory(e.target.value)}
                     className="w-full bg-darsil-obsidian border border-darsil-border rounded-xl px-3 py-2 text-white focus:border-amber-400 outline-none"
                   >
-                    <option value="REPUESTO_ELECTRICO">Repuestos Eléctricos</option>
-                    <option value="CABLEADO_CONECTORES">Cableado & Conectores</option>
-                    <option value="FILAMENTO_3D">Filamento Impresión 3D</option>
-                    <option value="ILUMINACION_FAROS">Iluminación & Faros</option>
-                    <option value="SENSORES_ACTUADORES">Sensores & CAN Bus</option>
-                    <option value="CONSUMIBLES_TALLER">Consumibles Taller</option>
+                    {categories && categories.length > 0 ? (
+                      categories.map(c => (
+                        <option key={c._id || c.code} value={c.code || c.name}>{c.name}</option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="REPUESTO_ELECTRICO">Repuestos Eléctricos</option>
+                        <option value="CABLEADO_CONECTORES">Cableado & Conectores</option>
+                        <option value="FILAMENTO_3D">Filamento Impresión 3D</option>
+                        <option value="ILUMINACION_FAROS">Iluminación & Faros</option>
+                        <option value="SENSORES_ACTUADORES">Sensores & CAN Bus</option>
+                        <option value="CONSUMIBLES_TALLER">Consumibles Taller</option>
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
@@ -503,11 +631,21 @@ export default function InventoryView() {
                     onChange={(e) => setFormUnit(e.target.value)}
                     className="w-full bg-darsil-obsidian border border-darsil-border rounded-xl px-3 py-2 text-white focus:border-amber-400 outline-none"
                   >
-                    <option value="Uds.">Uds.</option>
-                    <option value="Gramos (g)">Gramos (g)</option>
-                    <option value="Metros">Metros</option>
-                    <option value="Kits">Kits</option>
-                    <option value="Rollos">Rollos</option>
+                    {units && units.length > 0 ? (
+                      units.map(u => (
+                        <option key={u._id || u.abbreviation} value={u.abbreviation || u.name}>
+                          {u.name} ({u.abbreviation})
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Uds.">Unidades (Uds.)</option>
+                        <option value="Gramos (g)">Gramos (g)</option>
+                        <option value="Metros">Metros</option>
+                        <option value="Kits">Kits</option>
+                        <option value="Rollos">Rollos</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 <div>
@@ -772,6 +910,202 @@ export default function InventoryView() {
                 className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold"
               >
                 Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Administración de Categorías */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+          <div className="bg-darsil-card border border-darsil-border rounded-3xl w-full max-w-xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-darsil-border pb-3">
+              <div className="flex items-center space-x-2 text-amber-400">
+                <Tag className="w-5 h-5" />
+                <div>
+                  <h3 className="font-bold text-sm text-white">Categorías de Inventario</h3>
+                  <span className="text-[10px] text-slate-400">Administra familias de repuestos, insumos y filamentos 3D</span>
+                </div>
+              </div>
+              <button onClick={() => setShowCategoryModal(false)} className="text-slate-400 hover:text-white p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Formulario Crear Nueva Categoría */}
+            <form onSubmit={handleCreateCategory} className="bg-darsil-obsidian border border-darsil-border rounded-2xl p-3.5 space-y-2 text-xs">
+              <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                + Nueva Categoría de Almacén
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="text-slate-400 block mb-1 font-semibold text-[10px]">Nombre de Categoría (*):</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCatName}
+                    onChange={(e) => setNewCatName(e.target.value)}
+                    placeholder="Ej. Baterías & Acumuladores"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1 font-semibold text-[10px]">Descripción / Uso:</label>
+                  <input
+                    type="text"
+                    value={newCatDesc}
+                    onChange={(e) => setNewCatDesc(e.target.value)}
+                    placeholder="Ej. Acumuladores 12V/24V ciclo pesado"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end pt-1">
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition"
+                >
+                  + Agregar Categoría
+                </button>
+              </div>
+            </form>
+
+            {/* Lista de Categorías Existentes */}
+            <div className="flex-1 overflow-y-auto divide-y divide-darsil-border border border-darsil-border rounded-2xl bg-black/40 text-xs">
+              {categories.length === 0 ? (
+                <div className="p-6 text-center text-slate-500 italic">No hay categorías registradas.</div>
+              ) : (
+                categories.map((cat) => (
+                  <div key={cat._id} className="p-3 flex items-center justify-between hover:bg-slate-900/40 transition">
+                    <div>
+                      <div className="font-bold text-white flex items-center space-x-2">
+                        <span>{cat.name}</span>
+                        {cat.code && (
+                          <span className="text-[10px] text-amber-400 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded">
+                            {cat.code}
+                          </span>
+                        )}
+                      </div>
+                      {cat.description && (
+                        <div className="text-[11px] text-slate-400 mt-0.5">{cat.description}</div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(cat._id, cat.name)}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                      title="Eliminar categoría"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setShowCategoryModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold"
+              >
+                Listo / Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Administración de Unidades de Medida */}
+      {showUnitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+          <div className="bg-darsil-card border border-darsil-border rounded-3xl w-full max-w-xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-darsil-border pb-3">
+              <div className="flex items-center space-x-2 text-emerald-400">
+                <Boxes className="w-5 h-5" />
+                <div>
+                  <h3 className="font-bold text-sm text-white">Unidades de Medida</h3>
+                  <span className="text-[10px] text-slate-400">Define unidades de despacho, fraccionamiento y conteo físico</span>
+                </div>
+              </div>
+              <button onClick={() => setShowUnitModal(false)} className="text-slate-400 hover:text-white p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Formulario Crear Nueva Unidad */}
+            <form onSubmit={handleCreateUnit} className="bg-darsil-obsidian border border-darsil-border rounded-2xl p-3.5 space-y-2 text-xs">
+              <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+                + Nueva Unidad de Medida
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="text-slate-400 block mb-1 font-semibold text-[10px]">Nombre Completo (*):</label>
+                  <input
+                    type="text"
+                    required
+                    value={newUnitName}
+                    onChange={(e) => setNewUnitName(e.target.value)}
+                    placeholder="Ej. Galones / Paquetes / Bobinas"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white text-xs outline-none focus:border-emerald-400"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1 font-semibold text-[10px]">Abreviatura / Símbolo (*):</label>
+                  <input
+                    type="text"
+                    required
+                    value={newUnitAbbr}
+                    onChange={(e) => setNewUnitAbbr(e.target.value)}
+                    placeholder="Ej. Gal. / Pqt. / Bob."
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white text-xs outline-none focus:border-emerald-400 font-mono font-bold"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end pt-1">
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition"
+                >
+                  + Agregar Unidad
+                </button>
+              </div>
+            </form>
+
+            {/* Lista de Unidades Existentes */}
+            <div className="flex-1 overflow-y-auto divide-y divide-darsil-border border border-darsil-border rounded-2xl bg-black/40 text-xs">
+              {units.length === 0 ? (
+                <div className="p-6 text-center text-slate-500 italic">No hay unidades registradas.</div>
+              ) : (
+                units.map((unit) => (
+                  <div key={unit._id} className="p-3 flex items-center justify-between hover:bg-slate-900/40 transition">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-mono font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                        {unit.abbreviation}
+                      </span>
+                      <span className="font-bold text-white">{unit.name}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteUnit(unit._id, unit.name)}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                      title="Eliminar unidad"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setShowUnitModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold"
+              >
+                Listo / Cerrar
               </button>
             </div>
           </div>

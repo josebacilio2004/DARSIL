@@ -127,6 +127,8 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
   const [dispColor, setDispColor] = useState('');
   const [dispYear, setDispYear] = useState('');
   const [dispVin, setDispVin] = useState('');
+  const [dispValidityDays, setDispValidityDays] = useState(15);
+  const [dispPaymentCondition, setDispPaymentCondition] = useState('Condición de pago 07 días despues de realizar el servicio.');
   const [dispReportedFault, setDispReportedFault] = useState('Auxilio técnico / Diagnóstico general de unidad');
 
   // Logística Mapbox
@@ -153,26 +155,25 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
   // Datos del vehículo confirmados/editados en sitio
   const [diagPlate, setDiagPlate] = useState('');
   const [diagModel, setDiagModel] = useState('');
+  const [diagVehicleType, setDiagVehicleType] = useState('SEDAN_AUTO');
   const [diagColor, setDiagColor] = useState('');
   const [diagYear, setDiagYear] = useState('');
+  const [diagVin, setDiagVin] = useState('');
   const [diagDamages, setDiagDamages] = useState([]);
   const [diagMileage, setDiagMileage] = useState('');
   const [diagHourmeter, setDiagHourmeter] = useState('');
   const [diagFuelLevel, setDiagFuelLevel] = useState('1/2');
-  const [diagBatteryVoltage, setDiagBatteryVoltage] = useState('25.4 V');
+  const [diagBatteryVoltage, setDiagBatteryVoltage] = useState('');
   const [diagChecklist, setDiagChecklist] = useState({
-    bancoBaterias: 'BUENO',
-    arrancador: 'OPERATIVO',
-    alternador: 'OPERATIVO',
     lucesYFaros: 'OPERATIVO',
-    ramalElectrico: 'INTEGRO',
-    computadoraEcu: 'SIN_ERRORES',
-    bocina: 'OPERATIVO',
-    plumillas: 'OPERATIVO',
-    vidrios: 'OPERATIVO',
-    llantaRepuesto: true,
-    extintor: true,
-    herramientas: true
+    plumillasYParabrisas: 'OPERATIVO',
+    lunasYVidrios: 'OPERATIVO',
+    espejosRetrovisores: 'OPERATIVO',
+    carroceriaGeneral: 'BUENO',
+    llantaRepuesto: 'PRESENTE',
+    gataYHerramientas: 'PRESENTE',
+    extintorEmergencia: 'VIGENTE',
+    documentosUnidad: 'ENTREGADO'
   });
   const [diagReportedFault, setDiagReportedFault] = useState('');
   const [diagVisualObs, setDiagVisualObs] = useState('');
@@ -631,6 +632,8 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
     setDispColor('');
     setDispYear('');
     setDispVin('');
+    setDispValidityDays(15);
+    setDispPaymentCondition('Condición de pago 07 días despues de realizar el servicio.');
     setDispReportedFault('Auxilio técnico / Diagnóstico general de unidad');
     setOriginType('workshop');
     setOriginCoords(DEFAULT_ORIGIN.coords);
@@ -666,6 +669,8 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
         color: dispColor.trim() || 'No especificado',
         year: dispYear.trim() || '',
         vin: dispVin.trim(),
+        validityDays: Number(dispValidityDays) || 15,
+        paymentCondition: dispPaymentCondition || 'Condición de pago 07 días despues de realizar el servicio.',
         reportedFault: dispReportedFault.trim() || 'Auxilio técnico / Diagnóstico general de unidad',
         status: 'DESPACHADO',
         originLocation: {
@@ -701,32 +706,33 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
     setSelectedOrder(order);
     setDiagPlate(order.plate === 'POR ASIGNAR' ? '' : (order.plate || ''));
     setDiagModel(order.model === 'No especificado' ? '' : (order.model || ''));
+    setDiagVehicleType(order.vehicleType || 'SEDAN_AUTO');
     setDiagColor(order.color === 'No especificado' ? '' : (order.color || ''));
     setDiagYear(order.year || '');
+    setDiagVin(order.vin || '');
     setDiagDamages(order.damageMap || []);
     setDiagMileage(order.mileage || '');
     setDiagHourmeter(order.hourmeter || '');
     setDiagFuelLevel(order.fuelLevel || '1/2');
-    setDiagBatteryVoltage(order.batteryVoltage || '25.4 V');
+    setDiagBatteryVoltage('');
     setDiagChecklist(order.entryChecklist || {
-      bancoBaterias: 'BUENO',
-      arrancador: 'OPERATIVO',
-      alternador: 'OPERATIVO',
       lucesYFaros: 'OPERATIVO',
-      ramalElectrico: 'INTEGRO',
-      computadoraEcu: 'SIN_ERRORES',
-      bocina: 'OPERATIVO',
-      plumillas: 'OPERATIVO',
-      vidrios: 'OPERATIVO',
-      llantaRepuesto: true,
-      extintor: true,
-      herramientas: true
+      plumillasYParabrisas: 'OPERATIVO',
+      lunasYVidrios: 'OPERATIVO',
+      espejosRetrovisores: 'OPERATIVO',
+      carroceriaGeneral: 'BUENO',
+      llantaRepuesto: 'PRESENTE',
+      gataYHerramientas: 'PRESENTE',
+      extintorEmergencia: 'VIGENTE',
+      documentosUnidad: 'ENTREGADO'
     });
     setDiagReportedFault(order.reportedFault || '');
-    setDiagVisualObs(order.visualObservations || 'Inspección técnica completada sin novedades.');
+    setDiagVisualObs(order.visualObservations || 'Inspección técnica de recepción completada sin novedades.');
     setDiagServices(order.diagnosticServices || []);
     setDiagParts(order.diagnosticParts || []);
     setDiagStatus(order.status || 'EN_DIAGNOSTICO');
+    setQuoteValidityDays(order.validityDays || 15);
+    setQuotePaymentCondition(order.paymentCondition || 'Condición de pago 07 días despues de realizar el servicio.');
     setHasSignatureData(!!order.clientSignature);
     setActiveDiagnosticTab('damage');
     setShowDiagnosticModal(true);
@@ -739,13 +745,16 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
       const payload = {
         plate: (diagPlate || selectedOrder.plate || 'POR ASIGNAR').toUpperCase().trim(),
         model: diagModel || selectedOrder.model || '',
+        vehicleType: diagVehicleType || selectedOrder.vehicleType || 'SEDAN_AUTO',
         color: diagColor || selectedOrder.color || '',
         year: diagYear || selectedOrder.year || '',
+        vin: diagVin || selectedOrder.vin || '',
+        validityDays: Number(quoteValidityDays) || 15,
+        paymentCondition: quotePaymentCondition,
         damageMap: diagDamages,
         mileage: diagMileage,
         hourmeter: diagHourmeter,
         fuelLevel: diagFuelLevel,
-        batteryVoltage: diagBatteryVoltage,
         entryChecklist: diagChecklist,
         reportedFault: diagReportedFault,
         visualObservations: diagVisualObs,
@@ -774,13 +783,16 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
       await api.updateWorkOrder(selectedOrder._id, {
         plate: (diagPlate || selectedOrder.plate || 'POR ASIGNAR').toUpperCase().trim(),
         model: diagModel || selectedOrder.model || '',
+        vehicleType: diagVehicleType || selectedOrder.vehicleType || 'SEDAN_AUTO',
         color: diagColor || selectedOrder.color || '',
         year: diagYear || selectedOrder.year || '',
+        vin: diagVin || selectedOrder.vin || '',
+        validityDays: Number(quoteValidityDays) || 15,
+        paymentCondition: quotePaymentCondition,
         damageMap: diagDamages,
         mileage: diagMileage,
         hourmeter: diagHourmeter,
         fuelLevel: diagFuelLevel,
-        batteryVoltage: diagBatteryVoltage,
         entryChecklist: diagChecklist,
         reportedFault: diagReportedFault,
         visualObservations: diagVisualObs,
@@ -971,6 +983,54 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
       updated[index].quantity = newQty;
       setDiagParts(updated);
     }
+  };
+
+  const handleUpdateServicePrice = (index, newPrice) => {
+    const updated = [...diagServices];
+    updated[index].unitPrice = parseFloat(newPrice) || 0;
+    setDiagServices(updated);
+  };
+
+  const handleUpdateServiceDescription = (index, newDesc) => {
+    const updated = [...diagServices];
+    updated[index].description = newDesc;
+    setDiagServices(updated);
+  };
+
+  const handleAddCustomService = () => {
+    const nextNum = diagServices.length + 1;
+    const newSrv = {
+      code: `MO-CUST-${String(nextNum).padStart(2, '0')}`,
+      description: 'SERVICIO ADICIONAL PERSONALIZADO',
+      quantity: 1,
+      unitPrice: 150.00,
+      category: 'MANO_OBRA'
+    };
+    setDiagServices([...diagServices, newSrv]);
+  };
+
+  const handleUpdatePartPrice = (index, newPrice) => {
+    const updated = [...diagParts];
+    updated[index].unitPrice = parseFloat(newPrice) || 0;
+    setDiagParts(updated);
+  };
+
+  const handleUpdatePartName = (index, newName) => {
+    const updated = [...diagParts];
+    updated[index].name = newName;
+    setDiagParts(updated);
+  };
+
+  const handleAddCustomPart = () => {
+    const nextNum = diagParts.length + 1;
+    const newPart = {
+      sku: `REP-CUST-${String(nextNum).padStart(2, '0')}`,
+      name: 'REPUESTO O ACCESORIO PERSONALIZADO',
+      quantity: 1,
+      unitPrice: 80.00,
+      currentStock: 10
+    };
+    setDiagParts([...diagParts, newPart]);
   };
 
   // Filtrado de servicios de catálogo (Mano de Obra)
@@ -1340,9 +1400,9 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   <span>2. Datos de la Unidad Vehicular</span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Placa / Matrícula (Opcional):</label>
+                    <label className="block text-slate-400 font-semibold mb-1">Placa / Matrícula:</label>
                     <input
                       type="text"
                       value={dispPlate}
@@ -1377,7 +1437,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Color / Año (Opcionales):</label>
+                    <label className="block text-slate-400 font-semibold mb-1">Color / Año:</label>
                     <div className="flex space-x-1">
                       <input
                         type="text"
@@ -1395,6 +1455,17 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                       />
                     </div>
                   </div>
+
+                  <div>
+                    <label className="block text-slate-400 font-semibold mb-1">VIN / N° Chasis:</label>
+                    <input
+                      type="text"
+                      value={dispVin}
+                      onChange={(e) => setDispVin(e.target.value.toUpperCase())}
+                      placeholder="17 dígitos VIN (Opcional)"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-amber-300 font-mono text-[11px] outline-none focus:border-amber-400"
+                    />
+                  </div>
                 </div>
 
                 <div className="text-xs">
@@ -1410,12 +1481,81 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                 </div>
               </div>
 
-              {/* Bloque 3: Trazado de Ruta y Viáticos (Mapbox) */}
+              {/* Bloque 3: Condiciones Comerciales para la Cotización */}
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>3. Parámetros Comerciales para Futura Cotización</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <label className="block text-slate-400 font-semibold mb-1">Días de Validez:</label>
+                    <div className="flex items-center space-x-1.5">
+                      <input
+                        type="number"
+                        min="1"
+                        max="90"
+                        value={dispValidityDays}
+                        onChange={(e) => setDispValidityDays(e.target.value)}
+                        className="w-20 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white font-mono font-bold text-xs outline-none focus:border-amber-400"
+                      />
+                      <div className="flex space-x-1">
+                        {[7, 15, 30].map(d => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => setDispValidityDays(d)}
+                            className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition ${
+                              Number(dispValidityDays) === d
+                                ? 'bg-amber-500 text-slate-950 border-amber-400'
+                                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                            }`}
+                          >
+                            {d}d
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-slate-400 font-semibold mb-1">Condición de Pago:</label>
+                    <input
+                      type="text"
+                      value={dispPaymentCondition}
+                      onChange={(e) => setDispPaymentCondition(e.target.value)}
+                      placeholder="Ej. Condición de pago 07 días despues de realizar el servicio."
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white text-xs outline-none focus:border-amber-400 mb-1.5"
+                    />
+                    <div className="flex flex-wrap gap-1">
+                      {[
+                        'Contado contra entrega',
+                        'Condición de pago 07 días despues de realizar el servicio.',
+                        'Crédito 15 días factura',
+                        'Crédito 30 días',
+                        '50% adelanto / 50% saldo contra entrega'
+                      ].map(cond => (
+                        <button
+                          key={cond}
+                          type="button"
+                          onClick={() => setDispPaymentCondition(cond)}
+                          className="px-2 py-0.5 rounded-md text-[10px] bg-slate-900 border border-slate-800 text-slate-300 hover:border-amber-400 hover:text-amber-300 transition"
+                        >
+                          {cond.length > 28 ? cond.slice(0, 28) + '...' : cond}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloque 4: Trazado de Ruta y Viáticos (Mapbox) */}
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
                     <Navigation className="w-3.5 h-3.5" />
-                    <span>3. Logística y Trazado de Ruta con Mapbox</span>
+                    <span>4. Logística y Trazado de Ruta con Mapbox</span>
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -1592,7 +1732,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 mb-1">
                     Placa de Rodaje:
@@ -1621,6 +1761,21 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                    Tipo de Unidad:
+                  </label>
+                  <select
+                    value={diagVehicleType}
+                    onChange={(e) => setDiagVehicleType(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white outline-none focus:border-amber-400"
+                  >
+                    {VEHICLE_TYPES.map(vt => (
+                      <option key={vt.id} value={vt.id}>{vt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">
                     Color:
                   </label>
                   <input
@@ -1641,7 +1796,20 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                     placeholder="Ej. 2023"
                     value={diagYear}
                     onChange={(e) => setDiagYear(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-amber-400"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                    VIN / N° Chasis:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="17 caracteres VIN"
+                    value={diagVin}
+                    onChange={(e) => setDiagVin(e.target.value.toUpperCase())}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-amber-300 font-mono outline-none focus:border-amber-400"
                   />
                 </div>
               </div>
@@ -1706,23 +1874,24 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
             {/* Contenido Dinámico de la Pestaña */}
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
 
-              {/* TAB 1: CARROCERÍA Y DAÑOS */}
+              {/* TAB 1: CARROCERÍA Y DAÑOS SEGÚN TIPO DE VEHÍCULO */}
               {activeDiagnosticTab === 'damage' && (
                 <InteractiveCarDamage 
                   damages={diagDamages} 
-                  onChange={setDiagDamages} 
+                  onChange={setDiagDamages}
+                  vehicleType={diagVehicleType || selectedOrder?.vehicleType || 'SEDAN_AUTO'}
                 />
               )}
 
-              {/* TAB 2: ODOMETRÍA, COMBUSTIBLE Y CHECKLIST */}
+              {/* TAB 2: ODOMETRÍA, COMBUSTIBLE Y CHECKLIST SUPERFICIAL */}
               {activeDiagnosticTab === 'telemetry' && (
                 <div className="space-y-4 text-xs">
-                  {/* Odometría Dual & Batería */}
+                  {/* Odometría Dual al Ingreso (Sin Voltaje Batería) */}
                   <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
                     <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                      Mediciones de Odometría y Batería
+                      Mediciones de Odometría al Ingreso
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-slate-400 font-semibold mb-1">Kilometraje (Odómetro):</label>
                         <input
@@ -1734,23 +1903,13 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                         />
                       </div>
                       <div>
-                        <label className="block text-slate-400 font-semibold mb-1">Horómetro (Maquinaria/Tracto):</label>
+                        <label className="block text-slate-400 font-semibold mb-1">Horómetro (Maquinaria / Tracto):</label>
                         <input
                           type="text"
                           value={diagHourmeter}
                           onChange={(e) => setDiagHourmeter(e.target.value)}
                           placeholder="Ej. 3,500 hrs"
                           className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none focus:border-amber-400"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-slate-400 font-semibold mb-1">Voltaje Batería (Reposo):</label>
-                        <input
-                          type="text"
-                          value={diagBatteryVoltage}
-                          onChange={(e) => setDiagBatteryVoltage(e.target.value)}
-                          placeholder="Ej. 25.4 V"
-                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sky-400 font-mono font-bold outline-none focus:border-amber-400"
                         />
                       </div>
                     </div>
@@ -1781,52 +1940,14 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                     </div>
                   </div>
 
-                  {/* Checklist Físico & Eléctrico */}
+                  {/* Checklist de Recepción Superficial */}
                   <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
-                    <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                      Checklist de Inspección Físico-Eléctrico
+                    <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between">
+                      <span>Lista de Verificación Superficial al Ingreso (Recepción Física)</span>
+                      <span className="text-[10px] text-slate-400 font-normal">* Estado exterior con el que llega la unidad</span>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-slate-400 font-medium mb-1">Baterías:</label>
-                        <select
-                          value={diagChecklist.bancoBaterias}
-                          onChange={(e) => setDiagChecklist({ ...diagChecklist, bancoBaterias: e.target.value })}
-                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
-                        >
-                          <option value="BUENO">BUENO</option>
-                          <option value="REGULAR">REGULAR</option>
-                          <option value="DEFICIENTE">DEFICIENTE</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-slate-400 font-medium mb-1">Arrancador:</label>
-                        <select
-                          value={diagChecklist.arrancador}
-                          onChange={(e) => setDiagChecklist({ ...diagChecklist, arrancador: e.target.value })}
-                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
-                        >
-                          <option value="OPERATIVO">OPERATIVO</option>
-                          <option value="FALLA">CON FALLA</option>
-                          <option value="NO_GIRA">NO GIRA</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-slate-400 font-medium mb-1">Alternador:</label>
-                        <select
-                          value={diagChecklist.alternador}
-                          onChange={(e) => setDiagChecklist({ ...diagChecklist, alternador: e.target.value })}
-                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
-                        >
-                          <option value="OPERATIVO">OPERATIVO</option>
-                          <option value="NO_CARGA">NO CARGA</option>
-                          <option value="DEFICIENTE">DEFICIENTE</option>
-                        </select>
-                      </div>
-
                       <div>
                         <label className="block text-slate-400 font-medium mb-1">Luces & Faros:</label>
                         <select
@@ -1836,32 +1957,108 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                         >
                           <option value="OPERATIVO">OPERATIVO</option>
                           <option value="PARCIAL">PARCIAL</option>
-                          <option value="DEFICIENTE">DEFICIENTE</option>
+                          <option value="DEFICIENTE">DEFICIENTE / ROTO</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 font-medium mb-1">Ramal Eléctrico:</label>
+                        <label className="block text-slate-400 font-medium mb-1">Plumillas & Parabrisas:</label>
                         <select
-                          value={diagChecklist.ramalElectrico}
-                          onChange={(e) => setDiagChecklist({ ...diagChecklist, ramalElectrico: e.target.value })}
+                          value={diagChecklist.plumillasYParabrisas || 'OPERATIVO'}
+                          onChange={(e) => setDiagChecklist({ ...diagChecklist, plumillasYParabrisas: e.target.value })}
                           className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
                         >
-                          <option value="INTEGRO">INTEGRO</option>
-                          <option value="CORTADO">CORTADO</option>
-                          <option value="REPARADO">REPARADO</option>
+                          <option value="OPERATIVO">OPERATIVO</option>
+                          <option value="DESGASTADO">DESGASTADO</option>
+                          <option value="CON_FISURA">CON FISURA / RAJADURA</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 font-medium mb-1">Computadora ECU:</label>
+                        <label className="block text-slate-400 font-medium mb-1">Lunas & Vidrios:</label>
                         <select
-                          value={diagChecklist.computadoraEcu}
-                          onChange={(e) => setDiagChecklist({ ...diagChecklist, computadoraEcu: e.target.value })}
+                          value={diagChecklist.lunasYVidrios || 'OPERATIVO'}
+                          onChange={(e) => setDiagChecklist({ ...diagChecklist, lunasYVidrios: e.target.value })}
                           className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
                         >
-                          <option value="SIN_ERRORES">SIN ERRORES</option>
-                          <option value="CHECK_ACTIVO">CHECK ACTIVO</option>
+                          <option value="OPERATIVO">OPERATIVO</option>
+                          <option value="TRABADO">TRABADO / INOPERATIVO</option>
+                          <option value="RAJADO">RAJADO</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-400 font-medium mb-1">Espejos Retrovisores:</label>
+                        <select
+                          value={diagChecklist.espejosRetrovisores || 'OPERATIVO'}
+                          onChange={(e) => setDiagChecklist({ ...diagChecklist, espejosRetrovisores: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
+                        >
+                          <option value="OPERATIVO">COMPLETOS / OPERATIVO</option>
+                          <option value="CON_ROTURA">CON ROTURA</option>
+                          <option value="INCOMPLETO">INCOMPLETO / FALTA</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-400 font-medium mb-1">Carrocería General:</label>
+                        <select
+                          value={diagChecklist.carroceriaGeneral || 'BUENO'}
+                          onChange={(e) => setDiagChecklist({ ...diagChecklist, carroceriaGeneral: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
+                        >
+                          <option value="BUENO">BUENO (SIN GOLPES)</option>
+                          <option value="RAYONES">CON RAYONES LEVES</option>
+                          <option value="ABOLLADURAS">CON ABOLLADURAS</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-400 font-medium mb-1">Llanta de Repuesto:</label>
+                        <select
+                          value={diagChecklist.llantaRepuesto || 'PRESENTE'}
+                          onChange={(e) => setDiagChecklist({ ...diagChecklist, llantaRepuesto: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
+                        >
+                          <option value="PRESENTE">PRESENTE</option>
+                          <option value="AUSENTE">AUSENTE</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-400 font-medium mb-1">Gata & Herramientas:</label>
+                        <select
+                          value={diagChecklist.gataYHerramientas || 'PRESENTE'}
+                          onChange={(e) => setDiagChecklist({ ...diagChecklist, gataYHerramientas: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
+                        >
+                          <option value="PRESENTE">PRESENTE</option>
+                          <option value="AUSENTE">AUSENTE</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-400 font-medium mb-1">Extintor de Emergencia:</label>
+                        <select
+                          value={diagChecklist.extintorEmergencia || 'VIGENTE'}
+                          onChange={(e) => setDiagChecklist({ ...diagChecklist, extintorEmergencia: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
+                        >
+                          <option value="VIGENTE">VIGENTE</option>
+                          <option value="VENCIDO">VENCIDO</option>
+                          <option value="AUSENTE">AUSENTE</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-400 font-medium mb-1">Documentos de la Unidad:</label>
+                        <select
+                          value={diagChecklist.documentosUnidad || 'ENTREGADO'}
+                          onChange={(e) => setDiagChecklist({ ...diagChecklist, documentosUnidad: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white"
+                        >
+                          <option value="ENTREGADO">ENTREGADO</option>
+                          <option value="NO_ENTREGADO">NO ENTREGADO</option>
                         </select>
                       </div>
                     </div>
@@ -1932,6 +2129,16 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                             </option>
                           ))}
                         </select>
+
+                        <button
+                          type="button"
+                          onClick={handleAddCustomService}
+                          className="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 px-2.5 py-1.5 rounded-xl text-[11px] font-bold flex items-center space-x-1 transition shrink-0"
+                          title="Agregar servicio personalizado fuera de catálogo"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>+ Fila Personalizada</span>
+                        </button>
                       </div>
                     </div>
 
@@ -1989,17 +2196,23 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                     {/* Tabla de Servicios Agregados */}
                     {diagServices.length === 0 ? (
                       <div className="p-3 text-center text-slate-500 italic bg-slate-900/50 rounded-xl">
-                        No has agregado servicios de mano de obra. Escribe en el buscador o usa el selector "+ Catálogo Completo".
+                        No has agregado servicios de mano de obra. Escribe en el buscador, usa el selector "+ Catálogo Completo" o "+ Fila Personalizada".
                       </div>
                     ) : (
                       <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden">
                         {diagServices.map((srv, idx) => (
-                          <div key={idx} className="p-2.5 flex items-center justify-between bg-slate-900/80 gap-2 hover:bg-slate-900 transition">
-                            <div className="flex items-center space-x-2 min-w-0">
-                              <span className="font-mono font-bold text-amber-400 shrink-0">{srv.code}</span>
-                              <span className="text-white font-medium text-[11px] truncate">{srv.description}</span>
+                          <div key={idx} className="p-2.5 flex flex-col sm:flex-row sm:items-center justify-between bg-slate-900/80 gap-2 hover:bg-slate-900 transition">
+                            <div className="flex items-center space-x-2 min-w-0 flex-1">
+                              <span className="font-mono font-bold text-amber-400 text-xs shrink-0">{srv.code}</span>
+                              <input
+                                type="text"
+                                value={srv.description}
+                                onChange={(e) => handleUpdateServiceDescription(idx, e.target.value)}
+                                className="w-full bg-slate-950/60 border border-slate-800 focus:border-amber-400 rounded-lg px-2 py-1 text-white font-medium text-[11px] outline-none transition"
+                                title="Editar descripción de servicio"
+                              />
                             </div>
-                            <div className="flex items-center space-x-3 shrink-0">
+                            <div className="flex items-center space-x-2.5 shrink-0 self-end sm:self-auto">
                               {/* Ajustador de Cantidad */}
                               <div className="flex items-center bg-slate-950 border border-slate-700 rounded-lg overflow-hidden">
                                 <button
@@ -2023,9 +2236,19 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                                 </button>
                               </div>
 
-                              <span className="text-slate-400 text-[10px]">
-                                c/u S/ {Number(srv.unitPrice).toFixed(2)}
-                              </span>
+                              {/* Precio Unitario Editable */}
+                              <div className="flex items-center space-x-1">
+                                <span className="text-slate-400 text-[10px]">c/u S/</span>
+                                <input
+                                  type="number"
+                                  step="any"
+                                  min="0"
+                                  value={srv.unitPrice}
+                                  onChange={(e) => handleUpdateServicePrice(idx, e.target.value)}
+                                  className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-right text-amber-300 font-mono font-bold text-xs outline-none focus:border-amber-400"
+                                  title="Modificar precio unitario (ej. cambiar 100 a 150)"
+                                />
+                              </div>
 
                               <span className="font-mono font-bold text-amber-300 text-xs w-20 text-right">
                                 S/ {((Number(srv.quantity) || 1) * (Number(srv.unitPrice) || 0)).toFixed(2)}
@@ -2101,6 +2324,16 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                             </option>
                           ))}
                         </select>
+
+                        <button
+                          type="button"
+                          onClick={handleAddCustomPart}
+                          className="bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 px-2.5 py-1.5 rounded-xl text-[11px] font-bold flex items-center space-x-1 transition shrink-0"
+                          title="Agregar repuesto o accesorio personalizado"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>+ Fila Personalizada</span>
+                        </button>
                       </div>
                     </div>
 
@@ -2158,17 +2391,23 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                     {/* Tabla de Repuestos Agregados */}
                     {diagParts.length === 0 ? (
                       <div className="p-3 text-center text-slate-500 italic bg-slate-900/50 rounded-xl">
-                        No has agregado repuestos. Escribe en el buscador o usa el selector "+ Ver Todo el Almacén".
+                        No has agregado repuestos. Escribe en el buscador, usa el selector "+ Ver Todo el Almacén" o "+ Fila Personalizada".
                       </div>
                     ) : (
                       <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden">
                         {diagParts.map((part, idx) => (
-                          <div key={idx} className="p-2.5 flex items-center justify-between bg-slate-900/80 gap-2 hover:bg-slate-900 transition">
-                            <div className="flex items-center space-x-2 min-w-0">
-                              <span className="font-mono font-bold text-blue-400 shrink-0">{part.sku}</span>
-                              <span className="text-white font-medium text-[11px] truncate">{part.name}</span>
+                          <div key={idx} className="p-2.5 flex flex-col sm:flex-row sm:items-center justify-between bg-slate-900/80 gap-2 hover:bg-slate-900 transition">
+                            <div className="flex items-center space-x-2 min-w-0 flex-1">
+                              <span className="font-mono font-bold text-blue-400 text-xs shrink-0">{part.sku}</span>
+                              <input
+                                type="text"
+                                value={part.name}
+                                onChange={(e) => handleUpdatePartName(idx, e.target.value)}
+                                className="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-400 rounded-lg px-2 py-1 text-white font-medium text-[11px] outline-none transition"
+                                title="Editar nombre de repuesto"
+                              />
                             </div>
-                            <div className="flex items-center space-x-3 shrink-0">
+                            <div className="flex items-center space-x-2.5 shrink-0 self-end sm:self-auto">
                               {/* Ajustador de Cantidad */}
                               <div className="flex items-center bg-slate-950 border border-slate-700 rounded-lg overflow-hidden">
                                 <button
@@ -2192,9 +2431,19 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                                 </button>
                               </div>
 
-                              <span className="text-slate-400 text-[10px]">
-                                c/u S/ {Number(part.unitPrice).toFixed(2)}
-                              </span>
+                              {/* Precio Unitario Editable */}
+                              <div className="flex items-center space-x-1">
+                                <span className="text-slate-400 text-[10px]">c/u S/</span>
+                                <input
+                                  type="number"
+                                  step="any"
+                                  min="0"
+                                  value={part.unitPrice}
+                                  onChange={(e) => handleUpdatePartPrice(idx, e.target.value)}
+                                  className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-right text-blue-300 font-mono font-bold text-xs outline-none focus:border-blue-400"
+                                  title="Modificar precio unitario del repuesto"
+                                />
+                              </div>
 
                               <span className="font-mono font-bold text-amber-300 text-xs w-20 text-right">
                                 S/ {((Number(part.quantity) || 1) * (Number(part.unitPrice) || 0)).toFixed(2)}

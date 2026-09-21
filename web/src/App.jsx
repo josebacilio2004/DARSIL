@@ -14,7 +14,7 @@ import WorkOrdersView from './components/WorkOrdersView';
 import InventoryView from './components/InventoryView';
 import ReportsView from './components/ReportsView';
 import LoginModal from './components/LoginModal';
-import { api } from './services/api';
+import { api, getApiUrl } from './services/api';
 import { Menu, PlusCircle, Radio, Sparkles, ClipboardList } from 'lucide-react';
 
 export default function App() {
@@ -29,24 +29,24 @@ export default function App() {
     try {
       const saved = localStorage.getItem('darsil_auth_user');
       return saved ? JSON.parse(saved) : null;
-    } catch (e) {
+    } catch {
       return null;
     }
   });
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // Estados de Modales
+  // Modales
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [showNewQuoteModal, setShowNewQuoteModal] = useState(false);
-  const [selectedQuoteForPdf, setSelectedQuoteForPdf] = useState(null);
   const [editingQuote, setEditingQuote] = useState(null);
+  const [selectedQuoteForPdf, setSelectedQuoteForPdf] = useState(null);
   const [mappingQuote, setMappingQuote] = useState(null);
-  const [triggerNewWorkOrder, setTriggerNewWorkOrder] = useState(null);
+  const [triggerNewWorkOrder, setTriggerNewWorkOrder] = useState(0);
 
   const fetchQuotes = async () => {
     try {
       setLoading(true);
       const res = await api.getQuotes();
-      if (res.success && res.data) {
+      if (res?.data) {
         setQuotes(res.data);
       }
     } catch (err) {
@@ -59,7 +59,7 @@ export default function App() {
   const fetchCompany = async () => {
     try {
       const res = await api.getCompany();
-      if (res.success && res.data) {
+      if (res?.data) {
         setCompany(res.data);
       }
     } catch (err) {
@@ -70,15 +70,31 @@ export default function App() {
   useEffect(() => {
     fetchQuotes();
     fetchCompany();
-    // Siempre mostrar el Landing Page en primer plano al entrar al enlace
-    setActiveTab('portal');
   }, []);
 
   const handleShareWhatsApp = (q) => {
-    const totalStr = 'S/ ' + Number(q.total || 0).toFixed(2);
-    const phone = q.clientPhone ? q.clientPhone.replace(/\D/g, '') : '934787006';
-    const msg = `Hola ${q.clientName}, le compartimos la cotización oficial ${q.quoteNumber} de DARSIL Automotive Solutions por un total de ${totalStr}.\nPuede descargar su documento oficial aquí: ${window.location.origin}/api/quotes/${q._id}/pdf`;
-    window.open(`https://api.whatsapp.com/send?phone=51${phone}&text=${encodeURIComponent(msg)}`, '_blank');
+    const totalStr = 'S/ ' + Number(q.total || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 });
+    const rawPhone = q.clientPhone ? String(q.clientPhone).replace(/\D/g, '') : '934787006';
+    const phone = rawPhone.startsWith('51') ? rawPhone : `51${rawPhone}`;
+    const pdfLink = `${getApiUrl()}/quotes/${q._id}/pdf`;
+    const msg = `⚡ *DARSIL AUTOMOTIVE SOLUTIONS* ⚡
+_Tecnología • Diagnóstico • Ingeniería • Innovación_
+
+Estimado/a *${q.clientName}*,
+Le hacemos llegar la cotización oficial solicitada:
+
+📋 *N° Cotización:* ${q.quoteNumber}
+${q.plate ? `🚗 *Vehículo:* ${q.plate} (${q.model || 'Sin modelo'})\n` : ''}💰 *Total:* ${totalStr}
+📅 *Validez:* ${q.validUntil ? new Date(q.validUntil).toLocaleDateString('es-PE') : '15 días hábiles'}
+💳 *Condición:* ${q.paymentCondition || 'Condición de pago 07 días despues de realizar el servicio.'}
+
+📄 *Descargue su cotización oficial en PDF aquí:*
+${pdfLink}
+
+Quedamos a su entera disposición para coordinar la atención técnica.
+📞 Asesor: ${q.advisorName || 'Darios Bacilio'} (${q.advisorPhone || '934787006'})`;
+
+    window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   const handleLogout = () => {
@@ -266,6 +282,7 @@ export default function App() {
               onEditQuote={(q) => setEditingQuote(q)}
               onOpenMap={(q) => setMappingQuote(q)}
               onRefresh={fetchQuotes}
+              onOpenNewQuote={() => setShowNewQuoteModal(true)}
             />
           )}
 
@@ -339,9 +356,10 @@ export default function App() {
         <EditQuoteModal
           quote={editingQuote}
           onClose={() => setEditingQuote(null)}
-          onQuoteUpdated={() => {
+          onQuoteUpdated={(updatedQuote) => {
             fetchQuotes();
             setEditingQuote(null);
+            setSelectedQuoteForPdf(updatedQuote || editingQuote);
           }}
         />
       )}

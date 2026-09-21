@@ -39,6 +39,12 @@ router.delete('/work-orders/:id', workOrderController.deleteWorkOrder);
 // Control de Inventario & Kardex
 router.get('/inventory', inventoryController.getItems);
 router.get('/inventory/summary', inventoryController.getInventorySummary);
+router.get('/inventory/categories', inventoryController.getCategories);
+router.post('/inventory/categories', inventoryController.createCategory);
+router.delete('/inventory/categories/:id', inventoryController.deleteCategory);
+router.get('/inventory/units', inventoryController.getUnits);
+router.post('/inventory/units', inventoryController.createUnit);
+router.delete('/inventory/units/:id', inventoryController.deleteUnit);
 router.post('/inventory', inventoryController.createItem);
 router.put('/inventory/:id', inventoryController.updateItem);
 router.delete('/inventory/:id', inventoryController.deleteItem);

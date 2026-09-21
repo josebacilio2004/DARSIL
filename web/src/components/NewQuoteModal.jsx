@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Plus, Trash2, CheckCircle2, Loader2, Car, Building2, Wrench, Calendar, Clock, UserCheck } from 'lucide-react';
+import { X, Search, Plus, Trash2, CheckCircle2, Loader2, Car, Building2, Wrench, Calendar, Clock, UserCheck, Boxes, ClipboardList } from 'lucide-react';
 import { api } from '../services/api';
 import CatalogSearchModal from './CatalogSearchModal';
 
@@ -8,6 +8,9 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [searchingDoc, setSearchingDoc] = useState(false);
   const [catalog, setCatalog] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [workOrders, setWorkOrders] = useState([]);
+  const [selectedOtId, setSelectedOtId] = useState('');
   const [showCatalogSearch, setShowCatalogSearch] = useState(false);
 
   // Helper para fechas por defecto (hoy y +15 días)
@@ -26,25 +29,106 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
   const [vin, setVin] = useState('');
   const [model, setModel] = useState('');
 
-  // Tiempos y Plazos (Para que NUNCA salgan vacíos en el PDF)
+  // Tiempos y Plazos
   const [issueDate, setIssueDate] = useState(todayStr);
   const [validityDays, setValidityDays] = useState(15);
   const [validUntil, setValidUntil] = useState(defaultValidUntil);
   const [deliveryTerm, setDeliveryTerm] = useState('Inmediato / Según programación');
   const [orderType, setOrderType] = useState('Taller de Servicios');
-  const [advisorName, setAdvisorName] = useState('Ruben Basil');
+  const [advisorName, setAdvisorName] = useState('Darios Bacilio');
   const [paymentCondition, setPaymentCondition] = useState('Condición de pago 07 días despues de realizar el servicio.');
 
-  // Ítems para Taller Detallado
-  const [items, setItems] = useState([
-    { code: 'MO01', description: 'INSTALACIÓN DE RELÉ DE ARRANQUE', quantity: 1, unitPrice: 50.00, stockDisp: 'DISPONIBLE' }
+  // Partición de Ítems: Servicios (Bloque 4) vs Repuestos & Accesorios (Bloque 5)
+  const [serviceItems, setServiceItems] = useState([
+    { code: 'MO01', description: 'INSTALACIÓN DE RELÉ DE ARRANQUE', quantity: 1, unitPrice: 50.00 }
   ]);
+  const [partItems, setPartItems] = useState([]);
 
   useEffect(() => {
     api.getCatalog().then(res => {
       if (res?.data) setCatalog(res.data);
     });
+    api.getInventory().then(res => {
+      if (res?.data) setInventory(res.data);
+    });
+    api.getWorkOrders().then(res => {
+      if (res?.data) setWorkOrders(res.data);
+    });
   }, []);
+
+  // Extracción automática desde una Orden de Trabajo existente
+  const handleSelectWorkOrder = (otId) => {
+    setSelectedOtId(otId);
+    if (!otId) return;
+    const ot = workOrders.find(w => w._id === otId || w.orderNumber === otId);
+    if (!ot) return;
+
+    if (ot.clientName) setClientName(ot.clientName);
+    if (ot.clientDoc) setClientDoc(ot.clientDoc);
+    if (ot.clientPhone || ot.driverPhone) setClientPhone(ot.clientPhone || ot.driverPhone);
+    if (ot.destinationLocation?.address || ot.clientAddress) {
+      setClientAddress(ot.destinationLocation?.address || ot.clientAddress);
+    }
+    if (ot.plate && ot.plate !== 'POR ASIGNAR') setPlate(ot.plate);
+    if (ot.vin) setVin(ot.vin);
+    if (ot.model) setModel(ot.model);
+    if (ot.validityDays) {
+      setValidityDays(ot.validityDays);
+      setValidUntil(new Date(Date.now() + ot.validityDays * 86400000).toISOString().split('T')[0]);
+    }
+    if (ot.paymentCondition) setPaymentCondition(ot.paymentCondition);
+    if (ot.driverName) setReferencePerson(ot.driverName);
+    if (ot.assignedMechanic) setAdvisorName(ot.assignedMechanic);
+
+    // Servicios de la OT
+    const extractedServices = [];
+    if (ot.diagnosticServices && ot.diagnosticServices.length > 0) {
+      ot.diagnosticServices.forEach((s, idx) => {
+        extractedServices.push({
+          code: s.code || `MO${String(idx + 1).padStart(2, '0')}`,
+          description: s.description,
+          quantity: Number(s.quantity) || 1,
+          unitPrice: Number(s.unitPrice) || 0
+        });
+      });
+    } else if (ot.tasks && ot.tasks.length > 0) {
+      ot.tasks.forEach((t, idx) => {
+        extractedServices.push({
+          code: `MO${String(idx + 1).padStart(2, '0')}`,
+          description: t.description,
+          quantity: 1,
+          unitPrice: 80
+        });
+      });
+    }
+    if (ot.travelCost && ot.travelCost > 0) {
+      extractedServices.push({
+        code: 'LOG01',
+        description: `DESPLAZAMIENTO Y AUXILIO MECÁNICO EN RUTA (${(ot.routeDistanceKm || 0).toFixed(1)} KM)`,
+        quantity: 1,
+        unitPrice: Number(ot.travelCost) || 0
+      });
+    }
+    if (extractedServices.length > 0) {
+      setServiceItems(extractedServices);
+    }
+
+    // Repuestos de la OT
+    const extractedParts = [];
+    if (ot.diagnosticParts && ot.diagnosticParts.length > 0) {
+      ot.diagnosticParts.forEach((p, idx) => {
+        extractedParts.push({
+          code: p.sku || `REP${String(idx + 1).padStart(2, '0')}`,
+          description: `REPUESTO: ${p.name}`,
+          quantity: Number(p.quantity) || 1,
+          unitPrice: Number(p.unitPrice) || 0
+        });
+      });
+    }
+    if (extractedParts.length > 0) {
+      setPartItems(extractedParts);
+    }
+  };
 
   // Búsqueda inteligente de RUC (SUNAT) o DNI (RENIEC) vía APIsPerú
   const handleLookupDoc = async () => {
@@ -84,40 +168,72 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
     }
   };
 
-  const handleAddCatalogItem = (codeOrItem) => {
+  // Handlers Servicios
+  const handleAddCatalogService = (codeOrItem) => {
     const found = typeof codeOrItem === 'object' ? codeOrItem : catalog.find(c => c.code === codeOrItem);
     if (!found) return;
-    setItems([
-      ...items,
+    setServiceItems([
+      ...serviceItems,
       {
         code: found.code,
         description: found.description,
         quantity: 1,
-        unitPrice: Number(found.defaultPrice) || 0,
-        stockDisp: 'DISPONIBLE'
+        unitPrice: Number(found.defaultPrice) || 0
       }
     ]);
   };
 
-  const handleAddBlankRow = () => {
-    setItems([
-      ...items,
-      { code: `MO${String(items.length + 1).padStart(2, '0')}`, description: '', quantity: 1, unitPrice: 0, stockDisp: 'DISPONIBLE' }
+  const handleAddServiceBlankRow = () => {
+    setServiceItems([
+      ...serviceItems,
+      { code: `MO${String(serviceItems.length + 1).padStart(2, '0')}`, description: '', quantity: 1, unitPrice: 0 }
     ]);
   };
 
-  const handleRemoveItem = (index) => {
-    setItems(items.filter((_, i) => i !== index));
+  const handleRemoveService = (index) => {
+    setServiceItems(serviceItems.filter((_, i) => i !== index));
   };
 
-  const handleItemChange = (index, field, value) => {
-    const updated = [...items];
+  const handleServiceChange = (index, field, value) => {
+    const updated = [...serviceItems];
     updated[index][field] = value;
-    setItems(updated);
+    setServiceItems(updated);
   };
 
-  const subtotal = items.reduce((sum, item) => sum + (Number(item.quantity || 1) * Number(item.unitPrice || 0)), 0);
-  const total = subtotal;
+  // Handlers Repuestos
+  const handleAddInventoryPart = (part) => {
+    if (!part) return;
+    setPartItems([
+      ...partItems,
+      {
+        code: part.sku || part.code || `REP${String(partItems.length + 1).padStart(2, '0')}`,
+        description: `REPUESTO: ${part.name || part.description}`,
+        quantity: 1,
+        unitPrice: Number(part.salePrice || part.defaultPrice || 0)
+      }
+    ]);
+  };
+
+  const handleAddPartBlankRow = () => {
+    setPartItems([
+      ...partItems,
+      { code: `REP${String(partItems.length + 1).padStart(2, '0')}`, description: 'REPUESTO: ', quantity: 1, unitPrice: 0 }
+    ]);
+  };
+
+  const handleRemovePart = (index) => {
+    setPartItems(partItems.filter((_, i) => i !== index));
+  };
+
+  const handlePartChange = (index, field, value) => {
+    const updated = [...partItems];
+    updated[index][field] = value;
+    setPartItems(updated);
+  };
+
+  const subtotalServices = serviceItems.reduce((sum, item) => sum + (Number(item.quantity || 1) * Number(item.unitPrice || 0)), 0);
+  const subtotalParts = partItems.reduce((sum, item) => sum + (Number(item.quantity || 1) * Number(item.unitPrice || 0)), 0);
+  const total = subtotalServices + subtotalParts;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -128,6 +244,21 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
 
     setLoading(true);
     try {
+      const combinedItems = [
+        ...serviceItems.map(i => ({
+          ...i,
+          quantity: Number(i.quantity) || 1,
+          unitPrice: Number(i.unitPrice) || 0,
+          value: (Number(i.quantity) || 1) * (Number(i.unitPrice) || 0)
+        })),
+        ...partItems.map(i => ({
+          ...i,
+          quantity: Number(i.quantity) || 1,
+          unitPrice: Number(i.unitPrice) || 0,
+          value: (Number(i.quantity) || 1) * (Number(i.unitPrice) || 0)
+        }))
+      ];
+
       const payload = {
         templateType: 'TALLER_DETALLADO',
         clientDoc,
@@ -145,12 +276,9 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
         orderType: orderType || 'Taller de Servicios',
         advisorName,
         paymentCondition,
-        items: items.map(i => ({
-          ...i,
-          quantity: Number(i.quantity) || 1,
-          unitPrice: Number(i.unitPrice) || 0,
-          value: (Number(i.quantity) || 1) * (Number(i.unitPrice) || 0)
-        }))
+        originWorkOrderNumber: selectedOtId ? workOrders.find(w => w._id === selectedOtId)?.orderNumber : '',
+        workOrderId: selectedOtId || null,
+        items: combinedItems
       };
 
       const res = await api.createQuote(payload);
@@ -188,6 +316,47 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
           
+          {/* Selector de Extracción desde OT existente */}
+          <div className="bg-gradient-to-r from-blue-950/70 via-slate-900 to-amber-950/50 border border-blue-500/40 rounded-2xl p-3.5 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs font-black text-cyan-300 uppercase tracking-wider">
+                <ClipboardList className="w-4 h-4 text-cyan-400" />
+                <span>📥 Autocompletar / Extraer datos desde Orden de Trabajo (OT)</span>
+              </div>
+              {selectedOtId && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                  ✓ Datos precargados de OT
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <select
+                value={selectedOtId}
+                onChange={(e) => handleSelectWorkOrder(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:border-cyan-400 outline-none"
+              >
+                <option value="">-- Selecciona una OT para autocompletar cliente, placa y trabajos (Opcional) --</option>
+                {workOrders.map(ot => (
+                  <option key={ot._id} value={ot._id}>
+                    {ot.orderNumber} • {ot.plate} ({ot.model || 'Sin modelo'}) - {ot.clientName} [{ot.status}]
+                  </option>
+                ))}
+              </select>
+              {selectedOtId && (
+                <button
+                  type="button"
+                  onClick={() => handleSelectWorkOrder('')}
+                  className="px-3 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 shrink-0"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-400">
+              Al seleccionar una OT se importará el cliente, documento, teléfono, placa, modelo, VIN, viáticos, servicios y repuestos registrados en el diagnóstico.
+            </p>
+          </div>
+
           {/* Plantilla Oficial Única */}
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-2.5 flex items-center justify-between text-xs text-amber-300">
             <span className="font-bold">📄 Formato Oficial: Taller de Servicios & Flotas Detallado</span>
@@ -417,13 +586,12 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
               </div>
             </div>
           </div>
-
-          {/* Sección 4: Ítems y Catálogo */}
+          {/* 4. Desglose de Servicios & Mano de Obra */}
           <div className="bg-darsil-obsidian border border-darsil-border rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center space-x-2 text-darsil-gold font-bold text-xs uppercase tracking-wider">
                 <Wrench className="w-4 h-4 text-darsil-gold" />
-                <span>4. Propuesta Económica y Mano de Obra</span>
+                <span>4. Desglose de Servicios & Mano de Obra ({serviceItems.length})</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -433,19 +601,19 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                   className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
                 >
                   <Search className="w-3.5 h-3.5 text-slate-950" />
-                  <span>🔍 Buscar Servicio (Código / Palabra)</span>
+                  <span>🔍 Buscar Servicio</span>
                 </button>
 
                 <select
                   onChange={(e) => {
                     if (e.target.value) {
-                      handleAddCatalogItem(e.target.value);
+                      handleAddCatalogService(e.target.value);
                       e.target.value = '';
                     }
                   }}
                   className="text-xs bg-darsil-card border border-darsil-border rounded-xl px-2.5 py-1.5 font-semibold text-slate-200 focus:border-amber-400 outline-none"
                 >
-                  <option value="">⚡ + Catálogo Rápido...</option>
+                  <option value="">⚡ + Catálogo Servicios...</option>
                   {catalog.map(c => (
                     <option key={c.code} value={c.code}>
                       {c.code} - {c.description} (S/ {c.defaultPrice})
@@ -455,22 +623,22 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
 
                 <button
                   type="button"
-                  onClick={handleAddBlankRow}
+                  onClick={handleAddServiceBlankRow}
                   className="bg-darsil-card hover:bg-slate-800 text-slate-200 border border-darsil-border px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1"
                 >
                   <Plus className="w-3.5 h-3.5 text-darsil-gold" />
-                  <span>Fila</span>
+                  <span>+ Fila Servicio</span>
                 </button>
               </div>
             </div>
 
-            {/* Tabla */}
+            {/* Tabla de Servicios */}
             <div className="overflow-x-auto border border-darsil-border rounded-xl">
               <table className="w-full text-xs text-left">
                 <thead className="bg-slate-900 text-slate-300 font-bold">
                   <tr>
                     <th className="p-2.5 w-20">Ref.</th>
-                    <th className="p-2.5">Descripción</th>
+                    <th className="p-2.5">Descripción del Servicio</th>
                     <th className="p-2.5 w-16 text-center">Uds.</th>
                     <th className="p-2.5 w-28 text-right">P. Unit (S/)</th>
                     <th className="p-2.5 w-28 text-right">Valor (S/)</th>
@@ -478,68 +646,216 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-darsil-border font-medium">
-                  {items.map((item, idx) => {
-                    const rowVal = (Number(item.quantity) || 1) * (Number(item.unitPrice) || 0);
-                    return (
-                      <tr key={idx} className="hover:bg-darsil-card/50">
-                        <td className="p-2">
-                          <input
-                            type="text"
-                            value={item.code}
-                            onChange={(e) => handleItemChange(idx, 'code', e.target.value)}
-                            className="w-full font-mono text-center bg-darsil-card border border-darsil-border rounded-lg py-1 text-darsil-gold font-bold"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <input
-                            type="text"
-                            required
-                            value={item.description}
-                            onChange={(e) => handleItemChange(idx, 'description', e.target.value)}
-                            className="w-full bg-darsil-card border border-darsil-border rounded-lg px-2.5 py-1 text-slate-200 uppercase"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <input
-                            type="number"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => handleItemChange(idx, 'quantity', e.target.value)}
-                            className="w-full text-center bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold rounded-lg py-1"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <input
-                            type="number"
-                            step="0.50"
-                            value={item.unitPrice}
-                            onChange={(e) => handleItemChange(idx, 'unitPrice', e.target.value)}
-                            className="w-full text-right bg-darsil-card border border-darsil-border rounded-lg px-2 py-1 font-mono text-white"
-                          />
-                        </td>
-                        <td className="p-2 text-right font-mono font-black text-amber-400 pr-3">
-                          S/ {rowVal.toFixed(2)}
-                        </td>
-                        <td className="p-2 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(idx)}
-                            className="text-slate-500 hover:text-rose-400 p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {serviceItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="p-3 text-center text-slate-500 italic">
+                        Sin servicios asignados. Agrega desde el catálogo o una nueva fila.
+                      </td>
+                    </tr>
+                  ) : (
+                    serviceItems.map((item, idx) => {
+                      const rowVal = (Number(item.quantity) || 1) * (Number(item.unitPrice) || 0);
+                      return (
+                        <tr key={idx} className="hover:bg-darsil-card/50">
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              value={item.code}
+                              onChange={(e) => handleServiceChange(idx, 'code', e.target.value)}
+                              className="w-full font-mono text-center bg-darsil-card border border-darsil-border rounded-lg py-1 text-darsil-gold font-bold"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              required
+                              value={item.description}
+                              onChange={(e) => handleServiceChange(idx, 'description', e.target.value)}
+                              className="w-full bg-darsil-card border border-darsil-border rounded-lg px-2.5 py-1 text-slate-200 uppercase"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => handleServiceChange(idx, 'quantity', e.target.value)}
+                              className="w-full text-center bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold rounded-lg py-1"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="number"
+                              step="0.50"
+                              value={item.unitPrice}
+                              onChange={(e) => handleServiceChange(idx, 'unitPrice', e.target.value)}
+                              className="w-full text-right bg-darsil-card border border-darsil-border rounded-lg px-2 py-1 font-mono text-white"
+                            />
+                          </td>
+                          <td className="p-2 text-right font-mono font-black text-amber-400 pr-3">
+                            S/ {rowVal.toFixed(2)}
+                          </td>
+                          <td className="p-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveService(idx)}
+                              className="text-slate-500 hover:text-rose-400 p-1"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
 
-            {/* Total */}
-            <div className="flex justify-end items-center space-x-4 bg-darsil-card p-3.5 rounded-xl border border-darsil-border">
-              <span className="text-xs font-bold uppercase text-slate-400">Total Cotización:</span>
-              <span className="text-xl font-black text-darsil-gold font-mono">
+            {/* Subtotal Servicios */}
+            <div className="flex justify-end items-center space-x-2 text-xs text-slate-300 pr-2">
+              <span className="font-semibold text-slate-400">Subtotal Mano de Obra:</span>
+              <span className="font-mono font-bold text-amber-400">
+                S/ {subtotalServices.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          {/* 5. Desglose de Repuestos y Accesorios */}
+          <div className="bg-darsil-obsidian border border-darsil-border rounded-2xl p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center space-x-2 text-blue-400 font-bold text-xs uppercase tracking-wider">
+                <Boxes className="w-4 h-4 text-blue-400" />
+                <span>5. Desglose de Repuestos y Accesorios ({partItems.length})</span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const found = inventory.find(i => i.sku === e.target.value || i._id === e.target.value);
+                      if (found) handleAddInventoryPart(found);
+                      e.target.value = '';
+                    }
+                  }}
+                  className="text-xs bg-darsil-card border border-darsil-border rounded-xl px-2.5 py-1.5 font-semibold text-slate-200 focus:border-blue-400 outline-none"
+                >
+                  <option value="">⚙️ + Repuestos en Almacén...</option>
+                  {inventory.map(item => (
+                    <option key={item.sku || item._id} value={item.sku || item._id}>
+                      {item.sku} - {item.name} (S/ {Number(item.salePrice).toFixed(2)})
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={handleAddPartBlankRow}
+                  className="bg-darsil-card hover:bg-slate-800 text-slate-200 border border-darsil-border px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1"
+                >
+                  <Plus className="w-3.5 h-3.5 text-blue-400" />
+                  <span>+ Fila Repuesto</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Tabla de Repuestos */}
+            <div className="overflow-x-auto border border-darsil-border rounded-xl">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-900 text-slate-300 font-bold">
+                  <tr>
+                    <th className="p-2.5 w-28">SKU / Ref.</th>
+                    <th className="p-2.5">Descripción del Repuesto / Accesorio</th>
+                    <th className="p-2.5 w-16 text-center">Uds.</th>
+                    <th className="p-2.5 w-28 text-right">P. Unit (S/)</th>
+                    <th className="p-2.5 w-28 text-right">Valor (S/)</th>
+                    <th className="p-2.5 w-10"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-darsil-border font-medium">
+                  {partItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="p-3 text-center text-slate-500 italic">
+                        Sin repuestos requeridos. Selecciona del almacén o agrega una fila manual.
+                      </td>
+                    </tr>
+                  ) : (
+                    partItems.map((item, idx) => {
+                      const rowVal = (Number(item.quantity) || 1) * (Number(item.unitPrice) || 0);
+                      return (
+                        <tr key={idx} className="hover:bg-darsil-card/50">
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              value={item.code}
+                              onChange={(e) => handlePartChange(idx, 'code', e.target.value)}
+                              className="w-full font-mono text-center bg-darsil-card border border-darsil-border rounded-lg py-1 text-blue-400 font-bold"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              required
+                              value={item.description}
+                              onChange={(e) => handlePartChange(idx, 'description', e.target.value)}
+                              className="w-full bg-darsil-card border border-darsil-border rounded-lg px-2.5 py-1 text-slate-200 uppercase"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => handlePartChange(idx, 'quantity', e.target.value)}
+                              className="w-full text-center bg-blue-500/10 border border-blue-500/30 text-blue-300 font-bold rounded-lg py-1"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="number"
+                              step="0.50"
+                              value={item.unitPrice}
+                              onChange={(e) => handlePartChange(idx, 'unitPrice', e.target.value)}
+                              className="w-full text-right bg-darsil-card border border-darsil-border rounded-lg px-2 py-1 font-mono text-white"
+                            />
+                          </td>
+                          <td className="p-2 text-right font-mono font-black text-blue-300 pr-3">
+                            S/ {rowVal.toFixed(2)}
+                          </td>
+                          <td className="p-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePart(idx)}
+                              className="text-slate-500 hover:text-rose-400 p-1"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Subtotal Repuestos */}
+            <div className="flex justify-end items-center space-x-2 text-xs text-slate-300 pr-2">
+              <span className="font-semibold text-slate-400">Subtotal Repuestos & Accesorios:</span>
+              <span className="font-mono font-bold text-blue-400">
+                S/ {subtotalParts.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          {/* Total Consolidado */}
+          <div className="flex justify-between items-center bg-darsil-card p-4 rounded-2xl border border-darsil-border">
+            <div className="text-xs text-slate-400">
+              Servicios: <span className="text-amber-400 font-bold">S/ {subtotalServices.toFixed(2)}</span> • Repuestos: <span className="text-blue-400 font-bold">S/ {subtotalParts.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-xs font-bold uppercase text-slate-400">TOTAL COTIZACIÓN:</span>
+              <span className="text-2xl font-black text-darsil-gold font-mono">
                 S/ {total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
               </span>
             </div>
@@ -582,8 +898,8 @@ export default function NewQuoteModal({ onClose, onSuccess }) {
         isOpen={showCatalogSearch}
         onClose={() => setShowCatalogSearch(false)}
         catalog={catalog}
-        onSelectItem={handleAddCatalogItem}
-        onAddBlankRow={handleAddBlankRow}
+        onSelectItem={handleAddCatalogService}
+        onAddBlankRow={handleAddServiceBlankRow}
       />
     </div>
   );
