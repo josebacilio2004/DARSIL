@@ -734,8 +734,8 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
         isOpen={showCatalogSearch}
         onClose={() => setShowCatalogSearch(false)}
         catalog={catalog}
-        onSelectItem={handleAddCatalogItem}
-        onAddBlankRow={handleAddBlankRow}
+        onSelectItem={handleAddCatalogService}
+        onAddBlankRow={handleAddServiceBlankRow}
       />
     </div>
   );

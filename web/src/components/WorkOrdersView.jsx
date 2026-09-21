@@ -130,6 +130,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
   const [dispValidityDays, setDispValidityDays] = useState(15);
   const [dispPaymentCondition, setDispPaymentCondition] = useState('Condición de pago 07 días despues de realizar el servicio.');
   const [dispReportedFault, setDispReportedFault] = useState('Auxilio técnico / Diagnóstico general de unidad');
+  const [dispAssignedMechanic, setDispAssignedMechanic] = useState('Darios Bacilio');
 
   // Logística Mapbox
   const [originType, setOriginType] = useState('workshop'); // workshop, gps
@@ -180,6 +181,9 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
   const [diagServices, setDiagServices] = useState([]);
   const [diagParts, setDiagParts] = useState([]);
   const [diagStatus, setDiagStatus] = useState('EN_DIAGNOSTICO');
+  const [diagClientPhone, setDiagClientPhone] = useState('');
+  const [diagClientDoc, setDiagClientDoc] = useState('');
+  const [diagAssignedMechanic, setDiagAssignedMechanic] = useState('Darios Bacilio');
 
   // Firma Táctil
   const signatureCanvasRef = useRef(null);
@@ -632,6 +636,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
     setDispColor('');
     setDispYear('');
     setDispVin('');
+    setDispAssignedMechanic('Darios Bacilio');
     setDispValidityDays(15);
     setDispPaymentCondition('Condición de pago 07 días despues de realizar el servicio.');
     setDispReportedFault('Auxilio técnico / Diagnóstico general de unidad');
@@ -669,7 +674,8 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
         color: dispColor.trim() || 'No especificado',
         year: dispYear.trim() || '',
         vin: dispVin.trim(),
-        validityDays: Number(dispValidityDays) || 15,
+        assignedMechanic: dispAssignedMechanic || 'Darios Bacilio',
+        validityDays: dispValidityDays ? Number(dispValidityDays) : 15,
         paymentCondition: dispPaymentCondition || 'Condición de pago 07 días despues de realizar el servicio.',
         reportedFault: dispReportedFault.trim() || 'Auxilio técnico / Diagnóstico general de unidad',
         status: 'DESPACHADO',
@@ -710,6 +716,13 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
     setDiagColor(order.color === 'No especificado' ? '' : (order.color || ''));
     setDiagYear(order.year || '');
     setDiagVin(order.vin || '');
+    setDiagClientPhone(order.clientPhone || order.driverPhone || '');
+    setDiagClientDoc(order.clientDoc || '');
+    setDiagAssignedMechanic(
+      (order.assignedMechanic && !order.assignedMechanic.includes('Basil'))
+        ? order.assignedMechanic
+        : 'Darios Bacilio'
+    );
     setDiagDamages(order.damageMap || []);
     setDiagMileage(order.mileage || '');
     setDiagHourmeter(order.hourmeter || '');
@@ -749,6 +762,9 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
         color: diagColor || selectedOrder.color || '',
         year: diagYear || selectedOrder.year || '',
         vin: diagVin || selectedOrder.vin || '',
+        clientPhone: diagClientPhone || selectedOrder.clientPhone || '',
+        clientDoc: diagClientDoc || selectedOrder.clientDoc || '',
+        assignedMechanic: diagAssignedMechanic || 'Darios Bacilio',
         validityDays: Number(quoteValidityDays) || 15,
         paymentCondition: quotePaymentCondition,
         damageMap: diagDamages,
@@ -787,6 +803,9 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
         color: diagColor || selectedOrder.color || '',
         year: diagYear || selectedOrder.year || '',
         vin: diagVin || selectedOrder.vin || '',
+        clientPhone: diagClientPhone || selectedOrder.clientPhone || '',
+        clientDoc: diagClientDoc || selectedOrder.clientDoc || '',
+        assignedMechanic: diagAssignedMechanic || 'Darios Bacilio',
         validityDays: Number(quoteValidityDays) || 15,
         paymentCondition: quotePaymentCondition,
         damageMap: diagDamages,
@@ -1217,6 +1236,9 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                         <span className="truncate">{order.destinationLocation.address}</span>
                       </div>
                     )}
+                    <div className="text-[11px] text-slate-400 flex items-center justify-between pt-0.5">
+                      <span>Asesor: <b className="text-amber-300 font-semibold">{(!order.assignedMechanic || order.assignedMechanic.includes('Basil')) ? 'Darios Bacilio' : order.assignedMechanic}</b></span>
+                    </div>
                   </div>
 
                   {/* Telemetría y Daños */}
@@ -1328,19 +1350,18 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
                 <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
                   <User className="w-3.5 h-3.5" />
-                  <span>1. Identificación del Cliente (DNI / RUC)</span>
+                  <span>1. Identificación del Cliente</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">RUC o DNI:</label>
+                    <label className="block text-slate-400 font-semibold mb-1">RUC o DNI (Opcional):</label>
                     <div className="flex space-x-1">
                       <input
                         type="text"
-                        required
                         value={dispClientDoc}
                         onChange={(e) => setDispClientDoc(e.target.value)}
-                        placeholder="8 dígitos DNI / 11 RUC"
+                        placeholder="8 dígitos DNI / 11 RUC (Opcional)"
                         className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-mono font-bold outline-none focus:border-amber-400"
                       />
                       <button
@@ -1381,12 +1402,12 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Teléfono Contacto:</label>
+                    <label className="block text-slate-400 font-semibold mb-1">Teléfono Contacto (Opcional):</label>
                     <input
                       type="text"
                       value={dispClientPhone}
                       onChange={(e) => setDispClientPhone(e.target.value)}
-                      placeholder="934787006"
+                      placeholder="Ej. 934787006 (Opcional)"
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white font-mono outline-none focus:border-amber-400"
                     />
                   </div>
@@ -1397,12 +1418,12 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
                 <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
                   <Car className="w-3.5 h-3.5" />
-                  <span>2. Datos de la Unidad Vehicular</span>
+                  <span>2. Datos de la Unidad Vehicular (Opcional para completar en sitio)</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Placa / Matrícula:</label>
+                    <label className="block text-slate-400 font-semibold mb-1">Placa / Matrícula (Opcional):</label>
                     <input
                       type="text"
                       value={dispPlate}
@@ -1413,7 +1434,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Modelo:</label>
+                    <label className="block text-slate-400 font-semibold mb-1">Modelo (Opcional):</label>
                     <input
                       type="text"
                       value={dispModel}
@@ -1437,7 +1458,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Color / Año:</label>
+                    <label className="block text-slate-400 font-semibold mb-1">Color / Año (Opcional):</label>
                     <div className="flex space-x-1">
                       <input
                         type="text"
@@ -1457,40 +1478,58 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">VIN / N° Chasis:</label>
+                    <label className="block text-slate-400 font-semibold mb-1">VIN / N° Chasis (Opcional):</label>
                     <input
                       type="text"
                       value={dispVin}
                       onChange={(e) => setDispVin(e.target.value.toUpperCase())}
-                      placeholder="17 dígitos VIN (Opcional)"
+                      placeholder="17 dígitos VIN"
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-amber-300 font-mono text-[11px] outline-none focus:border-amber-400"
                     />
                   </div>
                 </div>
 
-                <div className="text-xs">
-                  <label className="block text-slate-400 font-semibold mb-1">Motivo de Solicitud / Falla Declarada:</label>
-                  <input
-                    type="text"
-                    required
-                    value={dispReportedFault}
-                    onChange={(e) => setDispReportedFault(e.target.value)}
-                    placeholder="Ej. Unidad no arranca en frío, testigo de alternador encendido"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400 font-medium"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="sm:col-span-2">
+                    <label className="block text-slate-400 font-semibold mb-1">Motivo de Solicitud / Falla Declarada:</label>
+                    <input
+                      type="text"
+                      value={dispReportedFault}
+                      onChange={(e) => setDispReportedFault(e.target.value)}
+                      placeholder="Ej. Unidad no arranca en frío, testigo de alternador encendido"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400 font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 font-semibold mb-1">Asesor Técnico Responsable:</label>
+                    <input
+                      type="text"
+                      value={dispAssignedMechanic}
+                      onChange={(e) => setDispAssignedMechanic(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-amber-300 font-bold outline-none focus:border-amber-400"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Bloque 3: Condiciones Comerciales para la Cotización */}
+              {/* Bloque 3: Condiciones Comerciales para la Cotización (Opcional) */}
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
-                <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>3. Parámetros Comerciales para Futura Cotización</span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>3. Parámetros Comerciales para Futura Cotización</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-amber-300 border border-amber-500/40">
+                    Opcional • Se puede completar después
+                  </span>
                 </div>
+                <p className="text-[11px] text-slate-400">
+                  Puedes omitir esta sección ahora; se podrá configurar o modificar directamente durante el diagnóstico en sitio o al generar la cotización oficial.
+                </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Días de Validez:</label>
+                    <label className="block text-slate-400 font-semibold mb-1">Días de Validez (Opcional):</label>
                     <div className="flex items-center space-x-1.5">
                       <input
                         type="number"
@@ -1520,7 +1559,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-slate-400 font-semibold mb-1">Condición de Pago:</label>
+                    <label className="block text-slate-400 font-semibold mb-1">Condición de Pago (Opcional):</label>
                     <input
                       type="text"
                       value={dispPaymentCondition}
@@ -1810,6 +1849,44 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                     value={diagVin}
                     onChange={(e) => setDiagVin(e.target.value.toUpperCase())}
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-amber-300 font-mono outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-800/60 text-xs">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                    Teléfono Contacto (WhatsApp):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej. 934787006"
+                    value={diagClientPhone}
+                    onChange={(e) => setDiagClientPhone(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-amber-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                    DNI / RUC Cliente:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="DNI o RUC"
+                    value={diagClientDoc}
+                    onChange={(e) => setDiagClientDoc(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-amber-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                    Asesor Técnico Responsable:
+                  </label>
+                  <input
+                    type="text"
+                    value={diagAssignedMechanic}
+                    onChange={(e) => setDiagAssignedMechanic(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-amber-300 font-bold outline-none focus:border-amber-400"
                   />
                 </div>
               </div>
@@ -2469,6 +2546,80 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* Términos Comerciales para la Cotización Oficial */}
+                  <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Términos Comerciales para la Cotización Oficial</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400">
+                        Configura aquí la validez y forma de pago acordada en sitio
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                      <div>
+                        <label className="block text-slate-400 font-semibold mb-1">Días de Validez de Cotización:</label>
+                        <div className="flex items-center space-x-1.5">
+                          <input
+                            type="number"
+                            min="1"
+                            max="90"
+                            value={quoteValidityDays}
+                            onChange={(e) => setQuoteValidityDays(e.target.value)}
+                            className="w-20 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white font-mono font-bold text-xs outline-none focus:border-amber-400"
+                          />
+                          <div className="flex space-x-1">
+                            {[7, 15, 30].map(d => (
+                              <button
+                                key={d}
+                                type="button"
+                                onClick={() => setQuoteValidityDays(d)}
+                                className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition ${
+                                  Number(quoteValidityDays) === d
+                                    ? 'bg-amber-500 text-slate-950 border-amber-400'
+                                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                                }`}
+                              >
+                                {d}d
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-slate-400 font-semibold mb-1">Condición de Pago Acordada:</label>
+                        <input
+                          type="text"
+                          value={quotePaymentCondition}
+                          onChange={(e) => setQuotePaymentCondition(e.target.value)}
+                          placeholder="Ej. Condición de pago 07 días despues de realizar el servicio."
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white text-xs outline-none focus:border-amber-400 mb-1.5"
+                        />
+                        <div className="flex flex-wrap gap-1">
+                          {[
+                            'Contado contra entrega',
+                            'Condición de pago 07 días despues de realizar el servicio.',
+                            'Crédito 15 días factura',
+                            'Crédito 30 días',
+                            '50% adelanto / 50% saldo contra entrega'
+                          ].map(cond => (
+                            <button
+                              key={cond}
+                              type="button"
+                              onClick={() => setQuotePaymentCondition(cond)}
+                              className="px-2 py-0.5 rounded-md text-[10px] bg-slate-900 border border-slate-800 text-slate-300 hover:border-amber-400 hover:text-amber-300 transition"
+                            >
+                              {cond.length > 28 ? cond.slice(0, 28) + '...' : cond}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Resumen Total Estimado */}

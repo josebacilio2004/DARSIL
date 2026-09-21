@@ -1,4 +1,4 @@
-﻿const axios = require('axios');
+const axios = require('axios');
 
 const APISPERU_TOKEN = process.env.APISPERU_TOKEN || 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImpmY2M5NTAxMjMwOUBnbWFpbC5jb20ifQ.UaK6eecpbt-mVnF9hI-BYSHtl6QQ5hCLU1MNItWe9P8';
 
@@ -129,7 +129,7 @@ Le hacemos llegar la cotización solicitada:
 ${pdfLink}
 
 Quedamos a su entera disposición para coordinar la atención.
-📞 Asesor: ${quote.advisorName || 'Ruben Basil'} (${quote.advisorPhone || '934787006'})`;
+📞 Asesor: ${(quote.advisorName && !quote.advisorName.includes('Basil')) ? quote.advisorName : 'Darios Bacilio'} (${quote.advisorPhone || '934787006'})`;
 
   const phoneParam = phone ? (phone.startsWith('51') ? phone : `51${phone}`) : '';
   const url = `https://api.whatsapp.com/send?phone=${phoneParam}&text=${encodeURIComponent(message)}`;

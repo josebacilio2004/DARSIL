@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const mongoose = require('mongoose');
 const CompanyConfig = require('../models/CompanyConfig');
 const CatalogItem = require('../models/CatalogItem');
@@ -141,7 +141,7 @@ async function seed() {
       model: vehicle.model,
       orderType: 'Taller de Servicios',
       referencePerson: 'Joel Cordova',
-      advisorName: 'Ruben Basil',
+      advisorName: 'Darios Bacilio',
       advisorPhone: '934787006',
       issueDate: new Date('2026-09-16'),
       validUntil: new Date('2026-10-01'),
@@ -167,7 +167,7 @@ async function seed() {
       location: 'Trujillo',
       commissionDays: '4 días',
       referencePerson: 'Joel Cordova',
-      advisorName: 'Ruben Basil',
+      advisorName: 'Darios Bacilio',
       advisorPhone: '934787006',
       issueDate: new Date('2026-09-16'),
       validUntil: new Date('2026-10-01'),

@@ -819,7 +819,7 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
               <span>© 2026 DARSIL Automotive Solutions. Todos los derechos reservados.</span>
             </div>
             <div className="flex items-center space-x-4">
-              <span>Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima</span>
+              <span>Villa El Salvador, Lima, Lima</span>
               <span>•</span>
               <a 
                 href="https://api.whatsapp.com/send?phone=51934787006" 

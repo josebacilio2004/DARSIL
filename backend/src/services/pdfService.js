@@ -63,6 +63,10 @@ function renderTallerHtml(quote, company) {
   const subtotalServices = serviceItems.reduce((acc, it) => acc + (Number(it.value) || 0), 0);
   const subtotalParts = partItems.reduce((acc, it) => acc + (Number(it.value) || 0), 0);
 
+  const advisorClean = (quote.advisorName && !quote.advisorName.includes('Basil'))
+    ? quote.advisorName
+    : 'Darios Bacilio';
+
   const banksHtml = (quote.bankAccountsSnapshot && quote.bankAccountsSnapshot.length > 0 
     ? quote.bankAccountsSnapshot 
     : (company?.bankAccounts || [])).map(b => `
@@ -318,7 +322,7 @@ function renderTallerHtml(quote, company) {
       <td class="meta-label">Teléfono</td>
       <td class="meta-val font-mono">${quote.clientPhone || ''}</td>
       <td class="meta-label">Asesor Técnico</td>
-      <td class="meta-val font-bold" style="color: #b45309;">${quote.advisorName || 'Darios Bacilio'}</td>
+      <td class="meta-val font-bold" style="color: #b45309;">${advisorClean}</td>
     </tr>
     <tr>
       <td class="meta-label">Dirección</td>
@@ -440,7 +444,7 @@ function renderTallerHtml(quote, company) {
       <td>
         ${advisorSignatureHtml}
         Firma del Asesor: <span class="sig-line"></span>
-        <div style="font-size: 8px; color: #475569; margin-top: 2px;">${quote.advisorName || 'Darios Bacilio'} - Asesor Técnico Responsable</div>
+        <div style="font-size: 8px; color: #475569; margin-top: 2px;">${advisorClean} - Asesor Técnico Responsable</div>
       </td>
     </tr>
   </table>
@@ -482,6 +486,10 @@ function renderWorkOrderHtml(order, company) {
   const horaIngreso = order.checkInDate 
     ? new Date(order.checkInDate).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) 
     : '';
+
+  const advisorClean = (order.assignedMechanic && !order.assignedMechanic.includes('Basil'))
+    ? order.assignedMechanic
+    : 'Darios Bacilio';
 
   const chk = order.entryChecklist || {};
 
@@ -750,7 +758,7 @@ function renderWorkOrderHtml(order, company) {
       <td class="lbl">Fecha y Hora Ingreso:</td>
       <td class="val font-bold">${fechaIngreso} ${horaIngreso}</td>
       <td class="lbl">Asesor Técnico:</td>
-      <td class="val font-bold">${order.assignedMechanic || 'Darios Bacilio'}</td>
+      <td class="val font-bold">${advisorClean}</td>
     </tr>
     <tr>
       <td class="lbl">Kilometraje (Odómetro):</td>
@@ -841,7 +849,7 @@ function renderWorkOrderHtml(order, company) {
         ${advisorSignatureHtml}
         <div class="sig-line">
           ASESOR / MECÁNICO RESPONSABLE DARSIL<br>
-          <span style="font-size: 7.5px; font-weight: normal; color: #64748b;">${order.assignedMechanic || 'Darios Bacilio'} - Especialista Técnico</span>
+          <span style="font-size: 7.5px; font-weight: normal; color: #64748b;">${advisorClean} - Especialista Técnico</span>
         </div>
       </td>
     </tr>

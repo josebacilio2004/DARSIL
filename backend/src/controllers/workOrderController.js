@@ -42,7 +42,14 @@ exports.getWorkOrders = async (req, res) => {
     }
 
     const orders = await WorkOrder.find(filter).sort({ createdAt: -1 });
-    res.json({ success: true, count: orders.length, data: orders });
+    const sanitizedOrders = orders.map(o => {
+      const doc = o.toObject ? o.toObject() : o;
+      if (!doc.assignedMechanic || doc.assignedMechanic.includes('Basil')) {
+        doc.assignedMechanic = 'Darios Bacilio';
+      }
+      return doc;
+    });
+    res.json({ success: true, count: sanitizedOrders.length, data: sanitizedOrders });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -53,7 +60,11 @@ exports.getWorkOrderById = async (req, res) => {
   try {
     const order = await WorkOrder.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: 'Orden de trabajo no encontrada' });
-    res.json({ success: true, data: order });
+    const doc = order.toObject ? order.toObject() : order;
+    if (!doc.assignedMechanic || doc.assignedMechanic.includes('Basil')) {
+      doc.assignedMechanic = 'Darios Bacilio';
+    }
+    res.json({ success: true, data: doc });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -66,6 +77,10 @@ exports.createWorkOrder = async (req, res) => {
 
     let tasks = req.body.tasks || [];
 
+    const assignedMechanic = (req.body.assignedMechanic && !req.body.assignedMechanic.includes('Basil'))
+      ? req.body.assignedMechanic
+      : 'Darios Bacilio';
+
     // Si viene vinculada a una cotización previa, precargar tareas de los ítems de la cotización
     if (req.body.quoteId && tasks.length === 0) {
       const quote = await Quote.findById(req.body.quoteId);
@@ -73,7 +88,7 @@ exports.createWorkOrder = async (req, res) => {
         tasks = quote.items.map(item => ({
           description: `${item.code ? item.code + ' - ' : ''}${item.description}`,
           isCompleted: false,
-          mechanic: req.body.assignedMechanic || 'Darios Bacilio'
+          mechanic: assignedMechanic
         }));
       }
     }
@@ -83,12 +98,13 @@ exports.createWorkOrder = async (req, res) => {
       tasks.push({
         description: `Inspección inicial y escaneo digital CAN Bus: ${req.body.reportedFault || 'Revisión general'}`,
         isCompleted: false,
-        mechanic: req.body.assignedMechanic || 'Darios Bacilio'
+        mechanic: assignedMechanic
       });
     }
 
     const order = new WorkOrder({
       ...req.body,
+      assignedMechanic,
       orderNumber,
       tasks,
       status: req.body.status || 'RECEPCIONADO'
@@ -332,7 +348,7 @@ exports.generateQuoteFromWorkOrder = async (req, res) => {
       model: order.model || '',
       orderType: 'Taller de Servicios',
       referencePerson: order.driverName || order.clientName,
-      advisorName: order.assignedMechanic || 'Darios Bacilio',
+      advisorName: (order.assignedMechanic && !order.assignedMechanic.includes('Basil')) ? order.assignedMechanic : 'Darios Bacilio',
       validityDays,
       validUntil: validUntilDate,
       deliveryTerm: 'Inmediato / Según programación de taller',

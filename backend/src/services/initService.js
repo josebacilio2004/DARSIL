@@ -1,6 +1,8 @@
 const CatalogItem = require('../models/CatalogItem');
 const CompanyConfig = require('../models/CompanyConfig');
 const User = require('../models/User');
+const WorkOrder = require('../models/WorkOrder');
+const Quote = require('../models/Quote');
 
 const OFFICIAL_CATALOG = [
   { code: 'MO01', description: 'INSTALACIÓN DE RELÉ DE ARRANQUE', category: 'MANO_OBRA', defaultPrice: 50.00 },
@@ -85,6 +87,26 @@ async function initializeSystemDefaults() {
     admin.setPassword('DarioBacilio#2026*Darsil');
     await admin.save();
     console.log('✅ Usuario Darios Bacilio sincronizado con contraseña segura.');
+
+    // 4. Normalización automática de Asesor Técnico a Darios Bacilio en BD
+    try {
+      await WorkOrder.updateMany(
+        { assignedMechanic: { $regex: /Basil/i } },
+        { $set: { assignedMechanic: 'Darios Bacilio' } }
+      );
+      await WorkOrder.updateMany(
+        { 'tasks.mechanic': { $regex: /Basil/i } },
+        { $set: { 'tasks.$[elem].mechanic': 'Darios Bacilio' } },
+        { arrayFilters: [{ 'elem.mechanic': { $regex: /Basil/i } }] }
+      );
+      await Quote.updateMany(
+        { advisorName: { $regex: /Basil/i } },
+        { $set: { advisorName: 'Darios Bacilio' } }
+      );
+      console.log('✅ Asesor técnico normalizado a Darios Bacilio en órdenes y cotizaciones.');
+    } catch (migErr) {
+      console.log('Nota normalización asesor:', migErr.message);
+    }
 
 
   } catch (err) {
