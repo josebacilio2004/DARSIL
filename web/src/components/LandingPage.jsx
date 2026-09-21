@@ -195,11 +195,11 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
       <div className="relative z-10 flex flex-col min-h-screen">
         
         {/* Header / Barra de Navegación del Portal */}
-        <header className="border-b border-white/10 backdrop-blur-md bg-black/60 sticky top-0 z-40 transition duration-300">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <header className="border-b border-white/10 backdrop-blur-md bg-black/60 sticky top-0 z-40 transition duration-300 w-full">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between w-full">
             
-            <div className="flex items-center space-x-3">
-              <div className="h-12 w-36 sm:w-44 flex items-center justify-center p-1 rounded-xl bg-black/50 border border-amber-500/20 backdrop-blur-sm">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="h-10 sm:h-12 w-32 sm:w-44 flex items-center justify-center p-1 rounded-xl bg-black/50 border border-amber-500/20 backdrop-blur-sm">
                 <img
                   src="./logo_transparente.png"
                   alt="DARSIL Logo"
@@ -216,7 +216,7 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
               </div>
             </div>
 
-            <nav className="flex items-center space-x-3 sm:space-x-5">
+            <nav className="flex items-center space-x-2 sm:space-x-5">
               <a 
                 href="#rastreador" 
                 className="text-xs font-bold text-slate-300 hover:text-amber-400 transition hidden sm:inline-block"
@@ -249,10 +249,10 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
                 <span>Central: 934 787 006</span>
               </a>
 
-              {/* Botón Acceso ERP Interno (Sin nombre de asesor) */}
+              {/* Botón Acceso ERP Interno */}
               <button
                 onClick={onSwitchToAdmin}
-                className="flex items-center space-x-2 text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:brightness-110 active:scale-95 transition"
+                className="flex items-center space-x-1.5 text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:brightness-110 active:scale-95 transition shrink-0"
               >
                 {authUser ? (
                   <>
@@ -270,42 +270,42 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
         </header>
 
         {/* Sección HERO de Alto Impacto */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16 flex flex-col justify-center items-center text-center">
+        <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-16 pb-12 sm:pb-16 flex flex-col justify-center items-center text-center overflow-hidden">
           
-          <div className="inline-flex items-center space-x-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-amber-500/10 border border-amber-400/30 backdrop-blur-md text-amber-300 text-[10px] sm:text-xs font-bold tracking-wider sm:tracking-widest uppercase mb-4 sm:mb-6 shadow-inner animate-pulse max-w-full">
+          <div className="inline-flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-amber-500/10 border border-amber-400/30 backdrop-blur-md text-amber-300 text-[9px] sm:text-xs font-bold tracking-wider uppercase mb-4 sm:mb-6 shadow-inner animate-pulse max-w-[calc(100vw-2rem)]">
             <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="truncate sm:whitespace-normal">TECNOLOGÍA DE VANGUARDIA • DIAGNÓSTICO DIGITAL & MANUFACTURA 3D</span>
+            <span className="truncate max-w-[260px] sm:max-w-none">TECNOLOGÍA DE VANGUARDIA • DIAGNÓSTICO DIGITAL & MANUFACTURA 3D</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400 tracking-tight max-w-5xl leading-tight sm:leading-none break-words">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400 tracking-tight max-w-5xl leading-tight sm:leading-none break-words w-full px-1 sm:px-0">
             INGENIERÍA AUTOMOTRIZ DE PRECISIÓN Y SOLUCIONES EN CAMPO
           </h1>
 
-          <p className="mt-4 sm:mt-6 text-sm sm:text-lg text-slate-300 max-w-3xl leading-relaxed font-normal">
+          <p className="mt-3 sm:mt-6 text-xs sm:text-base lg:text-lg text-slate-300 max-w-3xl leading-relaxed font-normal px-2 sm:px-0">
             Especialistas en electrónica pesada, reparación de sistemas de arranque de 24V, diagnóstico computarizado con escáner oficial y fabricación de componentes descontinuados mediante impresión 3D industrial.
           </p>
 
           {/* Buscador / Rastreador de Cotizaciones para Clientes */}
-          <div id="rastreador" className="mt-10 w-full max-w-2xl">
-            <div className="bg-slate-900/80 backdrop-blur-2xl p-4 sm:p-6 rounded-3xl border border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.15)]">
+          <div id="rastreador" className="mt-8 sm:mt-10 w-full max-w-2xl px-1 sm:px-0">
+            <div className="bg-slate-900/80 backdrop-blur-2xl p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.15)] w-full overflow-hidden">
               <div className="flex items-center space-x-2 text-xs font-bold text-amber-400 mb-3 uppercase tracking-wider text-left">
-                <Search className="w-4 h-4 text-amber-400" />
-                <span>Portal de Consulta para Clientes: Rastrea tu Cotización</span>
+                <Search className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="truncate">Portal de Consulta para Clientes: Rastrea tu Cotización</span>
               </div>
 
-              <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
-                <div className="relative flex-1">
+              <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 w-full">
+                <div className="relative flex-1 w-full min-w-0">
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Ingresa tu Placa (ej. ABG890) o N° Cotización (DA-2026-001)"
-                    className="w-full bg-black/60 border border-white/20 rounded-2xl px-4 py-3.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 transition uppercase tracking-wider"
+                    placeholder="Ingresa tu Placa (ej. ABC-123) o N° Cotización"
+                    className="w-full bg-black/60 border border-white/20 rounded-xl sm:rounded-2xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 transition uppercase tracking-wider"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black px-6 py-3.5 rounded-2xl text-sm shadow-gold-glow hover:brightness-110 active:scale-95 transition shrink-0 flex items-center justify-center space-x-2"
+                  className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black px-5 py-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm shadow-gold-glow hover:brightness-110 active:scale-95 transition shrink-0 flex items-center justify-center space-x-2"
                 >
                   <Search className="w-4 h-4" />
                   <span>Consultar Estado</span>
@@ -389,52 +389,52 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
         </section>
 
         {/* SECCIÓN NUEVA 1: Telemetría Holográfica & Indicadores en Vivo */}
-        <section className="py-12 border-y border-amber-500/20 bg-gradient-to-b from-black/80 via-slate-950/70 to-black/80 backdrop-blur-xl">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <section className="py-8 sm:py-12 border-y border-amber-500/20 bg-gradient-to-b from-black/80 via-slate-950/70 to-black/80 backdrop-blur-xl w-full overflow-hidden">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
               
-              <div className="bg-slate-900/60 p-5 rounded-2xl border border-amber-500/30 hover:border-amber-400 transition group flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Flotas Pesadas</span>
-                  <Truck className="w-4 h-4 text-amber-400 group-hover:scale-110 transition" />
+              <div className="bg-slate-900/60 p-3.5 sm:p-5 rounded-2xl border border-amber-500/30 hover:border-amber-400 transition group flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-amber-400">Flotas Pesadas</span>
+                  <Truck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 group-hover:scale-110 transition shrink-0" />
                 </div>
-                <div className="text-3xl sm:text-4xl font-black text-white tracking-tight group-hover:text-amber-300 transition">
+                <div className="text-xl sm:text-3xl font-black text-white tracking-tight group-hover:text-amber-300 transition">
                   +1,250<span className="text-amber-400">+</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-2">Unidades atendidas en ruta y taller (Mixers, Tractos, Buses y Maquinaria).</p>
+                <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 leading-snug">Unidades atendidas en ruta y taller (Mixers, Tractos, Buses y Maquinaria).</p>
               </div>
 
-              <div className="bg-slate-900/60 p-5 rounded-2xl border border-amber-500/30 hover:border-amber-400 transition group flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Precisión CAN Bus</span>
-                  <Cpu className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition" />
+              <div className="bg-slate-900/60 p-3.5 sm:p-5 rounded-2xl border border-amber-500/30 hover:border-amber-400 transition group flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-emerald-400">Precisión CAN Bus</span>
+                  <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 group-hover:scale-110 transition shrink-0" />
                 </div>
-                <div className="text-3xl sm:text-4xl font-black text-white tracking-tight group-hover:text-emerald-300 transition">
+                <div className="text-xl sm:text-3xl font-black text-white tracking-tight group-hover:text-emerald-300 transition">
                   99.4<span className="text-emerald-400">%</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-2">Efectividad en reprogramación de computadoras de abordo y sensores NOx.</p>
+                <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 leading-snug">Efectividad en reprogramación de computadoras de abordo y sensores NOx.</p>
               </div>
 
-              <div className="bg-slate-900/60 p-5 rounded-2xl border border-amber-500/30 hover:border-amber-400 transition group flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400">Respuesta Vial</span>
-                  <Clock className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition" />
+              <div className="bg-slate-900/60 p-3.5 sm:p-5 rounded-2xl border border-amber-500/30 hover:border-amber-400 transition group flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-400">Respuesta Vial</span>
+                  <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 group-hover:scale-110 transition shrink-0" />
                 </div>
-                <div className="text-3xl sm:text-4xl font-black text-white tracking-tight group-hover:text-cyan-300 transition">
+                <div className="text-xl sm:text-3xl font-black text-white tracking-tight group-hover:text-cyan-300 transition">
                   &lt; 45<span className="text-cyan-400"> min</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-2">Tiempo promedio de despacho de unidades móviles de rescate técnico.</p>
+                <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 leading-snug">Tiempo promedio de despacho de unidades móviles de rescate técnico.</p>
               </div>
 
-              <div className="bg-slate-900/60 p-5 rounded-2xl border border-amber-500/30 hover:border-amber-400 transition group flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-purple-400">Trazabilidad QR</span>
-                  <ShieldCheck className="w-4 h-4 text-purple-400 group-hover:scale-110 transition" />
+              <div className="bg-slate-900/60 p-3.5 sm:p-5 rounded-2xl border border-amber-500/30 hover:border-amber-400 transition group flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-purple-400">Trazabilidad QR</span>
+                  <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400 group-hover:scale-110 transition shrink-0" />
                 </div>
-                <div className="text-3xl sm:text-4xl font-black text-white tracking-tight group-hover:text-purple-300 transition">
+                <div className="text-xl sm:text-3xl font-black text-white tracking-tight group-hover:text-purple-300 transition">
                   100<span className="text-purple-400">%</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-2">Certificación técnica digital de cada cotización y servicio ejecutado.</p>
+                <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 leading-snug">Certificación técnica digital de cada cotización y servicio ejecutado.</p>
               </div>
 
             </div>
@@ -840,10 +840,10 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
         href="https://api.whatsapp.com/send?phone=51934787006&text=Hola%20DARSIL,%20quisiera%20cotizar%20un%20servicio%20t%C3%A9cnico."
         target="_blank"
         rel="noreferrer"
-        className="fixed bottom-6 right-6 z-50 p-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] active:scale-95 transition duration-300 flex items-center justify-center group"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 sm:p-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] active:scale-95 transition duration-300 flex items-center justify-center group"
         title="Contáctanos por WhatsApp"
       >
-        <Phone className="w-6 h-6 text-slate-950" />
+        <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-slate-950" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 ease-in-out font-black text-xs pl-0 group-hover:pl-2 text-slate-950">
           Atención Inmediata
         </span>

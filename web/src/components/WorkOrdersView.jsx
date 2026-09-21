@@ -606,6 +606,22 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
     }
   };
 
+  // Abrir portal oficial SUNARP directamente en una pestaña nueva con placa copiada
+  const handleOpenOfficialSunarp = (mode = 'disp') => {
+    const rawPlate = (mode === 'disp' ? dispPlate : diagPlate).trim();
+    if (rawPlate && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(rawPlate.toUpperCase()).catch(() => {});
+    }
+    window.open('https://consultavehicular.sunarp.gob.pe/consulta-vehicular/inicio', '_blank');
+    setSunarpToast({
+      title: '🌐 Portal Oficial SUNARP Abierto',
+      details: rawPlate 
+        ? `Placa "${rawPlate.toUpperCase()}" copiada al portapapeles. Pégala en el portal oficial y valida el captcha de SUNARP.`
+        : 'Se abrió la web oficial de SUNARP (consultavehicular.sunarp.gob.pe).'
+    });
+    setTimeout(() => setSunarpToast(null), 10000);
+  };
+
   // Detectar GPS del Asesor
   const handleDetectGps = () => {
     if (!navigator.geolocation) {
@@ -1493,20 +1509,31 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-slate-400 font-semibold text-[11px]">Placa (Opcional):</label>
-                      <button
-                        type="button"
-                        onClick={() => handleLookupSunarp('disp')}
-                        disabled={searchingSunarp}
-                        className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 bg-amber-500/10 hover:bg-amber-500/20 px-1.5 py-0.5 rounded-lg border border-amber-500/30 transition disabled:opacity-50"
-                        title="Consultar datos vehiculares oficiales en SUNARP"
-                      >
-                        {searchingSunarp ? (
-                          <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
-                        ) : (
-                          <Search className="w-3 h-3 text-amber-400" />
-                        )}
-                        <span>SUNARP</span>
-                      </button>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          type="button"
+                          onClick={() => handleLookupSunarp('disp')}
+                          disabled={searchingSunarp}
+                          className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 bg-amber-500/10 hover:bg-amber-500/20 px-1.5 py-0.5 rounded-lg border border-amber-500/30 transition disabled:opacity-50"
+                          title="Consultar datos vehiculares oficiales en SUNARP"
+                        >
+                          {searchingSunarp ? (
+                            <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                          ) : (
+                            <Search className="w-3 h-3 text-amber-400" />
+                          )}
+                          <span>SUNARP</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenOfficialSunarp('disp')}
+                          className="text-[10px] font-bold text-slate-400 hover:text-white flex items-center space-x-0.5 bg-slate-800 hover:bg-slate-700 px-1.5 py-0.5 rounded-lg border border-slate-700 transition"
+                          title="Abrir web oficial https://consultavehicular.sunarp.gob.pe/"
+                        >
+                          <ExternalLink className="w-3 h-3 text-cyan-400" />
+                          <span className="hidden sm:inline">Web</span>
+                        </button>
+                      </div>
                     </div>
                     <input
                       type="text"
@@ -1875,20 +1902,31 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                     <label className="block text-[11px] font-semibold text-slate-400">
                       Placa:
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => handleLookupSunarp('diag')}
-                      disabled={searchingSunarp}
-                      className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 bg-amber-500/10 hover:bg-amber-500/20 px-1.5 py-0.5 rounded-lg border border-amber-500/30 transition disabled:opacity-50"
-                      title="Consultar datos vehiculares oficiales en SUNARP"
-                    >
-                      {searchingSunarp ? (
-                        <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
-                      ) : (
-                        <Search className="w-3 h-3 text-amber-400" />
-                      )}
-                      <span>SUNARP</span>
-                    </button>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        type="button"
+                        onClick={() => handleLookupSunarp('diag')}
+                        disabled={searchingSunarp}
+                        className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 bg-amber-500/10 hover:bg-amber-500/20 px-1.5 py-0.5 rounded-lg border border-amber-500/30 transition disabled:opacity-50"
+                        title="Consultar datos vehiculares oficiales en SUNARP"
+                      >
+                        {searchingSunarp ? (
+                          <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                        ) : (
+                          <Search className="w-3 h-3 text-amber-400" />
+                        )}
+                        <span>SUNARP</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenOfficialSunarp('diag')}
+                        className="text-[10px] font-bold text-slate-400 hover:text-white flex items-center space-x-0.5 bg-slate-800 hover:bg-slate-700 px-1.5 py-0.5 rounded-lg border border-slate-700 transition"
+                        title="Abrir web oficial https://consultavehicular.sunarp.gob.pe/"
+                      >
+                        <ExternalLink className="w-3 h-3 text-cyan-400" />
+                        <span className="hidden sm:inline">Web</span>
+                      </button>
+                    </div>
                   </div>
                   <input
                     type="text"
