@@ -87,20 +87,20 @@ export default function ReportsView() {
     <div className="space-y-6 animate-in fade-in">
       
       {/* Cabecera y Filtros */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
         <div>
           <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">
             GERENCIA & CONTABILIDAD
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-white">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
             Reportes Ejecutivos & Libro Contable
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
             Análisis de facturación, desglose tributario IGV, clientes de mayor volumen y exportación a Excel.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full lg:w-auto">
           {/* Selector de Período */}
           <select
             value={dateRange}
@@ -135,7 +135,7 @@ export default function ReportsView() {
           {/* Botón Exportar CSV */}
           <button
             onClick={handleExportCsv}
-            className="w-full sm:w-auto justify-center flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:brightness-110 active:scale-95 transition"
+            className="w-full sm:w-auto justify-center flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:brightness-110 active:scale-95 transition shrink-0"
           >
             <Download className="w-4 h-4 text-slate-950" />
             <span>📥 Exportar a Excel (CSV)</span>
@@ -149,7 +149,7 @@ export default function ReportsView() {
         <div className="p-3 sm:p-4 rounded-2xl bg-darsil-card border border-darsil-border flex flex-col justify-between sm:flex-row sm:items-center gap-2">
           <div className="min-w-0">
             <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block">Total Cotizado</span>
-            <span className="text-base sm:text-2xl font-black text-amber-400 truncate block">{formatMoney(summary.totalQuoted)}</span>
+            <span className="text-sm xs:text-base sm:text-2xl font-black text-amber-400 truncate block">{formatMoney(summary.totalQuoted)}</span>
             <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">{summary.totalCount || 0} cotizaciones</span>
           </div>
           <div className="p-2 sm:p-3 rounded-xl bg-amber-500/10 text-amber-400 shrink-0 self-end sm:self-center">
@@ -160,7 +160,7 @@ export default function ReportsView() {
         <div className="p-3 sm:p-4 rounded-2xl bg-darsil-card border border-darsil-border flex flex-col justify-between sm:flex-row sm:items-center gap-2">
           <div className="min-w-0">
             <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block">Facturación Aprobada</span>
-            <span className="text-base sm:text-2xl font-black text-emerald-400 truncate block">{formatMoney(summary.totalApproved)}</span>
+            <span className="text-sm xs:text-base sm:text-2xl font-black text-emerald-400 truncate block">{formatMoney(summary.totalApproved)}</span>
             <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">{summary.approvedCount || 0} en taller</span>
           </div>
           <div className="p-2 sm:p-3 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0 self-end sm:self-center">
@@ -171,7 +171,7 @@ export default function ReportsView() {
         <div className="p-3 sm:p-4 rounded-2xl bg-darsil-card border border-darsil-border flex flex-col justify-between sm:flex-row sm:items-center gap-2">
           <div className="min-w-0">
             <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block">Ticket Promedio</span>
-            <span className="text-base sm:text-2xl font-black text-cyan-400 truncate block">{formatMoney(summary.averageTicket)}</span>
+            <span className="text-sm xs:text-base sm:text-2xl font-black text-cyan-400 truncate block">{formatMoney(summary.averageTicket)}</span>
             <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">Promedio por orden</span>
           </div>
           <div className="p-2 sm:p-3 rounded-xl bg-cyan-500/10 text-cyan-400 shrink-0 self-end sm:self-center">
@@ -182,7 +182,7 @@ export default function ReportsView() {
         <div className="p-3 sm:p-4 rounded-2xl bg-darsil-card border border-darsil-border flex flex-col justify-between sm:flex-row sm:items-center gap-2">
           <div className="min-w-0">
             <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block">Efectividad</span>
-            <span className="text-base sm:text-2xl font-black text-purple-400 truncate block">{summary.approvalRate || 0}%</span>
+            <span className="text-sm xs:text-base sm:text-2xl font-black text-purple-400 truncate block">{summary.approvalRate || 0}%</span>
             <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">Tasa de cierre</span>
           </div>
           <div className="p-2 sm:p-3 rounded-xl bg-purple-500/10 text-purple-400 shrink-0 self-end sm:self-center">
@@ -193,10 +193,10 @@ export default function ReportsView() {
       </div>
 
       {/* Gráficos y Tablas de Demanda */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         
         {/* Top Clientes por Facturación */}
-        <div className="lg:col-span-6 p-5 rounded-3xl bg-darsil-card border border-darsil-border space-y-4">
+        <div className="lg:col-span-6 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-darsil-card border border-darsil-border space-y-4">
           <div className="flex items-center justify-between border-b border-darsil-border pb-3">
             <div className="flex items-center space-x-2 text-amber-400">
               <Users className="w-4 h-4" />
@@ -214,7 +214,7 @@ export default function ReportsView() {
                 return (
                   <div key={idx} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-white truncate max-w-[240px]">{client.name}</span>
+                      <span className="font-bold text-white truncate max-w-[200px] sm:max-w-[240px]">{client.name}</span>
                       <span className="font-mono font-bold text-amber-400">{formatMoney(client.total)}</span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
@@ -231,7 +231,7 @@ export default function ReportsView() {
         </div>
 
         {/* Top Servicios más Demandados */}
-        <div className="lg:col-span-6 p-5 rounded-3xl bg-darsil-card border border-darsil-border space-y-4">
+        <div className="lg:col-span-6 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-darsil-card border border-darsil-border space-y-4">
           <div className="flex items-center justify-between border-b border-darsil-border pb-3">
             <div className="flex items-center space-x-2 text-cyan-400">
               <BarChart3 className="w-4 h-4" />
@@ -264,16 +264,56 @@ export default function ReportsView() {
       </div>
 
       {/* Tabla del Libro Contable de Cotizaciones */}
-      <div className="p-5 rounded-3xl bg-darsil-card border border-darsil-border space-y-4">
+      <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-darsil-card border border-darsil-border space-y-4">
         <div className="flex items-center justify-between border-b border-darsil-border pb-3">
           <div className="flex items-center space-x-2 text-emerald-400">
             <FileText className="w-4 h-4" />
-            <h3 className="text-sm font-black text-white">Registro Auxiliar de Ventas & Cotizaciones</h3>
+            <h3 className="text-sm font-black text-white">Registro Auxiliar de Ventas</h3>
           </div>
           <span className="text-xs text-slate-400 font-mono">Total {quotes.length} Registros</span>
         </div>
 
-        <div className="overflow-x-auto no-scrollbar rounded-2xl border border-darsil-border -mx-1 sm:mx-0">
+        {/* Vista Móvil del Libro Contable */}
+        <div className="md:hidden space-y-2.5">
+          {quotes.length === 0 ? (
+            <div className="text-center py-8 text-slate-500 text-xs">
+              No hay cotizaciones para el período seleccionado.
+            </div>
+          ) : (
+            quotes.map(q => (
+              <div key={q._id} className="p-3 bg-slate-900/90 rounded-xl border border-darsil-border space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-amber-400">{q.quoteNumber}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {q.issueDate ? new Date(q.issueDate).toLocaleDateString('es-PE') : '-'}
+                  </span>
+                </div>
+                <div className="font-bold text-white truncate">{q.clientName}</div>
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Doc: <b className="text-slate-300 font-mono">{q.clientDoc || 'S/N'}</b></span>
+                  <span>Placa: <b className="text-amber-300 font-mono">{q.plate || 'S/P'}</b></span>
+                </div>
+                <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                    q.status === 'APROBADA' || q.status === 'FACTURADA'
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      : q.status === 'EN_TALLER'
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                      : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  }`}>
+                    {q.status}
+                  </span>
+                  <div className="font-mono font-black text-amber-400 text-sm">
+                    {formatMoney(q.total)}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Vista Desktop / Tablet del Libro Contable */}
+        <div className="hidden md:block overflow-x-auto no-scrollbar rounded-2xl border border-darsil-border -mx-1 sm:mx-0">
           <table className="w-full text-xs text-left min-w-[720px]">
             <thead className="bg-slate-900/90 text-slate-300 font-bold border-b border-darsil-border">
               <tr>
@@ -340,7 +380,6 @@ export default function ReportsView() {
           </table>
         </div>
       </div>
-
     </div>
   );
 }

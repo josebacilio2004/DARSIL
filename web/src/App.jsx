@@ -174,7 +174,7 @@ Quedamos a su entera disposición para coordinar la atención técnica.
 
   // 3. Sistema ERP Taller Autenticado con Menú Lateral Desplegable
   return (
-    <div className="min-h-screen bg-darsil-obsidian text-slate-100 flex font-sans selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-darsil-obsidian text-slate-100 flex font-sans selection:bg-amber-500 selection:text-slate-950 w-full max-w-full overflow-x-hidden">
       
       {/* Menú Lateral Desplegable (Sidebar Drawer) */}
       <Sidebar
@@ -191,17 +191,17 @@ Quedamos a su entera disposición para coordinar la atención técnica.
 
       {/* Área de Trabajo Principal */}
       <div 
-        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${
+        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out w-full max-w-full min-w-0 overflow-x-hidden ${
           sidebarOpen ? 'lg:pl-72' : 'lg:pl-20'
         }`}
       >
         
         {/* Topbar Ejecutiva Responsiva */}
-        <header className="sticky top-0 z-30 bg-darsil-obsidian/95 backdrop-blur-md border-b border-darsil-border h-14 sm:h-16 px-3 sm:px-6 flex items-center justify-between shadow-md">
+        <header className="sticky top-0 z-30 bg-darsil-obsidian/95 backdrop-blur-md border-b border-darsil-border h-14 sm:h-16 px-2.5 sm:px-6 flex items-center justify-between shadow-md w-full max-w-full min-w-0">
           <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-xl bg-darsil-card hover:bg-slate-800 text-slate-300 hover:text-white border border-darsil-border transition active:scale-95 shrink-0"
+              className="p-1.5 sm:p-2 rounded-xl bg-darsil-card hover:bg-slate-800 text-slate-300 hover:text-white border border-darsil-border transition active:scale-95 shrink-0"
               title="Desplegar / Ocultar Menú Lateral"
             >
               <Menu className="w-4 h-4" />
@@ -211,7 +211,7 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             <div className="flex items-center space-x-1.5 sm:space-x-2 text-xs min-w-0">
               <span className="font-bold text-slate-400 hidden sm:inline">ERP DARSIL</span>
               <span className="text-slate-600 hidden sm:inline">/</span>
-              <span className="font-black text-amber-400 tracking-wide uppercase truncate max-w-[125px] xs:max-w-[170px] sm:max-w-none">
+              <span className="font-black text-amber-400 tracking-wide uppercase truncate max-w-[105px] xs:max-w-[140px] sm:max-w-none text-[11px] sm:text-xs">
                 {activeTab === 'dashboard' ? 'Dashboard' :
                  activeTab === 'quotes' ? 'Cotizaciones' :
                  activeTab === 'workorders' ? 'Órdenes de Trabajo' :
@@ -224,7 +224,7 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          <div className="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
             {/* Píldora de Estado */}
             <div className="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -234,16 +234,16 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             {/* Botón Acción Rápida: Nueva Orden de Trabajo */}
             <button
               onClick={handleOpenNewWorkOrder}
-              className="flex items-center space-x-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
+              className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
               title="Crear Nueva Orden de Trabajo y Check-In Taller"
             >
               <ClipboardList className="w-3.5 h-3.5 text-slate-950 shrink-0" />
               <span className="hidden sm:inline">+ Nueva Orden de Trabajo</span>
-              <span className="sm:hidden text-[11px] font-black">+ Nueva OT</span>
+              <span className="sm:hidden text-[10px] font-black">+ OT</span>
             </button>
 
             {/* Perfil Rápido */}
-            <div className="flex items-center space-x-1.5 sm:space-x-2 pl-1.5 sm:pl-2 border-l border-darsil-border">
+            <div className="flex items-center space-x-1 sm:space-x-2 pl-1 sm:pl-2 border-l border-darsil-border">
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 font-black flex items-center justify-center text-xs shadow-inner shrink-0">
                 DB
               </div>
@@ -260,7 +260,7 @@ Quedamos a su entera disposición para coordinar la atención técnica.
         </header>
 
         {/* Contenido de la Vista Activa con padding inferior para la barra móvil */}
-        <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 space-y-6 pb-24 lg:pb-6">
+        <main className="max-w-7xl w-full mx-auto px-2.5 sm:px-6 lg:px-8 py-3 sm:py-6 flex-1 space-y-4 sm:space-y-6 pb-24 lg:pb-6 min-w-0 overflow-x-hidden">
           
           {/* Pestaña: Dashboard Ejecutivo */}
           {activeTab === 'dashboard' && (
@@ -321,9 +321,11 @@ Quedamos a su entera disposición para coordinar la atención técnica.
         </main>
 
         {/* Footer ERP */}
-        <footer className="bg-darsil-obsidian border-t border-darsil-border py-4 px-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 pb-20 lg:pb-4">
-          <span>DARSIL AUTOMOTIVE SOLUTIONS • Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima • 2026</span>
-          <span className="text-amber-400 font-mono text-[10px]">v2.6.0 Enterprise</span>
+        <footer className="bg-darsil-obsidian border-t border-darsil-border py-4 px-3 sm:px-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 pb-20 lg:pb-4 w-full max-w-full overflow-hidden">
+          <span className="text-[10px] sm:text-xs text-slate-500 text-center sm:text-left break-words max-w-full leading-relaxed">
+            DARSIL AUTOMOTIVE SOLUTIONS • Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima • 2026
+          </span>
+          <span className="text-amber-400 font-mono text-[10px] shrink-0">v2.6.0 Enterprise</span>
         </footer>
 
       </div>

@@ -167,21 +167,21 @@ export default function CatalogView() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto justify-end">
           <div className="relative w-full sm:w-60">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 sm:top-3" />
             <input
               type="text"
               placeholder="Buscar por código o nombre..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="text-xs bg-darsil-obsidian border border-darsil-border text-white rounded-xl pl-10 pr-3 py-2 w-full outline-none focus:border-amber-400"
+              className="text-xs bg-darsil-obsidian border border-darsil-border text-white rounded-xl pl-10 pr-3 py-2 sm:py-2.5 w-full outline-none focus:border-amber-400"
             />
           </div>
 
           <button
             onClick={handleOpenNew}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 transition shrink-0 active:scale-95"
+            className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 sm:py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 transition shrink-0 active:scale-95"
           >
             <Plus className="w-4 h-4 text-slate-950" />
             <span>Nuevo Servicio</span>
@@ -198,9 +198,9 @@ export default function CatalogView() {
 
       {/* Grid o Lista de ítems */}
       {filtered.length === 0 ? (
-        <div className="bg-darsil-card p-12 rounded-2xl border border-darsil-border text-center space-y-4 shadow-card-dark">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
-            <Layers className="w-8 h-8" />
+        <div className="bg-darsil-card p-8 sm:p-12 rounded-2xl border border-darsil-border text-center space-y-4 shadow-card-dark">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+            <Layers className="w-7 h-7 sm:w-8 sm:h-8" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-white">No hay servicios en el catálogo</h3>
@@ -208,7 +208,7 @@ export default function CatalogView() {
               Presiona el botón para cargar automáticamente los 25 servicios oficiales de DARSIL o crea un servicio nuevo.
             </p>
           </div>
-          <div className="flex justify-center gap-3">
+          <div className="flex flex-col sm:flex-row justify-center gap-2.5 sm:gap-3">
             <button
               onClick={handleSeedCatalog}
               className="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
@@ -224,72 +224,138 @@ export default function CatalogView() {
           </div>
         </div>
       ) : (
-        <div className="bg-darsil-card rounded-2xl border border-darsil-border shadow-card-dark overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300 min-w-[580px]">
-              <thead className="bg-darsil-obsidian border-b border-darsil-border text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-              <tr>
-                <th className="p-3.5 w-24">Código</th>
-                <th className="p-3.5">Descripción Oficial del Servicio</th>
-                <th className="p-3.5 w-36">Categoría</th>
-                <th className="p-3.5 w-28 text-right">Precio Base</th>
-                <th className="p-3.5 w-24 text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-darsil-border font-medium">
-              {filtered.map((item) => (
-                <tr key={item._id || item.code} className="hover:bg-darsil-cardHover/60 transition group">
-                  <td className="p-3.5 font-mono font-black text-darsil-gold">
-                    <span className="bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
-                      {item.code}
+        <>
+          {/* Vista Móvil: Tarjetas Táctiles de Servicios para iPhone 15 Pro y pantallas pequeñas */}
+          <div className="md:hidden space-y-3">
+            {filtered.map((item) => (
+              <div
+                key={item._id || item.code}
+                className="bg-darsil-card border border-darsil-border hover:border-amber-500/40 rounded-2xl p-3.5 space-y-2.5 shadow-card-dark transition"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="bg-slate-900 border border-slate-800 text-amber-400 font-mono font-black px-2.5 py-1 rounded-lg text-xs shadow-inner">
+                    {item.code}
+                  </span>
+                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                    item.category === 'FABRICACION_3D' 
+                      ? 'bg-purple-950/50 text-purple-300 border-purple-800/40' :
+                    item.category === 'REPUESTO'
+                      ? 'bg-emerald-950/50 text-emerald-300 border-emerald-800/40' :
+                    item.category === 'SOLUCION_ESPECIAL'
+                      ? 'bg-amber-950/50 text-amber-300 border-amber-800/40'
+                      : 'bg-blue-950/50 text-blue-300 border-blue-800/40'
+                  }`}>
+                    {item.category === 'FABRICACION_3D' ? 'Fabricación 3D' :
+                     item.category === 'REPUESTO' ? 'Repuesto' :
+                     item.category === 'SOLUCION_ESPECIAL' ? 'Especial' : 'Mano de Obra'}
+                  </span>
+                </div>
+
+                <div className="text-xs font-bold text-white uppercase leading-snug">
+                  {item.description}
+                </div>
+
+                <div className="pt-2 border-t border-darsil-border flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Precio Base</span>
+                    <span className="text-sm font-mono font-black text-amber-300">
+                      S/ {Number(item.defaultPrice).toFixed(2)}
                     </span>
-                  </td>
-                  <td className="p-3.5 font-semibold text-white uppercase">
-                    {item.description}
-                  </td>
-                  <td className="p-3.5">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      item.category === 'FABRICACION_3D' 
-                        ? 'bg-purple-950/50 text-purple-300 border-purple-800/40' :
-                      item.category === 'REPUESTO'
-                        ? 'bg-emerald-950/50 text-emerald-300 border-emerald-800/40' :
-                      item.category === 'SOLUCION_ESPECIAL'
-                        ? 'bg-amber-950/50 text-amber-300 border-amber-800/40'
-                        : 'bg-blue-950/50 text-blue-300 border-blue-800/40'
-                    }`}>
-                      {item.category === 'FABRICACION_3D' ? 'Fabricación 3D' :
-                       item.category === 'REPUESTO' ? 'Repuesto' :
-                       item.category === 'SOLUCION_ESPECIAL' ? 'Especial' : 'Mano de Obra'}
-                    </span>
-                  </td>
-                  <td className="p-3.5 text-right font-mono font-black text-amber-300 text-sm">
-                    S/ {Number(item.defaultPrice).toFixed(2)}
-                  </td>
-                  <td className="p-3.5 text-center">
-                    <div className="flex items-center justify-center space-x-1.5">
-                      <button
-                        onClick={() => handleOpenEdit(item)}
-                        title="Editar servicio"
-                        className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 border border-slate-700/80 transition"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item)}
-                        title="Eliminar servicio"
-                        className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-red-500/20 text-slate-300 hover:text-red-400 border border-slate-700/80 transition"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    )}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(item)}
+                      className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs font-bold transition active:scale-95"
+                      title="Editar Servicio"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Editar</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(item)}
+                      className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-rose-950/50 hover:bg-rose-900/70 text-rose-400 border border-rose-500/40 text-xs font-bold transition active:scale-95"
+                      title="Eliminar Servicio"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Eliminar</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Vista Escritorio / Tablet: Tabla Completa */}
+          <div className="hidden md:block bg-darsil-card rounded-2xl border border-darsil-border shadow-card-dark overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300 min-w-[580px]">
+                <thead className="bg-darsil-obsidian border-b border-darsil-border text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="p-3.5 w-24">Código</th>
+                    <th className="p-3.5">Descripción Oficial del Servicio</th>
+                    <th className="p-3.5 w-36">Categoría</th>
+                    <th className="p-3.5 w-28 text-right">Precio Base</th>
+                    <th className="p-3.5 w-24 text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-darsil-border font-medium">
+                  {filtered.map((item) => (
+                    <tr key={item._id || item.code} className="hover:bg-darsil-cardHover/60 transition group">
+                      <td className="p-3.5 font-mono font-black text-darsil-gold">
+                        <span className="bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
+                          {item.code}
+                        </span>
+                      </td>
+                      <td className="p-3.5 font-semibold text-white uppercase">
+                        {item.description}
+                      </td>
+                      <td className="p-3.5">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          item.category === 'FABRICACION_3D' 
+                            ? 'bg-purple-950/50 text-purple-300 border-purple-800/40' :
+                          item.category === 'REPUESTO'
+                            ? 'bg-emerald-950/50 text-emerald-300 border-emerald-800/40' :
+                          item.category === 'SOLUCION_ESPECIAL'
+                            ? 'bg-amber-950/50 text-amber-300 border-amber-800/40'
+                            : 'bg-blue-950/50 text-blue-300 border-blue-800/40'
+                        }`}>
+                          {item.category === 'FABRICACION_3D' ? 'Fabricación 3D' :
+                           item.category === 'REPUESTO' ? 'Repuesto' :
+                           item.category === 'SOLUCION_ESPECIAL' ? 'Especial' : 'Mano de Obra'}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-black text-amber-300 text-sm">
+                        S/ {Number(item.defaultPrice).toFixed(2)}
+                      </td>
+                      <td className="p-3.5 text-center">
+                        <div className="flex items-center justify-center space-x-1.5">
+                          <button
+                            onClick={() => handleOpenEdit(item)}
+                            title="Editar servicio"
+                            className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 border border-slate-700/80 transition"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item)}
+                            title="Eliminar servicio"
+                            className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-red-500/20 text-slate-300 hover:text-red-400 border border-slate-700/80 transition"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Modal CRUD: Crear / Editar Servicio */}
       {modalOpen && editingItem && (

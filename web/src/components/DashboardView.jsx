@@ -114,10 +114,10 @@ export default function DashboardView({
       <div className="relative overflow-hidden bg-gradient-to-r from-darsil-obsidian via-slate-900 to-black p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-darsil-border shadow-2xl">
         <div className="absolute -right-10 -top-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
-          <div className="space-y-1.5 sm:space-y-2">
-            <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] sm:text-xs font-black tracking-wider uppercase">
-              <Zap className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-amber-400" />
-              <span>Panel de Control Ejecutivo • Operaciones & Flotas</span>
+          <div className="space-y-1.5 sm:space-y-2 min-w-0">
+            <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] sm:text-xs font-black tracking-wider uppercase max-w-full">
+              <Zap className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-amber-400 shrink-0" />
+              <span className="truncate">Panel de Control Ejecutivo • Operaciones</span>
             </div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
               DARSIL Automotive Solutions
@@ -131,7 +131,7 @@ export default function DashboardView({
             <button
               onClick={handleManualRefresh}
               disabled={loadingData}
-              className="flex items-center justify-center space-x-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white px-3.5 py-2 sm:py-2.5 rounded-xl border border-slate-700 text-xs font-bold transition shadow-lg active:scale-95"
+              className="flex items-center justify-center space-x-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white px-3.5 py-2 sm:py-2.5 rounded-xl border border-slate-700 text-xs font-bold transition shadow-lg active:scale-95 w-full sm:w-auto"
               title="Actualizar datos en vivo desde la base de datos"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loadingData ? 'animate-spin' : ''}`} />
@@ -139,14 +139,14 @@ export default function DashboardView({
             </button>
             <button
               onClick={() => setActiveTab('portal')}
-              className="flex items-center justify-center space-x-2 bg-slate-800/80 hover:bg-slate-700 text-white px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-slate-700 text-xs font-bold transition shadow-lg active:scale-95"
+              className="flex items-center justify-center space-x-2 bg-slate-800/80 hover:bg-slate-700 text-white px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-slate-700 text-xs font-bold transition shadow-lg active:scale-95 w-full sm:w-auto"
             >
               <Globe className="w-4 h-4 text-cyan-400" />
               <span>Ver Landing Clientes</span>
             </button>
             <button
               onClick={onOpenNewQuote}
-              className="flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-black shadow-gold-glow active:scale-95 transition"
+              className="flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-black shadow-gold-glow active:scale-95 transition w-full sm:w-auto"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Nueva Cotización</span>
@@ -286,10 +286,10 @@ export default function DashboardView({
       </div>
 
       {/* Sección Analítica: Distribución por Estado y Actividad en Vivo */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         
         {/* Columna Izquierda: Estados del Pipeline Comercial & Taller */}
-        <div className="bg-darsil-card p-6 rounded-3xl border border-darsil-border space-y-5">
+        <div className="bg-darsil-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-darsil-border space-y-4 sm:space-y-5">
           <div className="flex items-center justify-between border-b border-darsil-border pb-3">
             <h3 className="text-sm font-black text-white flex items-center space-x-2">
               <Clock className="w-4 h-4 text-amber-400" />
@@ -388,10 +388,10 @@ export default function DashboardView({
         </div>
 
         {/* Columna Central y Derecha: Actividad Reciente (Cotizaciones y Órdenes de Trabajo) */}
-        <div className="lg:col-span-2 bg-darsil-card p-6 rounded-3xl border border-darsil-border space-y-4">
+        <div className="lg:col-span-2 bg-darsil-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-darsil-border space-y-4">
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-darsil-border pb-3">
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setActiveListTab('quotes')}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 ${
@@ -401,7 +401,7 @@ export default function DashboardView({
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Cotizaciones Recientes ({quotes.length})</span>
+                <span>Cotizaciones ({quotes.length})</span>
               </button>
 
               <button
@@ -553,13 +553,13 @@ export default function DashboardView({
       </div>
 
       {/* Especialidades DARSIL y Capacidades de Ingeniería */}
-      <div className="bg-darsil-card p-6 rounded-3xl border border-darsil-border space-y-4">
-        <div className="flex items-center justify-between border-b border-darsil-border pb-3">
+      <div className="bg-darsil-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-darsil-border space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-darsil-border pb-3">
           <div className="flex items-center space-x-2">
-            <Wrench className="w-4 h-4 text-amber-400" />
+            <Wrench className="w-4 h-4 text-amber-400 shrink-0" />
             <h3 className="text-sm font-black text-white">Capacidad Operativa & Especialidades DARSIL</h3>
           </div>
-          <span className="text-[11px] text-amber-400 font-bold">Laboratorio Técnico & Taller Especializado</span>
+          <span className="text-[10px] sm:text-[11px] text-amber-400 font-bold">Laboratorio Técnico & Taller Especializado</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">

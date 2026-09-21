@@ -1227,52 +1227,52 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header y Acciones Rápidas */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/60 p-5 rounded-3xl border border-white/5 backdrop-blur-md">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-slate-900/60 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-white/5 backdrop-blur-md">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+            <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight">
               Órdenes de Trabajo (OT) & Taller Digital
             </h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Flujo Operativo Automatizado: Despacho con Mapbox ➡️ Diagnóstico con Diagrama de 5 Vistas ➡️ Cotización Oficial en 1 Clic
+          <p className="text-[11px] sm:text-xs text-slate-400 mt-1 leading-relaxed">
+            Flujo Operativo: Despacho ➡️ Check-In & Daños ➡️ Cotización Oficial en 1 Clic
           </p>
         </div>
 
         <button
           type="button"
           onClick={handleOpenDispatch}
-          className="flex items-center justify-center space-x-2 px-5 py-3 rounded-2xl text-xs font-black bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
+          className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-xs font-black bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition shrink-0"
         >
           <Plus className="w-4 h-4 text-slate-950" />
-          <span>Iniciar Orden de Trabajo (Despacho)</span>
+          <span>Iniciar Orden de Trabajo</span>
         </button>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
-          <div className="text-slate-400 font-semibold mb-1">Total OTs Registradas</div>
-          <div className="text-2xl font-black text-white">{orders.length}</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4">
+          <div className="text-slate-400 font-semibold mb-1 text-[11px] truncate">Total OTs</div>
+          <div className="text-xl sm:text-2xl font-black text-white">{orders.length}</div>
         </div>
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
-          <div className="text-amber-400 font-semibold mb-1">En Camino / Despacho</div>
-          <div className="text-2xl font-black text-amber-400">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4">
+          <div className="text-amber-400 font-semibold mb-1 text-[11px] truncate">En Despacho</div>
+          <div className="text-xl sm:text-2xl font-black text-amber-400">
             {orders.filter(o => o.status === 'DESPACHADO' || o.status === 'EN_CAMINO').length}
           </div>
         </div>
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
-          <div className="text-blue-400 font-semibold mb-1">En Diagnóstico / Taller</div>
-          <div className="text-2xl font-black text-blue-400">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4">
+          <div className="text-blue-400 font-semibold mb-1 text-[11px] truncate">En Taller</div>
+          <div className="text-xl sm:text-2xl font-black text-blue-400">
             {orders.filter(o => o.status === 'RECEPCIONADO' || o.status === 'EN_DIAGNOSTICO' || o.status === 'EN_PROCESO').length}
           </div>
         </div>
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
-          <div className="text-emerald-400 font-semibold mb-1">Cotizaciones Generadas</div>
-          <div className="text-2xl font-black text-emerald-400">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4">
+          <div className="text-emerald-400 font-semibold mb-1 text-[11px] truncate">Cotizaciones</div>
+          <div className="text-xl sm:text-2xl font-black text-emerald-400">
             {orders.filter(o => o.generatedQuoteNumber || o.quoteNumber).length}
           </div>
         </div>
@@ -1318,7 +1318,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
           No se encontraron órdenes de trabajo activas. Inicia una con el botón "Iniciar Orden de Trabajo".
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {orders.map(order => {
             const hasQuote = !!(order.generatedQuoteNumber || order.quoteNumber);
             const quoteNum = order.generatedQuoteNumber || order.quoteNumber;
@@ -1326,22 +1326,22 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
             return (
               <div 
                 key={order._id}
-                className="bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-4 flex flex-col justify-between shadow-xl transition group"
+                className="bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between shadow-xl transition group"
               >
                 <div>
                   {/* Cabecera Tarjeta */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono font-black text-amber-400 text-sm">
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <div className="flex items-center space-x-1.5 min-w-0">
+                      <span className="font-mono font-black text-amber-400 text-xs sm:text-sm shrink-0">
                         {order.orderNumber}
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                      <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
                         {order.status}
                       </span>
                     </div>
 
-                    <span className="font-mono font-black text-base text-white px-2.5 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300">
-                      {order.plate}
+                    <span className="font-mono font-black text-xs sm:text-sm text-white px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 shrink-0 truncate max-w-[120px]">
+                      {order.plate || 'S/P'}
                     </span>
                   </div>
 
@@ -1410,29 +1410,29 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                 </div>
 
                 {/* Acciones */}
-                <div className="flex items-center space-x-2 pt-2 border-t border-slate-800/80">
+                <div className="flex items-center space-x-1.5 pt-2.5 border-t border-slate-800/80">
                   <button
                     type="button"
                     onClick={() => handleOpenDiagnostic(order)}
                     className="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 hover:brightness-110 active:scale-95 transition shadow-sm"
                   >
-                    <Wrench className="w-3.5 h-3.5" />
+                    <Wrench className="w-3.5 h-3.5 text-slate-950" />
                     <span>Diagnóstico / Check-In</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => onSelectQuote && onSelectQuote({ ...order, isWorkOrder: true })}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition active:scale-95 shrink-0"
                     title="Ver Acta Oficial de OT en el Sistema"
                   >
-                    <FileText className="w-4 h-4" />
+                    <FileText className="w-4 h-4 text-amber-400" />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleDeleteOrder(order)}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/40 transition"
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/40 transition active:scale-95 shrink-0"
                     title="Eliminar Orden de Trabajo (CRUD)"
                   >
                     <Trash2 className="w-4 h-4" />

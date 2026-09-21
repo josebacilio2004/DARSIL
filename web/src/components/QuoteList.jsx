@@ -103,7 +103,7 @@ Quedamos a su entera disposición para coordinar la atención técnica.
           {onOpenNewQuote && (
             <button
               onClick={onOpenNewQuote}
-              className="flex items-center justify-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition shrink-0"
+              className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition shrink-0"
               title="Crear Nueva Cotización Oficial"
             >
               <PlusCircle className="w-4 h-4 text-slate-950" />
@@ -158,36 +158,36 @@ Quedamos a su entera disposición para coordinar la atención técnica.
                 className="bg-darsil-card border border-darsil-border hover:border-amber-500/40 rounded-2xl p-3.5 space-y-3 shadow-card-dark transition"
               >
                 {/* Cabecera de la Tarjeta Móvil */}
-                <div className="flex items-center justify-between">
-                  <span className="font-mono bg-slate-900 border border-slate-800 text-amber-400 font-black px-2.5 py-1 rounded-lg text-xs shadow-inner">
-                    {q.quoteNumber}
-                  </span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center space-x-2">
+                    <span className="font-mono bg-slate-900 border border-slate-800 text-amber-400 font-black px-2.5 py-1 rounded-lg text-xs shadow-inner">
+                      {q.quoteNumber}
+                    </span>
                     <span className="text-[10px] text-slate-500 font-mono">{dateStr}</span>
-                    <select
-                      value={q.status}
-                      onChange={(e) => handleStatusChange(e, q._id)}
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border outline-none cursor-pointer ${statusInfo.bg}`}
-                    >
-                      <option value="BORRADOR" className="bg-slate-900 text-white">Borrador</option>
-                      <option value="ENVIADA" className="bg-slate-900 text-white">Enviada</option>
-                      <option value="APROBADA" className="bg-slate-900 text-white">Aprobada</option>
-                      <option value="EN_TALLER" className="bg-slate-900 text-white">En Taller</option>
-                      <option value="FACTURADA" className="bg-slate-900 text-white">Facturada</option>
-                      <option value="RECHAZADA" className="bg-slate-900 text-white">Rechazada</option>
-                    </select>
                   </div>
+                  <select
+                    value={q.status}
+                    onChange={(e) => handleStatusChange(e, q._id)}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border outline-none cursor-pointer ${statusInfo.bg}`}
+                  >
+                    <option value="BORRADOR" className="bg-slate-900 text-white">Borrador</option>
+                    <option value="ENVIADA" className="bg-slate-900 text-white">Enviada</option>
+                    <option value="APROBADA" className="bg-slate-900 text-white">Aprobada</option>
+                    <option value="EN_TALLER" className="bg-slate-900 text-white">En Taller</option>
+                    <option value="FACTURADA" className="bg-slate-900 text-white">Facturada</option>
+                    <option value="RECHAZADA" className="bg-slate-900 text-white">Rechazada</option>
+                  </select>
                 </div>
 
                 {/* Cliente & Vehículo */}
-                <div>
+                <div className="space-y-1">
                   <div className="font-bold text-white text-sm line-clamp-1">{q.clientName}</div>
-                  <div className="text-[11px] text-slate-400 flex items-center space-x-1 mt-0.5">
-                    {q.clientDoc && <span className="font-mono text-slate-400 font-semibold">{q.clientDoc} • </span>}
+                  <div className="text-[11px] text-slate-400 flex items-center space-x-1">
+                    {q.clientDoc && <span className="font-mono text-slate-300 font-semibold">{q.clientDoc} • </span>}
                     <span className="truncate">{q.clientAddress || 'Taller DARSIL (VES)'}</span>
                   </div>
                   {q.plate && (
-                    <div className="flex items-center space-x-1.5 mt-1.5 text-xs font-mono font-bold text-amber-300">
+                    <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs font-mono font-bold text-amber-300">
                       <Car className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span>{q.plate}</span>
                       <span className="text-slate-400 font-sans font-normal text-[11px] truncate">({q.model || 'Sin modelo'})</span>
@@ -195,55 +195,68 @@ Quedamos a su entera disposición para coordinar la atención técnica.
                   )}
                 </div>
 
-                {/* Total & Botones de Acción Táctiles */}
-                <div className="pt-2.5 border-t border-darsil-border flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total</span>
-                    <span className="text-base font-black text-amber-400 font-mono">
-                      S/ {Number(q.total || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center space-x-1.5">
-                    <button
-                      onClick={() => onSelectQuote(q)}
-                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition"
-                      title="Ver PDF Oficial"
-                    >
-                      <Eye className="w-4 h-4 text-amber-400" />
-                    </button>
-                    <button
-                      onClick={(e) => handleShareWhatsApp(e, q)}
-                      className="p-2 rounded-xl bg-emerald-950/80 hover:bg-emerald-800 text-emerald-400 border border-emerald-500/40 transition"
-                      title="WhatsApp"
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onEditQuote(q)}
-                      className="p-2 rounded-xl bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border border-slate-700 transition"
-                      title="Editar"
-                    >
-                      <Edit3 className="w-4 h-4 text-amber-400" />
-                    </button>
-                    {onOpenMap && (
-                      <button
-                        onClick={() => onOpenMap(q)}
-                        className="p-2 rounded-xl bg-slate-800 hover:bg-blue-500/20 text-blue-400 border border-slate-700 transition"
-                        title="Mapa y Viáticos"
-                      >
-                        <MapPin className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button
-                      onClick={(e) => handleDelete(e, q)}
-                      className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 transition"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                {/* Total Presupuestado */}
+                <div className="pt-2 border-t border-darsil-border flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Presupuestado</span>
+                  <span className="text-base font-black text-amber-400 font-mono">
+                    S/ {Number(q.total || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                  </span>
                 </div>
+
+                {/* Botonera Táctil CRUD Móvil */}
+                <div className="grid grid-cols-4 gap-1.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => onSelectQuote(q)}
+                    className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition active:scale-95"
+                    title="Ver PDF Oficial"
+                  >
+                    <Eye className="w-4 h-4 text-amber-400" />
+                    <span className="text-[9px] font-bold mt-1">PDF</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onEditQuote(q)}
+                    className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 transition active:scale-95"
+                    title="Editar Cotización"
+                  >
+                    <Edit3 className="w-4 h-4 text-amber-400" />
+                    <span className="text-[9px] font-bold mt-1">Editar</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => handleShareWhatsApp(e, q)}
+                    className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-emerald-400 border border-emerald-500/40 transition active:scale-95"
+                    title="Compartir por WhatsApp"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span className="text-[9px] font-bold mt-1">WhatsApp</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => handleDelete(e, q)}
+                    className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-rose-950/50 hover:bg-rose-900/70 text-rose-400 border border-rose-500/40 transition active:scale-95"
+                    title="Eliminar Cotización"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="text-[9px] font-bold mt-1">Eliminar</span>
+                  </button>
+                </div>
+
+                {onOpenMap && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenMap(q)}
+                    className="w-full flex items-center justify-center space-x-1.5 py-1.5 rounded-xl bg-blue-950/40 hover:bg-blue-900/60 text-blue-300 border border-blue-500/30 text-[11px] font-semibold transition active:scale-95"
+                    title="Ver Ruta y Viáticos en Mapa"
+                  >
+                    <MapPin className="w-3 h-3 text-blue-400" />
+                    <span>Ruta & Viáticos Mapbox</span>
+                  </button>
+                )}
               </div>
             );
           })
