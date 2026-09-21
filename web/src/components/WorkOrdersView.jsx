@@ -48,11 +48,10 @@ const DEFAULT_ORIGIN = {
 const DEFAULT_CLIENT_DEST = [-76.9385, -12.1960]; // Ubicación inicial sugerida (~2.2 km del taller en Villa El Salvador)
 
 const VEHICLE_TYPES = [
-  { id: 'SEDAN_AUTO', label: 'Sedán / Auto Liviano' },
-  { id: 'CAMIONETA_SUV', label: 'Camioneta / SUV / Pick-up' },
-  { id: 'TRACTO_CAMION', label: 'Tractocamión / Volquete' },
-  { id: 'BUS', label: 'Bus Interprovincial / Urbano' },
-  { id: 'MAQUINARIA', label: 'Línea Amarilla / Maquinaria' }
+  { id: 'SEDAN_AUTO', label: 'Sedán' },
+  { id: 'CAMIONETA_PICKUP', label: 'Camioneta o Pick-up' },
+  { id: 'TRACTO_CAMION', label: 'Tractocamión' },
+  { id: 'MIXER', label: 'Mixer' }
 ];
 
 const FALLBACK_CATALOG = [
@@ -119,6 +118,8 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
   const [dispDriverName, setDispDriverName] = useState('');
   const [dispDriverPhone, setDispDriverPhone] = useState('');
   const [searchingDoc, setSearchingDoc] = useState(false);
+  const [searchingSunarp, setSearchingSunarp] = useState(false);
+  const [sunarpToast, setSunarpToast] = useState(null);
 
   // Placa, color y año opcionales en despacho
   const [dispPlate, setDispPlate] = useState('');
@@ -551,6 +552,57 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
       alert('Error en consulta APIsPerú: ' + err.message);
     } finally {
       setSearchingDoc(false);
+    }
+  };
+
+  // ==========================================
+  // CONSULTA VEHICULAR SUNARP (PERÚ)
+  // ==========================================
+  const handleLookupSunarp = async (mode = 'disp') => {
+    const rawPlate = (mode === 'disp' ? dispPlate : diagPlate).trim();
+    if (!rawPlate) {
+      alert('Por favor, ingresa el número de placa a consultar en SUNARP (ej. ABC-123, D1X-789, V6Y-900).');
+      return;
+    }
+
+    setSearchingSunarp(true);
+    try {
+      const res = await api.lookupSunarp(rawPlate);
+      if (res && res.success && res.data) {
+        const d = res.data;
+        if (mode === 'disp') {
+          setDispPlate(d.placa || rawPlate.toUpperCase());
+          setDispModel(`${d.marca ? d.marca + ' ' : ''}${d.modelo || ''}`.trim());
+          if (d.vehicleType) setDispVehicleType(d.vehicleType);
+          if (d.color) setDispColor(d.color);
+          if (d.year) setDispYear(String(d.year));
+          if (d.vin) setDispVin(d.vin);
+          if (d.titular && (!dispClientName || dispClientName.toLowerCase().includes('particular') || dispClientName.toLowerCase().includes('cliente'))) {
+            setDispClientName(d.titular);
+          }
+        } else {
+          setDiagPlate(d.placa || rawPlate.toUpperCase());
+          setDiagModel(`${d.marca ? d.marca + ' ' : ''}${d.modelo || ''}`.trim());
+          if (d.vehicleType) setDiagVehicleType(d.vehicleType);
+          if (d.color) setDiagColor(d.color);
+          if (d.year) setDiagYear(String(d.year));
+          if (d.vin) setDiagVin(d.vin);
+        }
+
+        const vTypeLabel = VEHICLE_TYPES.find(v => v.id === d.vehicleType)?.label || d.vehicleType;
+        setSunarpToast({
+          title: `Consulta SUNARP Exitosa • Placa ${d.placa}`,
+          details: `${d.marca} ${d.modelo} | Tipo: ${vTypeLabel} | Color: ${d.color} | Año: ${d.year} | Chasis/VIN: ${d.vin} | Titular: ${d.titular} (${d.sede})`
+        });
+        setTimeout(() => setSunarpToast(null), 12000);
+      } else {
+        alert(res?.message || 'No se obtuvieron registros de SUNARP para esta placa.');
+      }
+    } catch (err) {
+      console.error('Error en lookup SUNARP:', err);
+      alert('Error en consulta vehicular SUNARP: ' + (err.message || 'Error de conexión'));
+    } finally {
+      setSearchingSunarp(false);
     }
   };
 
@@ -1127,7 +1179,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
           className="flex items-center justify-center space-x-2 px-5 py-3 rounded-2xl text-xs font-black bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
         >
           <Plus className="w-4 h-4 text-slate-950" />
-          <span>+ Iniciar Orden de Trabajo (Despacho)</span>
+          <span>Iniciar Orden de Trabajo (Despacho)</span>
         </button>
       </div>
 
@@ -1194,7 +1246,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
         </div>
       ) : orders.length === 0 ? (
         <div className="p-12 text-center bg-slate-900/40 border border-dashed border-slate-800 rounded-3xl text-slate-400">
-          No se encontraron órdenes de trabajo activas. Inicia una con el botón "+ Iniciar Orden de Trabajo".
+          No se encontraron órdenes de trabajo activas. Inicia una con el botón "Iniciar Orden de Trabajo".
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1416,20 +1468,53 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
 
               {/* Bloque 2: Datos del Vehículo */}
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
-                <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
-                  <Car className="w-3.5 h-3.5" />
-                  <span>2. Datos de la Unidad Vehicular (Opcional para completar en sitio)</span>
+                <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between">
+                  <div className="flex items-center space-x-1.5">
+                    <Car className="w-3.5 h-3.5" />
+                    <span>2. Datos de la Unidad Vehicular (Opcional para completar en sitio)</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">SUNARP Consulta Vehicular</span>
                 </div>
+
+                {sunarpToast && (
+                  <div className="bg-emerald-950/90 border border-emerald-500/40 text-emerald-200 p-2.5 rounded-xl text-xs flex items-start justify-between gap-2 shadow-lg animate-fade-in">
+                    <div>
+                      <div className="font-bold flex items-center gap-1.5 text-emerald-300">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>{sunarpToast.title}</span>
+                      </div>
+                      <p className="text-[11px] text-emerald-200/90 mt-1 font-mono leading-relaxed">{sunarpToast.details}</p>
+                    </div>
+                    <button type="button" onClick={() => setSunarpToast(null)} className="text-emerald-400 hover:text-white p-1">✕</button>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Placa / Matrícula (Opcional):</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-400 font-semibold text-[11px]">Placa (Opcional):</label>
+                      <button
+                        type="button"
+                        onClick={() => handleLookupSunarp('disp')}
+                        disabled={searchingSunarp}
+                        className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 bg-amber-500/10 hover:bg-amber-500/20 px-1.5 py-0.5 rounded-lg border border-amber-500/30 transition disabled:opacity-50"
+                        title="Consultar datos vehiculares oficiales en SUNARP"
+                      >
+                        {searchingSunarp ? (
+                          <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                        ) : (
+                          <Search className="w-3 h-3 text-amber-400" />
+                        )}
+                        <span>SUNARP</span>
+                      </button>
+                    </div>
                     <input
                       type="text"
                       value={dispPlate}
                       onChange={(e) => setDispPlate(e.target.value.toUpperCase())}
-                      placeholder="Ej. ABG890 (Opcional)"
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-amber-300 font-mono font-black outline-none focus:border-amber-400"
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleLookupSunarp('disp'); } }}
+                      placeholder="Ej. ABC-123"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-amber-300 font-mono font-black outline-none focus:border-amber-400 uppercase tracking-wider"
                     />
                   </div>
 
@@ -1771,17 +1856,47 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                 </span>
               </div>
 
+              {sunarpToast && (
+                <div className="bg-emerald-950/90 border border-emerald-500/40 text-emerald-200 p-2.5 rounded-xl text-xs flex items-start justify-between gap-2 shadow-lg animate-fade-in mb-2">
+                  <div>
+                    <div className="font-bold flex items-center gap-1.5 text-emerald-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{sunarpToast.title}</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-200/90 mt-1 font-mono leading-relaxed">{sunarpToast.details}</p>
+                  </div>
+                  <button type="button" onClick={() => setSunarpToast(null)} className="text-emerald-400 hover:text-white p-1">✕</button>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">
-                    Placa de Rodaje:
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-400">
+                      Placa:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleLookupSunarp('diag')}
+                      disabled={searchingSunarp}
+                      className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 bg-amber-500/10 hover:bg-amber-500/20 px-1.5 py-0.5 rounded-lg border border-amber-500/30 transition disabled:opacity-50"
+                      title="Consultar datos vehiculares oficiales en SUNARP"
+                    >
+                      {searchingSunarp ? (
+                        <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                      ) : (
+                        <Search className="w-3 h-3 text-amber-400" />
+                      )}
+                      <span>SUNARP</span>
+                    </button>
+                  </div>
                   <input
                     type="text"
                     placeholder="Ej. ABC-123"
                     value={diagPlate}
                     onChange={(e) => setDiagPlate(e.target.value.toUpperCase())}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-amber-300 font-mono font-bold outline-none focus:border-amber-400"
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleLookupSunarp('diag'); } }}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-amber-300 font-mono font-bold outline-none focus:border-amber-400 uppercase tracking-wider"
                   />
                 </div>
 

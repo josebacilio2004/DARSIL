@@ -1,6 +1,6 @@
-﻿const Client = require('../models/Client');
+const Client = require('../models/Client');
 const Vehicle = require('../models/Vehicle');
-const { searchRuc, searchDni } = require('../services/integrationService');
+const { searchRuc, searchDni, searchSunarpPlate } = require('../services/integrationService');
 
 exports.getClients = async (req, res) => {
   try {
@@ -37,6 +37,16 @@ exports.lookupDni = async (req, res) => {
   try {
     const { dni } = req.params;
     const data = await searchDni(dni);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.lookupSunarp = async (req, res) => {
+  try {
+    const { plate } = req.params;
+    const data = await searchSunarpPlate(plate);
     res.json({ success: true, data });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });

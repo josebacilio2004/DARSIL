@@ -458,18 +458,34 @@ function renderTallerHtml(quote, company) {
   `;
 }
 
-let cachedCarDiagramBase64 = null;
-function getCarDiagramDataUri() {
-  if (cachedCarDiagramBase64) return cachedCarDiagramBase64;
+const cachedVehicleDiagrams = {};
+function getCarDiagramDataUri(vehicleType = 'SEDAN_AUTO') {
+  const normType = String(vehicleType || 'SEDAN_AUTO').toUpperCase();
+  let filename = 'car_views_diagram.png';
+  let mimeType = 'image/png';
+
+  if (normType.includes('PICKUP') || normType.includes('CAMIONETA')) {
+    filename = 'PICKUP.jfif';
+    mimeType = 'image/jpeg';
+  } else if (normType.includes('TRACTO')) {
+    filename = 'TRACTO.jfif';
+    mimeType = 'image/jpeg';
+  } else if (normType.includes('MIXER')) {
+    filename = 'MIXER.jfif';
+    mimeType = 'image/jpeg';
+  }
+
+  if (cachedVehicleDiagrams[filename]) return cachedVehicleDiagrams[filename];
+
   try {
-    const assetPath = path.join(__dirname, '../../assets/car_views_diagram.png');
+    const assetPath = path.join(__dirname, '../../assets', filename);
     if (fs.existsSync(assetPath)) {
       const data = fs.readFileSync(assetPath).toString('base64');
-      cachedCarDiagramBase64 = `data:image/png;base64,${data}`;
-      return cachedCarDiagramBase64;
+      cachedVehicleDiagrams[filename] = `data:${mimeType};base64,${data}`;
+      return cachedVehicleDiagrams[filename];
     }
   } catch (err) {
-    console.warn('Could not read car_views_diagram.png:', err.message);
+    console.warn(`Could not read ${filename}:`, err.message);
   }
   return '';
 }
@@ -480,7 +496,7 @@ function getCarDiagramDataUri() {
  */
 function renderWorkOrderHtml(order, company) {
   const logoSrc = getLogoDataUri();
-  const carDiagramSrc = getCarDiagramDataUri();
+  const carDiagramSrc = getCarDiagramDataUri(order.vehicleType || order.unitType);
 
   const fechaIngreso = formatDate(order.checkInDate || order.createdAt);
   const horaIngreso = order.checkInDate 

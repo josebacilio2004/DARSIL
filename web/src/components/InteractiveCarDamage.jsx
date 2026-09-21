@@ -9,11 +9,10 @@ const DAMAGE_TYPES = [
 ];
 
 const VEHICLE_TEMPLATES = [
-  { id: 'SEDAN_AUTO', label: 'Sedán / Auto Liviano', icon: '🚗' },
-  { id: 'CAMIONETA_SUV', label: 'Camioneta / SUV / Pick-up', icon: '🛻' },
-  { id: 'TRACTO_CAMION', label: 'Tractocamión / Volquete', icon: '🚛' },
-  { id: 'BUS', label: 'Bus Pasajeros / Urbano', icon: '🚌' },
-  { id: 'MAQUINARIA', label: 'Maquinaria / Línea Amarilla', icon: '🚜' }
+  { id: 'SEDAN_AUTO', label: 'Sedán', icon: '🚗', image: './car_views_diagram.png' },
+  { id: 'CAMIONETA_PICKUP', label: 'Camioneta o Pick-up', icon: '🛻', image: './PICKUP.jfif' },
+  { id: 'TRACTO_CAMION', label: 'Tractocamión', icon: '🚛', image: './TRACTO.jfif' },
+  { id: 'MIXER', label: 'Mixer', icon: '🔄', image: './MIXER.jfif' }
 ];
 
 const VEHICLE_PRESETS = {
@@ -35,60 +34,49 @@ const VEHICLE_PRESETS = {
     { part: 'espejos_retrovisores', label: 'Espejos Retrovisores', view: 'top', x: 19, y: 48 },
     { part: 'lunas_vidrios', label: 'Lunas / Vidrios', view: 'left', x: 50, y: 65 }
   ],
-  CAMIONETA_SUV: [
-    { part: 'parachoques_delantero_suv', label: 'Parachoques Delantero / Barra', view: 'front', x: 22, y: 22 },
-    { part: 'capo_suv', label: 'Capó Reforzado', view: 'front', x: 22, y: 15 },
-    { part: 'parabrisas_suv', label: 'Parabrisas Frontal', view: 'front', x: 22, y: 8 },
-    { part: 'puerta_delantera_izq', label: 'Puerta Delantera Conductor', view: 'left', x: 40, y: 72 },
-    { part: 'puerta_trasera_izq', label: 'Puerta Trasera Izq', view: 'left', x: 60, y: 72 },
-    { part: 'tolva_cajon', label: 'Tolva / Platón / Cajón', view: 'left', x: 80, y: 70 },
-    { part: 'compuerta_tolva', label: 'Compuerta de Tolva / Portón', view: 'rear', x: 74, y: 18 },
-    { part: 'estribos_laterales', label: 'Estribo Lateral Izq/Der', view: 'left', x: 50, y: 82 },
-    { part: 'barra_antivuelco', label: 'Rollbar / Barra Antivuelco', view: 'top', x: 25, y: 62 },
-    { part: 'techo_suv', label: 'Techo / Rieles de Carga', view: 'top', x: 19, y: 55 },
-    { part: 'faros_neblineros', label: 'Faros y Neblineros Delanteros', view: 'front', x: 15, y: 18 },
-    { part: 'espejos_suv', label: 'Espejos Retrovisores Eléctricos', view: 'top', x: 19, y: 48 }
+  CAMIONETA_PICKUP: [
+    { part: 'parachoques_delantero_pickup', label: 'Parachoques Delantero / Barra', view: 'front', x: 20, y: 25 },
+    { part: 'capo_pickup', label: 'Capó / Máscara Frontal', view: 'front', x: 22, y: 18 },
+    { part: 'parabrisas_pickup', label: 'Parabrisas Delantero', view: 'front', x: 25, y: 12 },
+    { part: 'puerta_delantera_izq', label: 'Puerta Delantera Conductor', view: 'left', x: 42, y: 65 },
+    { part: 'puerta_trasera_izq', label: 'Puerta Trasera Izq', view: 'left', x: 58, y: 65 },
+    { part: 'tolva_cajon', label: 'Tolva / Balde / Cajón Pick-up', view: 'left', x: 78, y: 65 },
+    { part: 'compuerta_tolva', label: 'Compuerta Posterior de Tolva', view: 'rear', x: 80, y: 25 },
+    { part: 'estribos_laterales', label: 'Estribos Laterales Izq/Der', view: 'left', x: 50, y: 80 },
+    { part: 'barra_antivuelco', label: 'Barra Antivuelco / Rollbar', view: 'top', x: 68, y: 55 },
+    { part: 'techo_pickup', label: 'Techo / Rieles Superiores', view: 'top', x: 50, y: 45 },
+    { part: 'faros_delanteros_pickup', label: 'Faros y Neblineros Delanteros', view: 'front', x: 18, y: 20 },
+    { part: 'faros_posteriores_pickup', label: 'Faros Posteriores / Stop', view: 'rear', x: 82, y: 30 }
   ],
   TRACTO_CAMION: [
-    { part: 'cabina_frontal', label: 'Máscara / Calandra Frontal', view: 'front', x: 22, y: 20 },
-    { part: 'parachoques_metalico', label: 'Parachoques Metálico Pesado', view: 'front', x: 22, y: 26 },
-    { part: 'parabrisas_dividido', label: 'Parabrisas Panorámico Tracto', view: 'front', x: 22, y: 10 },
-    { part: 'deflector_rompevientos', label: 'Deflector de Techo / Aerodinámico', view: 'top', x: 19, y: 48 },
-    { part: 'puerta_conductor_tracto', label: 'Puerta Conductor & Peldaños', view: 'left', x: 38, y: 70 },
-    { part: 'litera_dormitorio', label: 'Sector Litera / Dormitorio', view: 'left', x: 55, y: 70 },
-    { part: 'tanque_combustible_izq', label: 'Tanque Petróleo Diésel Izq', view: 'left', x: 55, y: 82 },
-    { part: 'tanque_combustible_der', label: 'Tanque Petróleo Diésel Der', view: 'right', x: 55, y: 82 },
-    { part: 'quinta_rueda', label: 'Quinta Rueda / Enganche Plato', view: 'rear', x: 74, y: 20 },
-    { part: 'caja_baterias_tracto', label: 'Caja de Baterías 24V Tracto', view: 'left', x: 70, y: 80 },
-    { part: 'guardabarros_metalicos', label: 'Guardabarros Metálicos Ejes', view: 'rear', x: 74, y: 14 },
-    { part: 'faros_faena_techo', label: 'Faros Pirata / Faena Trasera', view: 'rear', x: 80, y: 10 }
+    { part: 'mascara_calandra', label: 'Máscara / Calandra Frontal', view: 'front', x: 22, y: 30 },
+    { part: 'parachoques_pesado', label: 'Parachoques Metálico Pesado', view: 'front', x: 22, y: 40 },
+    { part: 'parabrisas_tracto', label: 'Parabrisas Panorámico Tracto', view: 'front', x: 22, y: 18 },
+    { part: 'deflector_techo', label: 'Deflector de Techo Aerodinámico', view: 'top', x: 30, y: 25 },
+    { part: 'puerta_conductor_tracto', label: 'Puerta Conductor & Peldaños', view: 'left', x: 38, y: 65 },
+    { part: 'dormitorio_litera', label: 'Sector Litera / Cabina Dormitorio', view: 'left', x: 52, y: 60 },
+    { part: 'tanque_diesel_izq', label: 'Tanque Petróleo Diésel Izq', view: 'left', x: 52, y: 78 },
+    { part: 'tanque_diesel_der', label: 'Tanque Petróleo Diésel Der', view: 'right', x: 52, y: 78 },
+    { part: 'quinta_rueda', label: 'Quinta Rueda / Enganche de Remolque', view: 'rear', x: 75, y: 45 },
+    { part: 'caja_baterias_24v', label: 'Caja Baterías 24V Tracto', view: 'left', x: 65, y: 75 },
+    { part: 'guardabarros_tracto', label: 'Guardabarros Ejes Motrices', view: 'rear', x: 75, y: 35 },
+    { part: 'faros_faena_tracto', label: 'Faros de Faena y Trocha', view: 'rear', x: 78, y: 20 }
   ],
-  BUS: [
-    { part: 'parabrisas_panoramico_bus', label: 'Parabrisas Panorámico Doble', view: 'front', x: 22, y: 10 },
-    { part: 'mascara_bus', label: 'Máscara Delantera & Logo Bus', view: 'front', x: 22, y: 20 },
-    { part: 'puerta_pasajeros', label: 'Puerta Principal de Pasajeros', view: 'right', x: 32, y: 85 },
-    { part: 'puerta_conductor_bus', label: 'Puerta / Ventana Conductor', view: 'left', x: 30, y: 70 },
-    { part: 'bodegas_laterales_izq', label: 'Bodegas / Maleteros Izq', view: 'left', x: 55, y: 80 },
-    { part: 'bodegas_laterales_der', label: 'Bodegas / Maleteros Der', view: 'right', x: 55, y: 80 },
-    { part: 'ventanales_laterales', label: 'Ventanales Panorámicos Salón', view: 'left', x: 55, y: 65 },
-    { part: 'parachoques_delantero_bus', label: 'Parachoques Delantero Bus', view: 'front', x: 22, y: 25 },
-    { part: 'tapa_compartimiento_motor', label: 'Tapa Compartimiento Motor Posterior', view: 'rear', x: 74, y: 20 },
-    { part: 'parachoques_posterior_bus', label: 'Parachoques Posterior Bus', view: 'rear', x: 74, y: 25 },
-    { part: 'espejos_cuerno_bus', label: 'Espejos Panorámicos Tipo Cuerno', view: 'front', x: 15, y: 12 },
-    { part: 'techo_acondicionado_bus', label: 'Techo / Equipo Aire Acondicionado', view: 'top', x: 19, y: 52 }
-  ],
-  MAQUINARIA: [
-    { part: 'cucharon_pala', label: 'Cucharón / Pala Frontal / Lampón', view: 'front', x: 15, y: 24 },
-    { part: 'brazo_pluma', label: 'Pluma / Brazo / Cilindros Levante', view: 'front', x: 22, y: 15 },
-    { part: 'cabina_rops', label: 'Cabina Blindada ROP/FOPS', view: 'top', x: 22, y: 50 },
-    { part: 'orugas_rodado', label: 'Orugas Metálicas / Rodado OTR', view: 'left', x: 50, y: 82 },
-    { part: 'contrapeso_posterior', label: 'Contrapeso Posterior Maquinaria', view: 'rear', x: 74, y: 20 },
-    { part: 'capot_compartimiento_motor', label: 'Capot Motor Diésel / Enfriador', view: 'rear', x: 74, y: 12 },
-    { part: 'cilindros_hidraulicos', label: 'Cilindros Hidráulicos y Sellos', view: 'front', x: 28, y: 18 },
-    { part: 'faros_faena_cabina', label: 'Faros LED de Faena / Girofaro', view: 'top', x: 19, y: 45 },
-    { part: 'tanque_hidraulico', label: 'Tanque de Aceite Hidráulico', view: 'left', x: 65, y: 72 }
+  MIXER: [
+    { part: 'trompo_tambor_mixer', label: 'Tambor / Trompo Mezclador Giratorio', view: 'left', x: 55, y: 45 },
+    { part: 'tolva_carga_mixer', label: 'Tolva de Carga / Embudo Superior', view: 'rear', x: 78, y: 20 },
+    { part: 'canaleta_descarga_mixer', label: 'Canaleta de Descarga y Extensiones', view: 'rear', x: 82, y: 50 },
+    { part: 'cabina_operador_mixer', label: 'Cabina Operador y Espejos', view: 'left', x: 25, y: 55 },
+    { part: 'tanque_agua_mixer', label: 'Tanque Presurizado de Agua', view: 'top', x: 38, y: 40 },
+    { part: 'sistema_hidraulico_trompo', label: 'Bomba y Reductor Hidráulico Trompo', view: 'front', x: 36, y: 60 },
+    { part: 'parachoques_frontal_mixer', label: 'Parachoques Frontal Pesado', view: 'front', x: 18, y: 35 },
+    { part: 'guardabarros_posteriores', label: 'Guardabarros Ejes Posteriores', view: 'rear', x: 72, y: 70 },
+    { part: 'mandos_posteriores_mixer', label: 'Mandos Posteriores de Mezcla/Giro', view: 'rear', x: 85, y: 65 },
+    { part: 'escalera_inspeccion_mixer', label: 'Escalera / Plataforma Inspección', view: 'rear', x: 75, y: 35 }
   ]
 };
+// Compatibilidad previa
+VEHICLE_PRESETS.CAMIONETA_SUV = VEHICLE_PRESETS.CAMIONETA_PICKUP;
 
 export default function InteractiveCarDamage({ damages = [], onChange, readOnly = false, vehicleType = 'SEDAN_AUTO' }) {
   const [currentType, setCurrentType] = useState(vehicleType || 'SEDAN_AUTO');
@@ -239,44 +227,20 @@ export default function InteractiveCarDamage({ damages = [], onChange, readOnly 
           className="relative w-full max-w-2xl mx-auto rounded-xl overflow-hidden bg-slate-900/90 cursor-crosshair border-2 border-dashed border-amber-500/30 hover:border-amber-500 transition select-none flex items-center justify-center"
           style={{ minHeight: '330px' }}
         >
-          {/* Si es SEDAN_AUTO, muestra la imagen de 5 vistas */}
-          {currentType === 'SEDAN_AUTO' ? (
+          {/* Muestra la plantilla técnica o blueprint del vehículo seleccionado (Sedán, Camioneta o Pick-up, Tractocamión, Mixer) */}
+          {currentTemplate.image ? (
             <img 
-              src="./car_views_diagram.png" 
-              alt="5 Vistas de Carrocería Sedán" 
-              className="w-full h-auto object-contain mx-auto pointer-events-none filter contrast-125 bg-white/95 rounded-lg"
+              src={currentTemplate.image} 
+              alt={`Esquema de ${currentTemplate.label}`} 
+              className="w-full h-auto max-h-[440px] object-contain mx-auto pointer-events-none filter contrast-125 bg-white/95 rounded-lg shadow-inner"
             />
           ) : (
-            /* Plantilla vectorial / blueprint para Camioneta, Tractocamión, Bus o Maquinaria */
             <div className="w-full h-full p-4 flex flex-col items-center justify-center relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-400">
-              {/* Cuadrícula de ingeniería */}
-              <div className="absolute inset-0 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:20px_20px] opacity-15 pointer-events-none"></div>
-
-              <div className="text-center z-10 space-y-2 pointer-events-none py-6">
-                <div className="text-6xl drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">
-                  {currentTemplate.icon}
-                </div>
-                <div className="font-mono font-black text-white text-base tracking-wider uppercase">
-                  ESQUEMA TÉCNICO • {currentTemplate.label}
-                </div>
-                <p className="text-[11px] text-amber-300 max-w-md mx-auto">
-                  Haz clic en cualquier sector del diagrama o selecciona un componente rápido abajo para registrar el peritaje.
-                </p>
-
-                <div className="grid grid-cols-3 gap-3 text-[10px] font-mono text-slate-400 pt-3">
-                  <div className="bg-slate-900/80 border border-slate-800 rounded-lg p-2">
-                    <span className="text-amber-400 block font-bold">ZONA FRONTAL</span>
-                    <span>Capó / Parachoques / Luces</span>
-                  </div>
-                  <div className="bg-slate-900/80 border border-slate-800 rounded-lg p-2">
-                    <span className="text-cyan-400 block font-bold">CABINA Y LATERALES</span>
-                    <span>Puertas / Tolva / Tanques</span>
-                  </div>
-                  <div className="bg-slate-900/80 border border-slate-800 rounded-lg p-2">
-                    <span className="text-purple-400 block font-bold">ZONA POSTERIOR</span>
-                    <span>Compuerta / Ejes / 5ta Rueda</span>
-                  </div>
-                </div>
+              <div className="text-6xl drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+                {currentTemplate.icon}
+              </div>
+              <div className="font-mono font-black text-white text-base tracking-wider uppercase mt-2">
+                ESQUEMA TÉCNICO • {currentTemplate.label}
               </div>
             </div>
           )}

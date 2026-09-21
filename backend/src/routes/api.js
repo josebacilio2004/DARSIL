@@ -67,9 +67,10 @@ router.post('/catalog/seed', catalogController.seedCatalog);
 router.get('/clients', clientController.getClients);
 router.get('/vehicles', clientController.getVehicles);
 
-// Integraciones SUNAT / RENIEC
+// Integraciones SUNAT / RENIEC / SUNARP
 router.get('/integrations/ruc/:ruc', clientController.lookupRuc);
 router.get('/integrations/dni/:dni', clientController.lookupDni);
+router.get('/integrations/sunarp/:plate', clientController.lookupSunarp);
 
 // Configuración de Empresa y Taller
 router.get('/company', companyController.getCompanyConfig);

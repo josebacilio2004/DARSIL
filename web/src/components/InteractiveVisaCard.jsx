@@ -216,7 +216,7 @@ export default function InteractiveVisaCard({ bankAccounts = [], onEditAccount, 
                       DARSIL AUTOMOTIVE SOLUTIONS
                     </span>
                     <span className="text-[10px] font-semibold text-slate-300 block">
-                      RUBEN BASILIO BACILIO
+                      RUBEN DARIO BACILIO DE LA CRUZ
                     </span>
                   </div>
 
@@ -255,7 +255,7 @@ export default function InteractiveVisaCard({ bankAccounts = [], onEditAccount, 
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-8 bg-slate-200 rounded flex items-center px-3 text-slate-800 font-serif italic text-xs font-bold tracking-wide select-none">
-                    Ruben Basilio Bacilio
+                    Ruben Dario Bacilio De La Cruz
                   </div>
                   <div className="w-14 h-8 bg-white rounded flex items-center justify-center font-mono font-black text-slate-900 text-xs border border-slate-300 shadow-inner">
                     824
