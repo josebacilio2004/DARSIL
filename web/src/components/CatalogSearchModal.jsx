@@ -26,8 +26,8 @@ export default function CatalogSearchModal({ catalog = [], isOpen, onClose, onSe
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-      <div className="bg-darsil-card border border-darsil-border rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
+    <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in">
+      <div className="bg-darsil-card border border-darsil-border rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[85vh] my-auto flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
         
         {/* Cabecera del Buscador */}
         <div className="p-4 sm:p-5 border-b border-darsil-border flex items-center justify-between bg-slate-900/60">

@@ -185,30 +185,30 @@ export default function MapboxRouteModal({ quote, company, onClose, onQuoteUpdat
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-      <div className="bg-darsil-card w-full max-w-5xl h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-darsil-border text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4">
+      <div className="bg-darsil-card w-full max-w-5xl h-[95vh] sm:h-[90vh] rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-darsil-border text-white">
         
         {/* Modal Header */}
-        <div className="bg-darsil-obsidian px-6 py-4 flex items-center justify-between border-b border-darsil-border">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-amber-500/20 text-darsil-gold border border-amber-500/30">
-              <Navigation className="w-5 h-5" />
+        <div className="bg-darsil-obsidian px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-darsil-border">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-amber-500/20 text-darsil-gold border border-amber-500/30 shrink-0">
+              <Navigation className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center space-x-2">
-                <h2 className="font-extrabold text-lg text-white">Ruta y Logística de Campo</h2>
-                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-amber-400 text-slate-950">
+                <h2 className="font-extrabold text-sm sm:text-lg text-white truncate">Ruta y Logística de Campo</h2>
+                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-amber-400 text-slate-950 shrink-0">
                   {quote.quoteNumber}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">
                 Cliente: <span className="font-semibold text-slate-200">{quote.clientName}</span>
                 {quote.plate ? ` • Placa: ${quote.plate}` : ''}
               </p>
             </div>
           </div>
 
-          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <button onClick={onClose} className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -217,10 +217,10 @@ export default function MapboxRouteModal({ quote, company, onClose, onQuoteUpdat
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
           
           {/* Mapa Mapbox */}
-          <div ref={mapContainer} className="flex-1 h-full w-full bg-slate-950" />
+          <div ref={mapContainer} className="flex-1 min-h-[220px] md:min-h-0 h-full w-full bg-slate-950" />
 
           {/* Panel Lateral de Presupuesto */}
-          <div className="w-full md:w-96 bg-darsil-obsidian border-t md:border-t-0 md:border-l border-darsil-border p-5 flex flex-col justify-between overflow-y-auto space-y-4">
+          <div className="w-full md:w-96 bg-darsil-obsidian border-t md:border-t-0 md:border-l border-darsil-border p-4 sm:p-5 flex flex-col justify-between overflow-y-auto space-y-4">
             
             <div className="space-y-4">
               <h3 className="font-bold text-sm text-darsil-gold uppercase tracking-wider flex items-center space-x-2">

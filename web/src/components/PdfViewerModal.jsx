@@ -72,20 +72,20 @@ Quedamos a su entera disposición para coordinar la atención técnica.
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-      <div className="bg-darsil-card w-full max-w-5xl h-[92vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-darsil-border text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4">
+      <div className="bg-darsil-card w-full max-w-5xl h-[95vh] sm:h-[92vh] rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-darsil-border text-white">
         
         {/* Header */}
-        <div className="bg-darsil-obsidian px-6 py-4 flex items-center justify-between border-b border-darsil-border">
-          <div className="flex items-center space-x-3">
-            <span className="font-mono bg-amber-400 text-slate-950 font-black px-2.5 py-1 rounded-xl text-sm shadow-gold-glow">
+        <div className="bg-darsil-obsidian px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-darsil-border">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <span className="font-mono bg-amber-400 text-slate-950 font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl text-xs sm:text-sm shadow-gold-glow shrink-0">
               {docNumber}
             </span>
-            <div>
-              <h2 className="font-extrabold text-lg text-white">{clientName}</h2>
-              <p className="text-xs text-slate-400">
+            <div className="min-w-0">
+              <h2 className="font-extrabold text-sm sm:text-lg text-white truncate">{clientName}</h2>
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">
                 {isWorkOrder ? (
-                  <span>{vehicleDesc ? `${vehicleDesc} • ` : ''}Estado OT: <b className="text-amber-400">{quote.status || 'REGISTRADO'}</b></span>
+                  <span>{vehicleDesc ? `${vehicleDesc} • ` : ''}Estado: <b className="text-amber-400">{quote.status || 'REGISTRADO'}</b></span>
                 ) : (
                   <span>{vehicleDesc ? `${vehicleDesc} • ` : ''}Total: <b className="text-emerald-400">S/ {Number(quote.total || 0).toFixed(2)}</b></span>
                 )}
@@ -93,16 +93,16 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             </div>
           </div>
 
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 justify-end shrink-0">
             
             {/* Mapa / Viáticos (si aplica a cotización) */}
             {onOpenMap && !isWorkOrder && (
               <button
                 type="button"
                 onClick={() => onOpenMap(quote)}
-                className="flex items-center space-x-1.5 bg-blue-950/60 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-800/60 px-3 py-1.5 rounded-xl text-xs font-bold transition"
+                className="flex items-center space-x-1 sm:space-x-1.5 bg-blue-950/60 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-800/60 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition"
               >
-                <MapPin className="w-4 h-4 text-blue-400" />
+                <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
                 <span className="hidden sm:inline">Ruta en Mapa</span>
               </button>
             )}
@@ -111,20 +111,21 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             <button
               type="button"
               onClick={handleWhatsAppRedirect}
-              className="flex items-center space-x-1.5 bg-emerald-950/60 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-800/60 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm"
+              className="flex items-center space-x-1 sm:space-x-1.5 bg-emerald-950/60 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-800/60 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm"
               title={`Enviar WhatsApp a ${quote.clientPhone || quote.driverPhone || 'cliente'}`}
             >
-              <Share2 className="w-4 h-4 text-emerald-400" />
-              <span>Enviar WhatsApp</span>
+              <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+              <span className="hidden sm:inline">Enviar WhatsApp</span>
+              <span className="sm:hidden">WhatsApp</span>
             </button>
 
             {/* Descargar */}
             <a
               href={pdfUrl}
               download={`${docNumber}.pdf`}
-              className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 transition"
+              className="flex items-center space-x-1 sm:space-x-1.5 bg-slate-800 hover:bg-slate-700 text-white px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 transition"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Descargar</span>
             </a>
 
@@ -133,7 +134,7 @@ Quedamos a su entera disposición para coordinar la atención técnica.
               href={pdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition"
+              className="p-1.5 sm:p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition"
               title="Abrir en pestaña nueva"
             >
               <ExternalLink className="w-4 h-4" />
@@ -142,7 +143,7 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             {/* Cerrar */}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition ml-1"
+              className="p-1.5 sm:p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition ml-0.5"
             >
               <X className="w-5 h-5" />
             </button>
@@ -150,14 +151,14 @@ Quedamos a su entera disposición para coordinar la atención técnica.
         </div>
 
         {/* Sub-barra de Estado */}
-        <div className="bg-darsil-obsidian/80 px-6 py-2 border-b border-darsil-border flex items-center justify-between text-xs text-slate-400">
+        <div className="bg-darsil-obsidian/80 px-3 sm:px-6 py-2 border-b border-darsil-border flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
           <div className="flex items-center space-x-2">
             <span>Estado:</span>
             {isWorkOrder ? (
               <select
                 value={quote.status || 'DESPACHADO'}
                 onChange={(e) => handleStatusChange(e.target.value)}
-                className="bg-darsil-card border border-darsil-border rounded-lg px-2.5 py-1 font-bold text-amber-300 outline-none"
+                className="bg-darsil-card border border-darsil-border rounded-lg px-2 py-0.5 font-bold text-amber-300 outline-none text-xs"
               >
                 <option value="DESPACHADO" className="bg-slate-900 text-white">Despachado</option>
                 <option value="EN_DIAGNOSTICO" className="bg-slate-900 text-white">En Diagnóstico</option>
@@ -170,7 +171,7 @@ Quedamos a su entera disposición para coordinar la atención técnica.
               <select
                 value={quote.status}
                 onChange={(e) => handleStatusChange(e.target.value)}
-                className="bg-darsil-card border border-darsil-border rounded-lg px-2.5 py-1 font-bold text-amber-300 outline-none"
+                className="bg-darsil-card border border-darsil-border rounded-lg px-2 py-0.5 font-bold text-amber-300 outline-none text-xs"
               >
                 <option value="BORRADOR" className="bg-slate-900 text-white">Borrador</option>
                 <option value="ENVIADA" className="bg-slate-900 text-white">Enviada</option>
@@ -182,10 +183,10 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             )}
           </div>
 
-          <div>
-            Tipo de Documento: <span className="font-semibold text-slate-200">
-              {isWorkOrder ? 'Acta Oficial de Orden de Trabajo & Check-In (Taller DARSIL)' : (
-                quote.templateType === 'PROYECTO_ESPECIAL' ? 'Proyecto Especial (Plantilla 1)' : 'Taller Detallado (Plantilla 2 Oficial)'
+          <div className="text-[11px] sm:text-xs truncate max-w-full">
+            <span className="text-slate-500">Documento:</span> <span className="font-semibold text-slate-300">
+              {isWorkOrder ? 'Acta de Orden de Trabajo' : (
+                quote.templateType === 'PROYECTO_ESPECIAL' ? 'Proyecto Especial' : 'Taller Detallado Oficial'
               )}
             </span>
           </div>

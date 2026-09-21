@@ -84,53 +84,26 @@ Quedamos a su entera disposición para coordinar la atención técnica.
     <div className="space-y-4">
       
       {/* Barra de Filtros, Búsqueda y Botón Nueva Cotización */}
-      <div className="bg-darsil-card p-4 rounded-2xl shadow-card-dark border border-darsil-border flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-darsil-card p-3 sm:p-4 rounded-2xl shadow-card-dark border border-darsil-border space-y-3">
         
-        {/* Input de Búsqueda */}
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-          <input
-            type="text"
-            placeholder="Buscar por placa, N° cotización, cliente..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-xs bg-darsil-obsidian border border-darsil-border rounded-xl text-slate-100 placeholder-slate-500 focus:border-amber-400 outline-none"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-          {/* Filtros por Estado */}
-          <div className="flex items-center space-x-1.5 overflow-x-auto text-xs">
-            <button
-              onClick={() => setFilterStatus('ALL')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition ${
-                filterStatus === 'ALL' 
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow' 
-                  : 'bg-darsil-obsidian text-slate-400 hover:text-white border border-darsil-border'
-              }`}
-            >
-              Todas ({quotes.length})
-            </button>
-            {['APROBADA', 'EN_TALLER', 'ENVIADA', 'BORRADOR'].map(st => (
-              <button
-                key={st}
-                onClick={() => setFilterStatus(st)}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition border ${
-                  filterStatus === st 
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-400' 
-                    : 'bg-darsil-obsidian text-slate-400 border-darsil-border hover:text-white'
-                }`}
-              >
-                {STATUS_CONFIG[st]?.label || st}
-              </button>
-            ))}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          {/* Input de Búsqueda */}
+          <div className="relative w-full sm:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 sm:top-3" />
+            <input
+              type="text"
+              placeholder="Buscar por placa, N° cotización, cliente..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-xs bg-darsil-obsidian border border-darsil-border rounded-xl text-slate-100 placeholder-slate-500 focus:border-amber-400 outline-none"
+            />
           </div>
 
           {/* Botón Superior Derecho: Nueva Cotización */}
           {onOpenNewQuote && (
             <button
               onClick={onOpenNewQuote}
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition shrink-0"
+              className="flex items-center justify-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition shrink-0"
               title="Crear Nueva Cotización Oficial"
             >
               <PlusCircle className="w-4 h-4 text-slate-950" />
@@ -139,12 +112,148 @@ Quedamos a su entera disposición para coordinar la atención técnica.
           )}
         </div>
 
+        {/* Filtros por Estado con scroll táctil suave */}
+        <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-0.5 text-xs">
+          <button
+            onClick={() => setFilterStatus('ALL')}
+            className={`px-3 py-1.5 rounded-lg font-bold transition shrink-0 ${
+              filterStatus === 'ALL' 
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow' 
+                : 'bg-darsil-obsidian text-slate-400 hover:text-white border border-darsil-border'
+            }`}
+          >
+            Todas ({quotes.length})
+          </button>
+          {['APROBADA', 'EN_TALLER', 'ENVIADA', 'BORRADOR'].map(st => (
+            <button
+              key={st}
+              onClick={() => setFilterStatus(st)}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition border shrink-0 ${
+                filterStatus === st 
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-400' 
+                  : 'bg-darsil-obsidian text-slate-400 border-darsil-border hover:text-white'
+              }`}
+            >
+              {STATUS_CONFIG[st]?.label || st}
+            </button>
+          ))}
+        </div>
+
       </div>
 
-      {/* Tabla Corporativa de Cotizaciones */}
-      <div className="bg-darsil-card rounded-2xl border border-darsil-border shadow-card-dark overflow-hidden">
+      {/* Vista Móvil (Tarjetas Táctiles para iPhone 15 Pro y pantallas pequeñas) */}
+      <div className="md:hidden space-y-3">
+        {filteredQuotes.length === 0 ? (
+          <div className="p-8 text-center text-slate-500 bg-darsil-card border border-darsil-border rounded-2xl text-xs">
+            No se encontraron cotizaciones con los criterios seleccionados.
+          </div>
+        ) : (
+          filteredQuotes.map((q) => {
+            const statusInfo = STATUS_CONFIG[q.status] || STATUS_CONFIG['BORRADOR'];
+            const dateStr = q.issueDate ? new Date(q.issueDate).toLocaleDateString('es-PE') : '-';
+
+            return (
+              <div
+                key={q._id}
+                className="bg-darsil-card border border-darsil-border hover:border-amber-500/40 rounded-2xl p-3.5 space-y-3 shadow-card-dark transition"
+              >
+                {/* Cabecera de la Tarjeta Móvil */}
+                <div className="flex items-center justify-between">
+                  <span className="font-mono bg-slate-900 border border-slate-800 text-amber-400 font-black px-2.5 py-1 rounded-lg text-xs shadow-inner">
+                    {q.quoteNumber}
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[10px] text-slate-500 font-mono">{dateStr}</span>
+                    <select
+                      value={q.status}
+                      onChange={(e) => handleStatusChange(e, q._id)}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border outline-none cursor-pointer ${statusInfo.bg}`}
+                    >
+                      <option value="BORRADOR" className="bg-slate-900 text-white">Borrador</option>
+                      <option value="ENVIADA" className="bg-slate-900 text-white">Enviada</option>
+                      <option value="APROBADA" className="bg-slate-900 text-white">Aprobada</option>
+                      <option value="EN_TALLER" className="bg-slate-900 text-white">En Taller</option>
+                      <option value="FACTURADA" className="bg-slate-900 text-white">Facturada</option>
+                      <option value="RECHAZADA" className="bg-slate-900 text-white">Rechazada</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Cliente & Vehículo */}
+                <div>
+                  <div className="font-bold text-white text-sm line-clamp-1">{q.clientName}</div>
+                  <div className="text-[11px] text-slate-400 flex items-center space-x-1 mt-0.5">
+                    {q.clientDoc && <span className="font-mono text-slate-400 font-semibold">{q.clientDoc} • </span>}
+                    <span className="truncate">{q.clientAddress || 'Taller DARSIL (VES)'}</span>
+                  </div>
+                  {q.plate && (
+                    <div className="flex items-center space-x-1.5 mt-1.5 text-xs font-mono font-bold text-amber-300">
+                      <Car className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>{q.plate}</span>
+                      <span className="text-slate-400 font-sans font-normal text-[11px] truncate">({q.model || 'Sin modelo'})</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Total & Botones de Acción Táctiles */}
+                <div className="pt-2.5 border-t border-darsil-border flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total</span>
+                    <span className="text-base font-black text-amber-400 font-mono">
+                      S/ {Number(q.total || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center space-x-1.5">
+                    <button
+                      onClick={() => onSelectQuote(q)}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition"
+                      title="Ver PDF Oficial"
+                    >
+                      <Eye className="w-4 h-4 text-amber-400" />
+                    </button>
+                    <button
+                      onClick={(e) => handleShareWhatsApp(e, q)}
+                      className="p-2 rounded-xl bg-emerald-950/80 hover:bg-emerald-800 text-emerald-400 border border-emerald-500/40 transition"
+                      title="WhatsApp"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => onEditQuote(q)}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border border-slate-700 transition"
+                      title="Editar"
+                    >
+                      <Edit3 className="w-4 h-4 text-amber-400" />
+                    </button>
+                    {onOpenMap && (
+                      <button
+                        onClick={() => onOpenMap(q)}
+                        className="p-2 rounded-xl bg-slate-800 hover:bg-blue-500/20 text-blue-400 border border-slate-700 transition"
+                        title="Mapa y Viáticos"
+                      >
+                        <MapPin className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => handleDelete(e, q)}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 transition"
+                      title="Eliminar"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Tabla Corporativa de Cotizaciones (Solo Pantallas Medianas y Grandes) */}
+      <div className="hidden md:block bg-darsil-card rounded-2xl border border-darsil-border shadow-card-dark overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
+          <table className="w-full text-left text-xs text-slate-300 min-w-[720px]">
             <thead className="bg-darsil-obsidian border-b border-darsil-border text-slate-400 font-bold uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="p-3.5 w-32">Nº Cotización</th>

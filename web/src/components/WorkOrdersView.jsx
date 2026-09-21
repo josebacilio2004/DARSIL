@@ -1209,13 +1209,13 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
       </div>
 
       {/* Filtros y Búsqueda */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-800">
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-slate-900/40 p-3 rounded-2xl border border-slate-800">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-0.5">
           {['ALL', 'DESPACHADO', 'EN_DIAGNOSTICO', 'EN_PROCESO', 'ENTREGADO'].map(st => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 ${
                 statusFilter === st 
                   ? 'bg-amber-500 text-slate-950 shadow-md' 
                   : 'text-slate-400 hover:text-white bg-slate-800/60'
@@ -1378,8 +1378,8 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
       {/* MODAL PASO 1: NUEVO DESPACHO INICIAL (CLIENTE, AUTO, MAPA) */}
       {/* ======================================================== */}
       {showDispatchModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full shadow-2xl p-5 sm:p-6 space-y-4 my-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-4 md:p-6 flex min-h-full items-start sm:items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl sm:rounded-3xl max-w-3xl w-full shadow-2xl p-4 sm:p-6 space-y-4 my-auto">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
                 <Truck className="w-5 h-5 text-amber-400" />
@@ -1487,7 +1487,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3 text-xs">
                   <div>
                     <label className="block text-slate-400 font-semibold mb-1 text-[11px]">Placa (Opcional):</label>
                     <div className="relative">
@@ -1789,8 +1789,8 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
       {/* MODAL PASO 2: DIAGNÓSTICO EN SITIO / TALLER (EDICIÓN OT)  */}
       {/* ======================================================== */}
       {showDiagnosticModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto animate-fadeIn">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-5xl w-full shadow-2xl p-4 sm:p-6 space-y-4 my-auto max-h-[94vh] flex flex-col">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/90 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl sm:rounded-3xl max-w-5xl w-full shadow-2xl p-3 sm:p-6 space-y-3 sm:space-y-4 my-auto flex flex-col">
             
             {/* Header del Diagnóstico */}
             <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-3">

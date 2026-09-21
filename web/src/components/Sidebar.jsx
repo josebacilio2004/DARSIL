@@ -111,7 +111,7 @@ export default function Sidebar({
 
       {/* Menú Lateral Desplegable */}
       <aside 
-        className={`fixed top-0 bottom-0 left-0 z-50 bg-darsil-obsidian border-r border-darsil-border text-white flex flex-col justify-between transition-all duration-300 ease-in-out shadow-2xl ${
+        className={`fixed top-0 bottom-0 left-0 z-50 bg-darsil-obsidian border-r border-darsil-border text-white flex flex-col justify-between transition-all duration-300 ease-in-out shadow-2xl pt-safe pb-safe ${
           isOpen ? 'w-64 sm:w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'
         }`}
       >
@@ -122,7 +122,10 @@ export default function Sidebar({
           {isOpen ? (
             <>
               <div 
-                onClick={() => setActiveTab('dashboard')} 
+                onClick={() => {
+                  setActiveTab('dashboard');
+                  if (typeof window !== 'undefined' && window.innerWidth < 1024) setIsOpen(false);
+                }} 
                 className="flex items-center space-x-2.5 cursor-pointer select-none overflow-hidden group"
               >
                 <div className="h-9 w-9 flex items-center justify-center p-1 rounded-xl bg-black/50 border border-amber-500/30 group-hover:border-amber-400 shrink-0 transition shadow-inner">
@@ -283,8 +286,8 @@ export default function Sidebar({
 
       {/* Modal de Configuración de Servidor */}
       {serverModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-darsil-card border border-darsil-border rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-3 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-darsil-card border border-darsil-border rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl space-y-4 my-auto">
             <div className="flex items-center justify-between border-b border-darsil-border pb-3">
               <div className="flex items-center space-x-2 text-cyan-400">
                 <Server className="w-5 h-5" />

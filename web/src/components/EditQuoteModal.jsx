@@ -195,23 +195,23 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="bg-darsil-card w-full max-w-4xl my-8 rounded-3xl shadow-2xl overflow-hidden border border-darsil-border text-white">
+    <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-4 md:p-6 flex min-h-full items-start sm:items-center justify-center bg-black/80 backdrop-blur-md">
+      <div className="bg-darsil-card w-full max-w-4xl my-auto rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-darsil-border text-white">
         
         {/* Header */}
-        <div className="bg-darsil-obsidian px-6 py-4 flex items-center justify-between border-b border-darsil-border">
+        <div className="bg-darsil-obsidian px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between border-b border-darsil-border">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-amber-500/20 text-darsil-gold border border-amber-500/30 font-black">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-amber-500/20 text-darsil-gold border border-amber-500/30 font-black">
               ✏️
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg font-bold text-white">Editar Cotización</h2>
-                <span className="font-mono text-xs font-black px-2.5 py-1 rounded bg-amber-400 text-slate-950">
+                <h2 className="text-sm sm:text-lg font-bold text-white">Editar Cotización</h2>
+                <span className="font-mono text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded bg-amber-400 text-slate-950">
                   {quote.quoteNumber}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Actualiza datos, plazos de entrega y partidas de la cotización</p>
+              <p className="text-[10px] sm:text-xs text-slate-400">Actualiza datos, plazos de entrega y partidas de la cotización</p>
             </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
@@ -219,7 +219,7 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 space-y-4 sm:space-y-5 max-h-[82vh] overflow-y-auto">
           
           {/* Cliente */}
           <div className="bg-darsil-obsidian border border-darsil-border rounded-2xl p-4 space-y-3">
@@ -469,8 +469,8 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
             </div>
 
             {/* Tabla de Servicios */}
-            <div className="overflow-x-auto border border-darsil-border rounded-xl">
-              <table className="w-full text-xs text-left">
+            <div className="overflow-x-auto no-scrollbar border border-darsil-border rounded-xl">
+              <table className="w-full text-xs text-left min-w-[560px]">
                 <thead className="bg-slate-900 text-slate-300 font-bold">
                   <tr>
                     <th className="p-2.5 w-20">Ref.</th>
@@ -596,8 +596,8 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
             </div>
 
             {/* Tabla de Repuestos */}
-            <div className="overflow-x-auto border border-darsil-border rounded-xl">
-              <table className="w-full text-xs text-left">
+            <div className="overflow-x-auto no-scrollbar border border-darsil-border rounded-xl">
+              <table className="w-full text-xs text-left min-w-[560px]">
                 <thead className="bg-slate-900 text-slate-300 font-bold">
                   <tr>
                     <th className="p-2.5 w-28">SKU / Ref.</th>

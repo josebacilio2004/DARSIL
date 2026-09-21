@@ -298,8 +298,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenNewQuote, compan
 
       {/* Modal de Configuración de Servidor API */}
       {serverModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-darsil-card border border-amber-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 overflow-y-auto p-3 sm:p-4 flex min-h-full items-start sm:items-center justify-center">
+          <div className="bg-darsil-card border border-amber-500/40 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
                 <Server className="w-5 h-5 text-amber-400" />

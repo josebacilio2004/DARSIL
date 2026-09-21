@@ -317,10 +317,10 @@ export default function InventoryView() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full md:w-auto">
           <button
             onClick={() => setShowCategoryModal(true)}
-            className="flex items-center space-x-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-darsil-card hover:bg-slate-800 text-amber-400 border border-amber-500/30 transition active:scale-95 shadow-sm"
+            className="flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-darsil-card hover:bg-slate-800 text-amber-400 border border-amber-500/30 transition active:scale-95 shadow-sm"
             title="Administrar Categorías de Inventario"
           >
             <Tag className="w-3.5 h-3.5" />
@@ -329,7 +329,7 @@ export default function InventoryView() {
 
           <button
             onClick={() => setShowUnitModal(true)}
-            className="flex items-center space-x-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-darsil-card hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 transition active:scale-95 shadow-sm"
+            className="flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-darsil-card hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 transition active:scale-95 shadow-sm"
             title="Administrar Unidades de Medida"
           >
             <Boxes className="w-3.5 h-3.5" />
@@ -338,67 +338,67 @@ export default function InventoryView() {
 
           <button
             onClick={() => handleOpenMovement(items[0] || null)}
-            className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-darsil-card hover:bg-slate-800 text-slate-200 border border-darsil-border transition active:scale-95"
+            className="flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-darsil-card hover:bg-slate-800 text-slate-200 border border-darsil-border transition active:scale-95"
           >
             <History className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Movimiento Kardex</span>
+            <span>Kardex</span>
           </button>
 
           <button
             onClick={handleOpenNewItem}
-            className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
+            className="flex items-center justify-center space-x-1.5 px-3.5 py-2 sm:py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
           >
             <Plus className="w-4 h-4 text-slate-950" />
-            <span>+ Nuevo Repuesto / Filamento</span>
+            <span>+ Nuevo</span>
           </button>
         </div>
       </div>
 
-      {/* Tarjetas KPI */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Valor de Almacén</span>
-            <span className="text-2xl font-black text-amber-400">{formatMoney(summary?.totalStockValue)}</span>
-            <span className="text-[10px] text-slate-500 block">Costo total inmovilizado</span>
+      {/* Tarjetas KPI: 2 columnas en iPhone 15 Pro, 4 en desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block truncate">Valor Almacén</span>
+            <span className="text-base sm:text-2xl font-black text-amber-400 block truncate">{formatMoney(summary?.totalStockValue)}</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">Costo inmovilizado</span>
           </div>
-          <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400">
-            <DollarSign className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Referencias Activas</span>
-            <span className="text-2xl font-black text-white">{summary?.totalItems || items.length}</span>
-            <span className="text-[10px] text-slate-500 block">SKUs en catálogo físico</span>
-          </div>
-          <div className="p-3 rounded-xl bg-cyan-500/10 text-cyan-400">
-            <Boxes className="w-5 h-5" />
+          <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-amber-500/10 text-amber-400 shrink-0 ml-1">
+            <DollarSign className="w-4 sm:w-5 h-4 sm:h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Alertas de Stock Bajo</span>
-            <span className={`text-2xl font-black ${summary?.lowStockCount > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block truncate">Referencias</span>
+            <span className="text-base sm:text-2xl font-black text-white block truncate">{summary?.totalItems || items.length}</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">SKUs en almacén</span>
+          </div>
+          <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-cyan-500/10 text-cyan-400 shrink-0 ml-1">
+            <Boxes className="w-4 sm:w-5 h-4 sm:h-5" />
+          </div>
+        </div>
+
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block truncate">Stock Bajo</span>
+            <span className={`text-base sm:text-2xl font-black block truncate ${summary?.lowStockCount > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
               {summary?.lowStockCount || 0}
             </span>
-            <span className="text-[10px] text-slate-500 block">Por debajo del mínimo</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">Bajo el mínimo</span>
           </div>
-          <div className={`p-3 rounded-xl ${summary?.lowStockCount > 0 ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
-            <AlertTriangle className="w-5 h-5" />
+          <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl shrink-0 ml-1 ${summary?.lowStockCount > 0 ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+            <AlertTriangle className="w-4 sm:w-5 h-4 sm:h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Kardex Inmutable</span>
-            <span className="text-2xl font-black text-purple-400">Auditoría 100%</span>
-            <span className="text-[10px] text-slate-500 block">Trazabilidad por movimiento</span>
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block truncate">Kardex</span>
+            <span className="text-base sm:text-2xl font-black text-purple-400 block truncate">Auditoría</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">Inmutable</span>
           </div>
-          <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400">
-            <History className="w-5 h-5" />
+          <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-purple-500/10 text-purple-400 shrink-0 ml-1">
+            <History className="w-4 sm:w-5 h-4 sm:h-5" />
           </div>
         </div>
       </div>
@@ -459,9 +459,99 @@ export default function InventoryView() {
         </div>
       </div>
 
-      {/* Tabla de Inventario */}
-      <div className="overflow-x-auto rounded-2xl border border-darsil-border bg-darsil-card">
-        <table className="w-full text-xs text-left">
+      {/* Vista Móvil: Tarjetas Táctiles para iPhone 15 Pro */}
+      <div className="md:hidden space-y-3">
+        {items.length === 0 ? (
+          <div className="p-8 text-center text-slate-500 bg-darsil-card border border-darsil-border rounded-2xl text-xs">
+            No se encontraron ítems en inventario.
+          </div>
+        ) : (
+          items.map((item) => {
+            const isCritical = item.currentStock <= item.minStock;
+            const isWarning = item.currentStock <= item.minStock * 1.5;
+
+            return (
+              <div
+                key={item._id}
+                className="bg-darsil-card border border-darsil-border hover:border-amber-500/40 rounded-2xl p-3.5 space-y-2.5 shadow-card-dark transition"
+              >
+                {/* Cabecera de la Tarjeta */}
+                <div className="flex items-center justify-between">
+                  <span className="font-mono bg-slate-900 border border-slate-800 text-amber-400 font-black px-2 py-0.5 rounded text-xs">
+                    {item.sku}
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 truncate max-w-[150px]">
+                    {item.category.replace(/_/g, ' ')}
+                  </span>
+                </div>
+
+                {/* Nombre y Proveedor */}
+                <div>
+                  <div className="font-bold text-white text-xs">{item.name}</div>
+                  <div className="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
+                    <span>Ubicación: <b className="text-slate-300">{item.location || 'Taller'}</b></span>
+                    {item.supplier && <span>Prov: {item.supplier}</span>}
+                  </div>
+                </div>
+
+                {/* Existencias y Precios */}
+                <div className="pt-2 border-t border-darsil-border/60 flex items-center justify-between text-xs">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[10px] text-slate-400">Stock:</span>
+                    <span className={`inline-flex items-center space-x-1 font-mono font-black text-xs px-2 py-0.5 rounded-lg ${
+                      isCritical 
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/40' 
+                        : isWarning
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                    }`}>
+                      <span>{item.currentStock}</span>
+                      <span className="text-[9px] font-normal opacity-80">{item.unit}</span>
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">(mín: {item.minStock})</span>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 block leading-none">P. Venta</span>
+                    <span className="font-mono font-black text-amber-400 text-xs">
+                      {formatMoney(item.salePrice)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Botones de Acción Táctiles */}
+                <div className="pt-2 border-t border-darsil-border/60 flex items-center justify-end space-x-2">
+                  <button
+                    onClick={() => handleOpenMovement(item)}
+                    className="flex-1 flex items-center justify-center space-x-1 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold transition"
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    <span>Movimiento</span>
+                  </button>
+                  <button
+                    onClick={() => handleViewKardex(item)}
+                    className="p-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition"
+                    title="Ver Historial de Kardex"
+                  >
+                    <History className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleOpenEditItem(item)}
+                    className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
+                    title="Editar Ficha"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Tabla de Inventario (Solo Pantallas Medianas y Grandes) */}
+      <div className="hidden md:block overflow-x-auto rounded-2xl border border-darsil-border bg-darsil-card">
+        <table className="w-full text-xs text-left min-w-[760px]">
           <thead className="bg-slate-900/80 text-slate-300 font-black border-b border-darsil-border">
             <tr>
               <th className="p-3.5">SKU / Código</th>
@@ -507,7 +597,7 @@ export default function InventoryView() {
                       <span className={`inline-flex items-center space-x-1 font-mono font-black text-sm px-2.5 py-0.5 rounded-lg ${
                         isCritical 
                           ? 'bg-red-500/20 text-red-400 border border-red-500/40' 
-                          : isWarning
+                        : isWarning
                           ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                           : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                       }`}>
@@ -559,8 +649,8 @@ export default function InventoryView() {
 
       {/* Modal Nuevo / Editar Ítem */}
       {showItemModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-darsil-card border border-darsil-border rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-darsil-card border border-darsil-border rounded-2xl sm:rounded-3xl w-full max-w-lg p-4 sm:p-6 shadow-2xl space-y-4 my-auto max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-darsil-border pb-3">
               <div className="flex items-center space-x-2 text-amber-400">
                 <Package className="w-5 h-5" />
@@ -739,8 +829,8 @@ export default function InventoryView() {
 
       {/* Modal Registrar Movimiento Kardex */}
       {showMovementModal && selectedItemForMove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-darsil-card border border-darsil-border rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-darsil-card border border-darsil-border rounded-2xl sm:rounded-3xl w-full max-w-md p-4 sm:p-6 shadow-2xl space-y-4 my-auto">
             <div className="flex items-center justify-between border-b border-darsil-border pb-3">
               <div className="flex items-center space-x-2 text-cyan-400">
                 <History className="w-5 h-5" />
@@ -850,8 +940,8 @@ export default function InventoryView() {
 
       {/* Modal Historial de Kardex */}
       {showKardexModal && kardexItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="bg-darsil-card border border-darsil-border rounded-3xl w-full max-w-3xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="bg-darsil-card border border-darsil-border rounded-2xl sm:rounded-3xl w-full max-w-3xl p-4 sm:p-6 shadow-2xl space-y-4 my-auto max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between border-b border-darsil-border pb-3">
               <div className="flex items-center space-x-2 text-cyan-400">
                 <History className="w-5 h-5" />
@@ -918,8 +1008,8 @@ export default function InventoryView() {
 
       {/* Modal Administración de Categorías */}
       {showCategoryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
-          <div className="bg-darsil-card border border-darsil-border rounded-3xl w-full max-w-xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/85 backdrop-blur-md animate-in fade-in">
+          <div className="bg-darsil-card border border-darsil-border rounded-2xl sm:rounded-3xl w-full max-w-xl p-4 sm:p-6 shadow-2xl space-y-4 my-auto max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between border-b border-darsil-border pb-3">
               <div className="flex items-center space-x-2 text-amber-400">
                 <Tag className="w-5 h-5" />
@@ -1019,8 +1109,8 @@ export default function InventoryView() {
 
       {/* Modal Administración de Unidades de Medida */}
       {showUnitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
-          <div className="bg-darsil-card border border-darsil-border rounded-3xl w-full max-w-xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/85 backdrop-blur-md animate-in fade-in">
+          <div className="bg-darsil-card border border-darsil-border rounded-2xl sm:rounded-3xl w-full max-w-xl p-4 sm:p-6 shadow-2xl space-y-4 my-auto max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between border-b border-darsil-border pb-3">
               <div className="flex items-center space-x-2 text-emerald-400">
                 <Boxes className="w-5 h-5" />

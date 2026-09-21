@@ -34,8 +34,8 @@ export default function LoginModal({ onLoginSuccess, onCancel }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md bg-darsil-card/95 border border-amber-500/50 rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_rgba(229,169,60,0.15)] overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto p-3 sm:p-4 flex min-h-full items-start sm:items-center justify-center">
+      <div className="relative w-full max-w-md my-auto bg-darsil-card/95 border border-amber-500/50 rounded-3xl p-5 sm:p-8 shadow-[0_0_50px_rgba(229,169,60,0.15)] overflow-hidden animate-in zoom-in-95 duration-200">
         
         {/* Glow de fondo */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />

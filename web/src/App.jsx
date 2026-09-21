@@ -15,14 +15,14 @@ import InventoryView from './components/InventoryView';
 import ReportsView from './components/ReportsView';
 import LoginModal from './components/LoginModal';
 import { api, getApiUrl } from './services/api';
-import { Menu, PlusCircle, Radio, Sparkles, ClipboardList } from 'lucide-react';
+import { Menu, PlusCircle, Radio, Sparkles, ClipboardList, LayoutDashboard, FileText } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('portal'); // Iniciar en el portal público de clientes
   const [quotes, setQuotes] = useState([]);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : false);
 
   // Autenticación de Darios Bacilio
   const [authUser, setAuthUser] = useState(() => {
@@ -196,37 +196,37 @@ Quedamos a su entera disposición para coordinar la atención técnica.
         }`}
       >
         
-        {/* Topbar Ejecutiva */}
-        <header className="sticky top-0 z-30 bg-darsil-obsidian/95 backdrop-blur-md border-b border-darsil-border h-16 px-4 sm:px-6 flex items-center justify-between shadow-md">
-          <div className="flex items-center space-x-3">
+        {/* Topbar Ejecutiva Responsiva */}
+        <header className="sticky top-0 z-30 bg-darsil-obsidian/95 backdrop-blur-md border-b border-darsil-border h-14 sm:h-16 px-3 sm:px-6 flex items-center justify-between shadow-md">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-xl bg-darsil-card hover:bg-slate-800 text-slate-300 hover:text-white border border-darsil-border transition active:scale-95"
+              className="p-2 rounded-xl bg-darsil-card hover:bg-slate-800 text-slate-300 hover:text-white border border-darsil-border transition active:scale-95 shrink-0"
               title="Desplegar / Ocultar Menú Lateral"
             >
               <Menu className="w-4 h-4" />
             </button>
 
-            {/* Breadcrumb del ERP */}
-            <div className="flex items-center space-x-2 text-xs">
+            {/* Breadcrumb del ERP con truncamiento en pantallas pequeñas */}
+            <div className="flex items-center space-x-1.5 sm:space-x-2 text-xs min-w-0">
               <span className="font-bold text-slate-400 hidden sm:inline">ERP DARSIL</span>
               <span className="text-slate-600 hidden sm:inline">/</span>
-              <span className="font-black text-amber-400 tracking-wide uppercase">
-                {activeTab === 'dashboard' ? 'Dashboard General' :
-                 activeTab === 'quotes' ? 'Cotizaciones Oficiales' :
-                 activeTab === 'workorders' ? 'Órdenes de Trabajo & Check-In Taller' :
-                 activeTab === 'catalog' ? 'Catálogo de Mano de Obra' :
-                 activeTab === 'inventory' ? 'Control de Inventario & Kardex' :
-                 activeTab === 'reports' ? 'Reportes Ejecutivos & Libro Ventas' :
-                 activeTab === 'company' ? 'Datos Bancarios & Taller' :
+              <span className="font-black text-amber-400 tracking-wide uppercase truncate max-w-[125px] xs:max-w-[170px] sm:max-w-none">
+                {activeTab === 'dashboard' ? 'Dashboard' :
+                 activeTab === 'quotes' ? 'Cotizaciones' :
+                 activeTab === 'workorders' ? 'Órdenes de Trabajo' :
+                 activeTab === 'catalog' ? 'Catálogo MO' :
+                 activeTab === 'inventory' ? 'Inventario' :
+                 activeTab === 'reports' ? 'Reportes' :
+                 activeTab === 'company' ? 'Datos Bancarios' :
                  activeTab}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
             {/* Píldora de Estado */}
-            <div className="hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
+            <div className="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Render Cloud & Atlas Conectado</span>
             </div>
@@ -234,17 +234,17 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             {/* Botón Acción Rápida: Nueva Orden de Trabajo */}
             <button
               onClick={handleOpenNewWorkOrder}
-              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
+              className="flex items-center space-x-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow hover:brightness-110 active:scale-95 transition"
               title="Crear Nueva Orden de Trabajo y Check-In Taller"
             >
-              <ClipboardList className="w-3.5 h-3.5 text-slate-950" />
+              <ClipboardList className="w-3.5 h-3.5 text-slate-950 shrink-0" />
               <span className="hidden sm:inline">+ Nueva Orden de Trabajo</span>
-              <span className="sm:hidden">+ Nueva OT</span>
+              <span className="sm:hidden text-[11px] font-black">+ Nueva OT</span>
             </button>
 
             {/* Perfil Rápido */}
-            <div className="flex items-center space-x-2 pl-2 border-l border-darsil-border">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 font-black flex items-center justify-center text-xs shadow-inner">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 pl-1.5 sm:pl-2 border-l border-darsil-border">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 font-black flex items-center justify-center text-xs shadow-inner shrink-0">
                 DB
               </div>
               <div className="hidden xl:block text-left">
@@ -259,8 +259,8 @@ Quedamos a su entera disposición para coordinar la atención técnica.
           </div>
         </header>
 
-        {/* Contenido de la Vista Activa */}
-        <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+        {/* Contenido de la Vista Activa con padding inferior para la barra móvil */}
+        <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 space-y-6 pb-24 lg:pb-6">
           
           {/* Pestaña: Dashboard Ejecutivo */}
           {activeTab === 'dashboard' && (
@@ -321,12 +321,64 @@ Quedamos a su entera disposición para coordinar la atención técnica.
         </main>
 
         {/* Footer ERP */}
-        <footer className="bg-darsil-obsidian border-t border-darsil-border py-4 px-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+        <footer className="bg-darsil-obsidian border-t border-darsil-border py-4 px-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 pb-20 lg:pb-4">
           <span>DARSIL AUTOMOTIVE SOLUTIONS • Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima • 2026</span>
           <span className="text-amber-400 font-mono text-[10px]">v2.6.0 Enterprise</span>
         </footer>
 
       </div>
+
+      {/* Barra de Navegación Inferior Móvil (Mobile Bottom Bar) estilo iOS App para iPhone 15 Pro */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-darsil-obsidian/95 backdrop-blur-xl border-t border-darsil-border py-1.5 px-3 flex items-center justify-around lg:hidden pb-safe shadow-[0_-5px_25px_rgba(0,0,0,0.6)] select-none">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
+            activeTab === 'dashboard' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <LayoutDashboard className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5 font-medium">Inicio</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('workorders')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
+            activeTab === 'workorders' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <ClipboardList className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5 font-medium">OT Taller</span>
+        </button>
+
+        {/* Botón Flotante Central: Nueva OT */}
+        <button
+          onClick={handleOpenNewWorkOrder}
+          className="flex flex-col items-center justify-center -mt-5 p-3 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 shadow-gold-glow active:scale-95 transition"
+          title="Nueva Orden de Trabajo"
+        >
+          <PlusCircle className="w-6 h-6 stroke-[2.5]" />
+        </button>
+
+        <button
+          onClick={() => setActiveTab('quotes')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
+            activeTab === 'quotes' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <FileText className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5 font-medium">Cotizaciones</span>
+        </button>
+
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
+            ['catalog', 'inventory', 'reports', 'company'].includes(activeTab) ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Menu className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5 font-medium">Menú</span>
+        </button>
+      </nav>
 
       {/* Modal Login si se abre desde sidebar */}
       {showLoginModal && (

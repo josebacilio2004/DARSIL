@@ -361,8 +361,8 @@ export default function CompanyInfoView() {
 
       {/* Modal Agregar / Editar Cuenta Bancaria */}
       {showAddBankModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-darsil-card w-full max-w-md rounded-3xl shadow-2xl p-6 border border-darsil-border text-white space-y-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-3 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/80 backdrop-blur-md">
+          <div className="bg-darsil-card w-full max-w-md rounded-3xl shadow-2xl p-5 sm:p-6 border border-darsil-border text-white space-y-4 my-auto">
             
             <div className="flex items-center justify-between border-b border-darsil-border pb-3">
               <h3 className="font-bold text-base text-white">

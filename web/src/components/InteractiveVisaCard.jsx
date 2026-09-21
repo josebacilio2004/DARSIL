@@ -104,7 +104,7 @@ export default function InteractiveVisaCard({ bankAccounts = [], onEditAccount, 
         
         {/* Tarjeta VISA Interactiva */}
         <div 
-          className="relative w-full max-w-[430px] h-[250px] cursor-pointer select-none perspective group"
+          className="relative w-full max-w-[430px] h-[215px] sm:h-[245px] cursor-pointer select-none perspective group"
           onClick={() => setIsFlipped(!isFlipped)}
           title="Haz clic para girar la tarjeta"
         >
@@ -112,7 +112,7 @@ export default function InteractiveVisaCard({ bankAccounts = [], onEditAccount, 
           <div className={`absolute -inset-1 rounded-3xl bg-gradient-to-r ${bankStyle.glow} blur-xl opacity-75 group-hover:opacity-100 transition duration-500`}></div>
 
           <div 
-            className={`relative w-full h-full duration-700 rounded-3xl p-6 shadow-2xl border border-amber-500/40 transition-transform transform-gpu ${
+            className={`relative w-full h-full duration-700 rounded-3xl p-4 sm:p-6 shadow-2xl border border-amber-500/40 transition-transform transform-gpu ${
               isFlipped ? '[transform:rotateY(180deg)]' : ''
             }`}
             style={{ 
@@ -123,7 +123,7 @@ export default function InteractiveVisaCard({ bankAccounts = [], onEditAccount, 
             
             {/* ==================== ANVERSO (FRONT) ==================== */}
             <div 
-              className={`absolute inset-0 p-6 flex flex-col justify-between rounded-3xl ${
+              className={`absolute inset-0 p-4 sm:p-6 flex flex-col justify-between rounded-3xl ${
                 isFlipped ? 'pointer-events-none opacity-0' : 'opacity-100'
               } transition-opacity duration-300`}
               style={{ backfaceVisibility: 'hidden' }}
@@ -134,31 +134,31 @@ export default function InteractiveVisaCard({ bankAccounts = [], onEditAccount, 
               {/* Fila Superior: Banco + Chip EMV + Contactless */}
               <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase block">
+                  <span className="text-[9px] sm:text-[10px] font-black tracking-widest text-slate-400 uppercase block">
                     CUENTA EMPRESARIAL
                   </span>
                   <div className="flex items-center space-x-2 mt-0.5">
-                    <span className="text-base font-black text-white font-mono tracking-wider">
+                    <span className="text-sm sm:text-base font-black text-white font-mono tracking-wider">
                       {activeAccount.bank}
                     </span>
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${bankStyle.badge}`}>
+                    <span className={`text-[8px] sm:text-[9px] font-bold px-2 py-0.5 rounded-full border ${bankStyle.badge}`}>
                       {activeAccount.accountType || 'CTA CTE'}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2.5 sm:space-x-3">
                   {/* Símbolo Contactless */}
                   <div className="text-amber-300/80 -rotate-90">
-                    <Wifi className="w-5 h-5" />
+                    <Wifi className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
 
                   {/* Logo VISA Oficial con Efecto Metálico */}
                   <div className="text-right">
-                    <span className="text-2xl font-black italic tracking-tighter text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-sans">
+                    <span className="text-xl sm:text-2xl font-black italic tracking-tighter text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-sans">
                       VISA
                     </span>
-                    <span className="text-[8px] font-bold text-amber-400 block -mt-1 tracking-widest">
+                    <span className="text-[7px] sm:text-[8px] font-bold text-amber-400 block -mt-1 tracking-widest">
                       PLATINUM
                     </span>
                   </div>
@@ -166,12 +166,12 @@ export default function InteractiveVisaCard({ bankAccounts = [], onEditAccount, 
               </div>
 
               {/* Centro: Chip EMV Metálico Realista */}
-              <div className="relative z-10 flex items-center space-x-4 my-auto">
-                <div className="w-12 h-9 rounded-md bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 p-[1px] shadow-inner border border-yellow-200/60 relative overflow-hidden flex items-center justify-center">
+              <div className="relative z-10 flex items-center space-x-3 sm:space-x-4 my-auto">
+                <div className="w-10 h-7 sm:w-12 sm:h-9 rounded-md bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 p-[1px] shadow-inner border border-yellow-200/60 relative overflow-hidden flex items-center justify-center">
                   {/* Líneas de microcircuito del chip */}
                   <div className="w-full h-full bg-gradient-to-tr from-amber-400 to-yellow-300 relative">
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-6 h-4 border border-amber-700/60 rounded-sm"></div>
+                      <div className="w-5 h-3 sm:w-6 sm:h-4 border border-amber-700/60 rounded-sm"></div>
                     </div>
                     <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-amber-700/60"></div>
                     <div className="absolute left-0 right-0 top-1/2 h-[1px] bg-amber-700/60"></div>
@@ -179,16 +179,16 @@ export default function InteractiveVisaCard({ bankAccounts = [], onEditAccount, 
                 </div>
 
                 {/* Sello de Seguridad */}
-                <div className="flex items-center space-x-1 text-[10px] text-slate-400 font-mono">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="flex items-center space-x-1 text-[9px] sm:text-[10px] text-slate-400 font-mono">
+                  <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
                   <span>DARSIL SECURE PAY</span>
                 </div>
               </div>
 
               {/* Fila Inferior: Número de Cuenta Formateado + Titular + Vencimiento */}
-              <div className="relative z-10 space-y-2">
+              <div className="relative z-10 space-y-1.5 sm:space-y-2">
                 <div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 mb-0.5 font-mono">
+                  <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-400 mb-0.5 font-mono">
                     <span>N° DE CUENTA BANCARIA</span>
                     <button
                       type="button"
@@ -196,35 +196,35 @@ export default function InteractiveVisaCard({ bankAccounts = [], onEditAccount, 
                         e.stopPropagation();
                         setShowFullNumber(!showFullNumber);
                       }}
-                      className="hover:text-amber-400 transition"
+                      className="hover:text-amber-400 transition p-1"
                       title={showFullNumber ? "Ocultar dígitos" : "Mostrar dígitos"}
                     >
                       {showFullNumber ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                     </button>
                   </div>
-                  <div className="font-mono text-lg sm:text-xl font-bold tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  <div className="font-mono text-xs sm:text-lg font-black tracking-wider sm:tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] truncate">
                     {formatCardNumber(activeAccount.accountNumber)}
                   </div>
                 </div>
 
                 <div className="flex items-end justify-between pt-1 border-t border-slate-700/50">
-                  <div>
-                    <span className="text-[8px] uppercase tracking-wider text-slate-400 block font-mono">
+                  <div className="min-w-0 pr-2">
+                    <span className="text-[7px] sm:text-[8px] uppercase tracking-wider text-slate-400 block font-mono">
                       TITULAR / CARDHOLDER
                     </span>
-                    <span className="text-xs font-black text-amber-400 tracking-wide block uppercase">
+                    <span className="text-[10px] sm:text-xs font-black text-amber-400 tracking-wide block uppercase truncate">
                       DARSIL AUTOMOTIVE SOLUTIONS
                     </span>
-                    <span className="text-[10px] font-semibold text-slate-300 block">
+                    <span className="text-[9px] sm:text-[10px] font-semibold text-slate-300 block truncate">
                       RUBEN DARIO BACILIO DE LA CRUZ
                     </span>
                   </div>
 
-                  <div className="text-right">
-                    <span className="text-[8px] uppercase tracking-wider text-slate-400 block font-mono">
+                  <div className="text-right shrink-0">
+                    <span className="text-[7px] sm:text-[8px] uppercase tracking-wider text-slate-400 block font-mono">
                       VÁLIDA HASTA
                     </span>
-                    <span className="text-xs font-mono font-bold text-white">
+                    <span className="text-[11px] sm:text-xs font-mono font-bold text-white">
                       12 / 29
                     </span>
                   </div>
@@ -235,51 +235,51 @@ export default function InteractiveVisaCard({ bankAccounts = [], onEditAccount, 
 
             {/* ==================== REVERSO (BACK) ==================== */}
             <div 
-              className={`absolute inset-0 py-5 px-6 flex flex-col justify-between rounded-3xl [transform:rotateY(180deg)] ${
+              className={`absolute inset-0 py-3 px-4 sm:py-5 sm:px-6 flex flex-col justify-between rounded-3xl [transform:rotateY(180deg)] ${
                 !isFlipped ? 'pointer-events-none opacity-0' : 'opacity-100'
               } transition-opacity duration-300`}
               style={{ backfaceVisibility: 'hidden' }}
             >
               {/* Banda Magnética */}
-              <div className="-mx-6 -mt-2 h-11 bg-black border-y border-slate-800 flex items-center px-6">
-                <span className="text-[8px] font-mono text-slate-600 tracking-widest">
+              <div className="-mx-4 sm:-mx-6 -mt-1 sm:-mt-2 h-9 sm:h-11 bg-black border-y border-slate-800 flex items-center px-4 sm:px-6">
+                <span className="text-[7px] sm:text-[8px] font-mono text-slate-600 tracking-widest">
                   ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
                 </span>
               </div>
 
               {/* Panel de Firma y CVV */}
-              <div className="space-y-2 mt-2">
-                <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+              <div className="space-y-1 sm:space-y-2 mt-1 sm:mt-2">
+                <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-400 font-mono">
                   <span>FIRMA AUTORIZADA</span>
                   <span>CVV / CVC</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-8 bg-slate-200 rounded flex items-center px-3 text-slate-800 font-serif italic text-xs font-bold tracking-wide select-none">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex-1 h-7 sm:h-8 bg-slate-200 rounded flex items-center px-2.5 sm:px-3 text-slate-800 font-serif italic text-[11px] sm:text-xs font-bold tracking-wide select-none truncate">
                     Ruben Dario Bacilio De La Cruz
                   </div>
-                  <div className="w-14 h-8 bg-white rounded flex items-center justify-center font-mono font-black text-slate-900 text-xs border border-slate-300 shadow-inner">
+                  <div className="w-12 sm:w-14 h-7 sm:h-8 bg-white rounded flex items-center justify-center font-mono font-black text-slate-900 text-xs border border-slate-300 shadow-inner shrink-0">
                     824
                   </div>
                 </div>
               </div>
 
               {/* Bloque CCI Interbancario */}
-              <div className="bg-slate-900/90 rounded-2xl p-3 border border-amber-500/30 space-y-1">
+              <div className="bg-slate-900/90 rounded-2xl p-2.5 sm:p-3 border border-amber-500/30 space-y-0.5 sm:space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase font-mono">
+                  <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase font-mono">
                     CÓDIGO DE CUENTA INTERBANCARIO (CCI)
                   </span>
-                  <span className="text-[9px] font-bold text-amber-400 font-mono">
+                  <span className="text-[8px] sm:text-[9px] font-bold text-amber-400 font-mono">
                     {activeAccount.bank}
                   </span>
                 </div>
-                <div className="font-mono text-sm sm:text-base font-black text-amber-300 tracking-wider">
+                <div className="font-mono text-xs sm:text-base font-black text-amber-300 tracking-wider truncate">
                   {activeAccount.interbankAccount}
                 </div>
               </div>
 
               {/* Soporte Oficial DARSIL */}
-              <div className="flex items-center justify-between text-[9px] text-slate-400 pt-1 font-mono">
+              <div className="flex items-center justify-between text-[8px] sm:text-[9px] text-slate-400 pt-0.5 sm:pt-1 font-mono">
                 <span>Central: +51 934 787 006</span>
                 <span className="italic">darsil.com • Lima - Perú</span>
               </div>

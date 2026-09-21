@@ -111,27 +111,27 @@ export default function DashboardView({
     <div className="space-y-6">
       
       {/* Banner de Bienvenida Ejecutivo con Estado en Vivo */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-darsil-obsidian via-slate-900 to-black p-6 sm:p-8 rounded-3xl border border-darsil-border shadow-2xl">
+      <div className="relative overflow-hidden bg-gradient-to-r from-darsil-obsidian via-slate-900 to-black p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-darsil-border shadow-2xl">
         <div className="absolute -right-10 -top-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-black tracking-wider uppercase">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] sm:text-xs font-black tracking-wider uppercase">
+              <Zap className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-amber-400" />
               <span>Panel de Control Ejecutivo • Operaciones & Flotas</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
               DARSIL Automotive Solutions
             </h1>
-            <p className="text-slate-400 text-sm max-w-xl">
+            <p className="text-slate-400 text-xs sm:text-sm max-w-xl">
               Monitoreo en tiempo real de presupuestos, órdenes de trabajo, tasa de conversión comercial, inventario kardex y logística en ruta.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
             <button
               onClick={handleManualRefresh}
               disabled={loadingData}
-              className="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white px-3.5 py-2.5 rounded-xl border border-slate-700 text-xs font-bold transition shadow-lg"
+              className="flex items-center justify-center space-x-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white px-3.5 py-2 sm:py-2.5 rounded-xl border border-slate-700 text-xs font-bold transition shadow-lg active:scale-95"
               title="Actualizar datos en vivo desde la base de datos"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loadingData ? 'animate-spin' : ''}`} />
@@ -139,14 +139,14 @@ export default function DashboardView({
             </button>
             <button
               onClick={() => setActiveTab('portal')}
-              className="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl border border-slate-700 text-xs font-bold transition shadow-lg"
+              className="flex items-center justify-center space-x-2 bg-slate-800/80 hover:bg-slate-700 text-white px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-slate-700 text-xs font-bold transition shadow-lg active:scale-95"
             >
               <Globe className="w-4 h-4 text-cyan-400" />
               <span>Ver Landing Clientes</span>
             </button>
             <button
               onClick={onOpenNewQuote}
-              className="flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 px-5 py-2.5 rounded-xl text-xs font-black shadow-gold-glow active:scale-95 transition"
+              className="flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-black shadow-gold-glow active:scale-95 transition"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Nueva Cotización</span>
@@ -155,24 +155,24 @@ export default function DashboardView({
         </div>
       </div>
 
-      {/* Grid de KPIs Principales Conectados Directamente a la Base de Datos */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      {/* Grid de KPIs Principales: 2 columnas en iPhone 15 Pro, 3 en tablet, 6 en desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-4">
         
         {/* KPI 1: Facturación Cotizada */}
         <div 
           onClick={() => setActiveTab('quotes')}
-          className="bg-darsil-card p-4 rounded-2xl border border-darsil-border hover:border-amber-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
+          className="bg-darsil-card p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-darsil-border hover:border-amber-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Cotizado</span>
-            <div className="p-1.5 rounded-xl bg-amber-500/10 text-amber-400 group-hover:scale-110 transition">
-              <DollarSign className="w-4 h-4" />
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Total Cotizado</span>
+            <div className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-amber-500/10 text-amber-400 group-hover:scale-110 transition shrink-0">
+              <DollarSign className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2.5">
-            <div className="text-xl font-black text-white">{formatSoles(totalMonto)}</div>
-            <div className="flex items-center space-x-1 mt-1 text-[11px] text-amber-400 font-semibold">
-              <TrendingUp className="w-3 h-3" />
+          <div className="mt-1.5 sm:mt-2.5">
+            <div className="text-base sm:text-xl font-black text-white truncate">{formatSoles(totalMonto)}</div>
+            <div className="flex items-center space-x-1 mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-amber-400 font-semibold truncate">
+              <TrendingUp className="w-2.5 sm:w-3 h-2.5 sm:h-3 shrink-0" />
               <span>{totalCotizaciones} cotizaciones</span>
             </div>
           </div>
@@ -181,18 +181,18 @@ export default function DashboardView({
         {/* KPI 2: Monto Aprobado */}
         <div 
           onClick={() => setActiveTab('quotes')}
-          className="bg-darsil-card p-4 rounded-2xl border border-darsil-border hover:border-emerald-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
+          className="bg-darsil-card p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-darsil-border hover:border-emerald-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Monto Aprobado</span>
-            <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition">
-              <CheckCircle2 className="w-4 h-4" />
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Monto Aprobado</span>
+            <div className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition shrink-0">
+              <CheckCircle2 className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2.5">
-            <div className="text-xl font-black text-emerald-400">{formatSoles(montoAprobado)}</div>
-            <div className="flex items-center space-x-1 mt-1 text-[11px] text-emerald-400 font-semibold">
-              <span>{aprobadas.length} aprobadas ({tasaAprobacion}%)</span>
+          <div className="mt-1.5 sm:mt-2.5">
+            <div className="text-base sm:text-xl font-black text-emerald-400 truncate">{formatSoles(montoAprobado)}</div>
+            <div className="flex items-center space-x-1 mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-emerald-400 font-semibold truncate">
+              <span>{aprobadas.length} ({tasaAprobacion}%)</span>
             </div>
           </div>
         </div>
@@ -200,21 +200,21 @@ export default function DashboardView({
         {/* KPI 3: Órdenes de Trabajo Activas en Taller */}
         <div 
           onClick={() => setActiveTab('workorders')}
-          className="bg-darsil-card p-4 rounded-2xl border border-darsil-border hover:border-cyan-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark relative overflow-hidden"
+          className="bg-darsil-card p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-darsil-border hover:border-cyan-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark relative overflow-hidden"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">TALLER Y SERVICIOS</span>
+            <div className="flex items-center space-x-1 sm:space-x-1.5 min-w-0">
+              <span className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
+              <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">TALLER & OTs</span>
             </div>
-            <div className="p-1.5 rounded-xl bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition">
-              <Wrench className="w-4 h-4" />
+            <div className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition shrink-0">
+              <Wrench className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2.5">
-            <div className="text-xl font-black text-cyan-400">{otsActivas} OTs Activas</div>
-            <div className="mt-1 text-[10px] text-slate-400 font-semibold truncate">
-              {otCounts.diagnostico} Diag. • {otCounts.enProceso} Proc. • {otCounts.despachado} Ruta
+          <div className="mt-1.5 sm:mt-2.5">
+            <div className="text-base sm:text-xl font-black text-cyan-400 truncate">{otsActivas} OTs Activas</div>
+            <div className="mt-0.5 sm:mt-1 text-[9px] sm:text-[10px] text-slate-400 font-semibold truncate">
+              {otCounts.diagnostico} Diag • {otCounts.enProceso} Proc
             </div>
           </div>
         </div>
@@ -222,22 +222,22 @@ export default function DashboardView({
         {/* KPI 4: Almacén & Kardex Valorizado */}
         <div 
           onClick={() => setActiveTab('inventory')}
-          className="bg-darsil-card p-4 rounded-2xl border border-darsil-border hover:border-purple-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
+          className="bg-darsil-card p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-darsil-border hover:border-purple-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">STOCK DE REPUESTOS</span>
-            <div className="p-1.5 rounded-xl bg-purple-500/10 text-purple-400 group-hover:scale-110 transition">
-              <Boxes className="w-4 h-4" />
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">STOCK REPUESTOS</span>
+            <div className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-purple-500/10 text-purple-400 group-hover:scale-110 transition shrink-0">
+              <Boxes className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2.5">
-            <div className="text-xl font-black text-purple-400">{formatSoles(totalValuacionInventario)}</div>
-            <div className="flex items-center justify-between mt-1 text-[10px]">
-              <span className="text-slate-400 font-semibold">{totalProductosInventario} repuestos</span>
+          <div className="mt-1.5 sm:mt-2.5">
+            <div className="text-base sm:text-xl font-black text-purple-400 truncate">{formatSoles(totalValuacionInventario)}</div>
+            <div className="flex items-center justify-between mt-0.5 sm:mt-1 text-[9px] sm:text-[10px]">
+              <span className="text-slate-400 font-semibold truncate">{totalProductosInventario} repuestos</span>
               {productosBajoStock > 0 && (
-                <span className="text-rose-400 font-bold flex items-center gap-0.5">
+                <span className="text-rose-400 font-bold flex items-center gap-0.5 shrink-0 ml-1">
                   <AlertTriangle className="w-2.5 h-2.5" />
-                  {productosBajoStock} críticos
+                  {productosBajoStock}
                 </span>
               )}
             </div>
@@ -247,19 +247,19 @@ export default function DashboardView({
         {/* KPI 5: Clientes & Flotas Registradas */}
         <div 
           onClick={() => setActiveTab('quotes')}
-          className="bg-darsil-card p-4 rounded-2xl border border-darsil-border hover:border-blue-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
+          className="bg-darsil-card p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-darsil-border hover:border-blue-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Clientes & Flotas</span>
-            <div className="p-1.5 rounded-xl bg-blue-500/10 text-blue-400 group-hover:scale-110 transition">
-              <Building2 className="w-4 h-4" />
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Clientes & Flotas</span>
+            <div className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-blue-500/10 text-blue-400 group-hover:scale-110 transition shrink-0">
+              <Building2 className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2.5">
-            <div className="text-xl font-black text-white">{clientesUnicos} Empresas</div>
-            <div className="flex items-center space-x-1 mt-1 text-[11px] text-blue-400 font-semibold">
-              <Car className="w-3 h-3" />
-              <span>Atención técnica integral</span>
+          <div className="mt-1.5 sm:mt-2.5">
+            <div className="text-base sm:text-xl font-black text-white truncate">{clientesUnicos} Empresas</div>
+            <div className="flex items-center space-x-1 mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-blue-400 font-semibold truncate">
+              <Car className="w-2.5 sm:w-3 h-2.5 sm:h-3 shrink-0" />
+              <span>Atención integral</span>
             </div>
           </div>
         </div>
@@ -267,18 +267,18 @@ export default function DashboardView({
         {/* KPI 6: Ticket Promedio */}
         <div 
           onClick={() => setActiveTab('quotes')}
-          className="bg-darsil-card p-4 rounded-2xl border border-darsil-border hover:border-amber-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
+          className="bg-darsil-card p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-darsil-border hover:border-amber-500/50 transition cursor-pointer group hover:bg-darsil-obsidian shadow-card-dark"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ticket Promedio</span>
-            <div className="p-1.5 rounded-xl bg-yellow-500/10 text-yellow-400 group-hover:scale-110 transition">
-              <Layers className="w-4 h-4" />
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Ticket Promedio</span>
+            <div className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-yellow-500/10 text-yellow-400 group-hover:scale-110 transition shrink-0">
+              <Layers className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2.5">
-            <div className="text-xl font-black text-white">{formatSoles(promedioCotizacion)}</div>
-            <div className="mt-1 text-[11px] text-slate-400 font-semibold">
-              <span>Por servicio emitido</span>
+          <div className="mt-1.5 sm:mt-2.5">
+            <div className="text-base sm:text-xl font-black text-white truncate">{formatSoles(promedioCotizacion)}</div>
+            <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-slate-400 font-semibold truncate">
+              <span>Por servicio</span>
             </div>
           </div>
         </div>
@@ -437,7 +437,7 @@ export default function DashboardView({
                 quotes.slice(0, 5).map((q) => (
                   <div 
                     key={q._id}
-                    className="p-3.5 bg-darsil-obsidian/70 rounded-2xl border border-darsil-border/60 hover:border-amber-500/40 transition flex items-center justify-between gap-4"
+                    className="p-3 sm:p-3.5 bg-darsil-obsidian/70 rounded-2xl border border-darsil-border/60 hover:border-amber-500/40 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
                     <div className="flex items-center space-x-3 min-w-0">
                       <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
@@ -461,8 +461,8 @@ export default function DashboardView({
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3 shrink-0">
-                      <div className="text-right">
+                    <div className="flex items-center justify-between sm:justify-end space-x-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60 shrink-0">
+                      <div className="text-left sm:text-right">
                         <div className="text-xs font-black text-amber-400">{formatSoles(q.total)}</div>
                         <div className="text-[10px] text-slate-400">{q.items?.length || 1} partida(s)</div>
                       </div>
@@ -501,7 +501,7 @@ export default function DashboardView({
                 workOrders.slice(0, 5).map((wo) => (
                   <div 
                     key={wo._id}
-                    className="p-3.5 bg-darsil-obsidian/70 rounded-2xl border border-darsil-border/60 hover:border-cyan-500/40 transition flex items-center justify-between gap-4"
+                    className="p-3 sm:p-3.5 bg-darsil-obsidian/70 rounded-2xl border border-darsil-border/60 hover:border-cyan-500/40 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
                     <div className="flex items-center space-x-3 min-w-0">
                       <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0">
@@ -527,8 +527,8 @@ export default function DashboardView({
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3 shrink-0">
-                      <div className="text-right">
+                    <div className="flex items-center justify-between sm:justify-end space-x-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60 shrink-0">
+                      <div className="text-left sm:text-right">
                         <div className="text-xs font-black text-cyan-400">{formatSoles(wo.totalEstimated)}</div>
                         <div className="text-[10px] text-slate-400">{wo.items?.length || 0} tareas / fallas</div>
                       </div>

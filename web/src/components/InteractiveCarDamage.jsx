@@ -224,8 +224,7 @@ export default function InteractiveCarDamage({ damages = [], onChange, readOnly 
         {/* Área Visual con la plantilla correspondiente */}
         <div 
           onClick={handleContainerClick}
-          className="relative w-full max-w-2xl mx-auto rounded-xl overflow-hidden bg-slate-900/90 cursor-crosshair border-2 border-dashed border-amber-500/30 hover:border-amber-500 transition select-none flex items-center justify-center"
-          style={{ minHeight: '330px' }}
+          className="relative w-full max-w-2xl mx-auto rounded-xl overflow-hidden bg-slate-900/90 cursor-crosshair border-2 border-dashed border-amber-500/30 hover:border-amber-500 transition select-none flex items-center justify-center min-h-[220px] sm:min-h-[320px]"
         >
           {/* Muestra la plantilla técnica o blueprint del vehículo seleccionado (Sedán, Camioneta o Pick-up, Tractocamión, Mixer) */}
           {currentTemplate.image ? (
@@ -349,8 +348,8 @@ export default function InteractiveCarDamage({ damages = [], onChange, readOnly 
 
       {/* Modal para Seleccionar Tipo de Daño tras hacer Clic */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-md w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-3 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4 sm:p-5 max-w-md w-full my-auto shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
                 <AlertCircle className="w-5 h-5 text-amber-400" />

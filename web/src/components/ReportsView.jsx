@@ -100,12 +100,12 @@ export default function ReportsView() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {/* Selector de Período */}
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="text-xs bg-darsil-card border border-darsil-border text-slate-200 rounded-xl px-3 py-2.5 font-bold outline-none focus:border-amber-400"
+            className="w-full sm:w-auto text-xs bg-darsil-card border border-darsil-border text-slate-200 rounded-xl px-3 py-2.5 font-bold outline-none focus:border-amber-400"
           >
             <option value="ALL">Todo el Histórico</option>
             <option value="THIS_MONTH">Mes Actual</option>
@@ -115,7 +115,7 @@ export default function ReportsView() {
           </select>
 
           {dateRange === 'CUSTOM' && (
-            <div className="flex items-center gap-1.5 bg-darsil-card p-1 rounded-xl border border-darsil-border text-xs">
+            <div className="flex items-center gap-1.5 bg-darsil-card p-1 rounded-xl border border-darsil-border text-xs w-full sm:w-auto justify-between">
               <input
                 type="date"
                 value={startDate}
@@ -135,7 +135,7 @@ export default function ReportsView() {
           {/* Botón Exportar CSV */}
           <button
             onClick={handleExportCsv}
-            className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:brightness-110 active:scale-95 transition"
+            className="w-full sm:w-auto justify-center flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:brightness-110 active:scale-95 transition"
           >
             <Download className="w-4 h-4 text-slate-950" />
             <span>📥 Exportar a Excel (CSV)</span>
@@ -144,49 +144,49 @@ export default function ReportsView() {
       </div>
 
       {/* Tarjetas KPI Financieras */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         
-        <div className="p-4 rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Total Cotizado</span>
-            <span className="text-2xl font-black text-amber-400">{formatMoney(summary.totalQuoted)}</span>
-            <span className="text-[10px] text-slate-500 block">{summary.totalCount || 0} cotizaciones emitidas</span>
+        <div className="p-3 sm:p-4 rounded-2xl bg-darsil-card border border-darsil-border flex flex-col justify-between sm:flex-row sm:items-center gap-2">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block">Total Cotizado</span>
+            <span className="text-base sm:text-2xl font-black text-amber-400 truncate block">{formatMoney(summary.totalQuoted)}</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">{summary.totalCount || 0} cotizaciones</span>
           </div>
-          <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400">
-            <DollarSign className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Facturación Aprobada</span>
-            <span className="text-2xl font-black text-emerald-400">{formatMoney(summary.totalApproved)}</span>
-            <span className="text-[10px] text-slate-500 block">{summary.approvedCount || 0} órdenes aprobadas/taller</span>
-          </div>
-          <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
-            <CheckCircle2 className="w-5 h-5" />
+          <div className="p-2 sm:p-3 rounded-xl bg-amber-500/10 text-amber-400 shrink-0 self-end sm:self-center">
+            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Ticket Promedio</span>
-            <span className="text-2xl font-black text-cyan-400">{formatMoney(summary.averageTicket)}</span>
-            <span className="text-[10px] text-slate-500 block">Promedio por orden de servicio</span>
+        <div className="p-3 sm:p-4 rounded-2xl bg-darsil-card border border-darsil-border flex flex-col justify-between sm:flex-row sm:items-center gap-2">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block">Facturación Aprobada</span>
+            <span className="text-base sm:text-2xl font-black text-emerald-400 truncate block">{formatMoney(summary.totalApproved)}</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">{summary.approvedCount || 0} en taller</span>
           </div>
-          <div className="p-3 rounded-xl bg-cyan-500/10 text-cyan-400">
-            <TrendingUp className="w-5 h-5" />
+          <div className="p-2 sm:p-3 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0 self-end sm:self-center">
+            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-darsil-card border border-darsil-border flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Efectividad Comercial</span>
-            <span className="text-2xl font-black text-purple-400">{summary.approvalRate || 0}%</span>
-            <span className="text-[10px] text-slate-500 block">Tasa de cierre de cotizaciones</span>
+        <div className="p-3 sm:p-4 rounded-2xl bg-darsil-card border border-darsil-border flex flex-col justify-between sm:flex-row sm:items-center gap-2">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block">Ticket Promedio</span>
+            <span className="text-base sm:text-2xl font-black text-cyan-400 truncate block">{formatMoney(summary.averageTicket)}</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">Promedio por orden</span>
           </div>
-          <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400">
-            <Percent className="w-5 h-5" />
+          <div className="p-2 sm:p-3 rounded-xl bg-cyan-500/10 text-cyan-400 shrink-0 self-end sm:self-center">
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+        </div>
+
+        <div className="p-3 sm:p-4 rounded-2xl bg-darsil-card border border-darsil-border flex flex-col justify-between sm:flex-row sm:items-center gap-2">
+          <div className="min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider block">Efectividad</span>
+            <span className="text-base sm:text-2xl font-black text-purple-400 truncate block">{summary.approvalRate || 0}%</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate">Tasa de cierre</span>
+          </div>
+          <div className="p-2 sm:p-3 rounded-xl bg-purple-500/10 text-purple-400 shrink-0 self-end sm:self-center">
+            <Percent className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
 
@@ -273,8 +273,8 @@ export default function ReportsView() {
           <span className="text-xs text-slate-400 font-mono">Total {quotes.length} Registros</span>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-darsil-border">
-          <table className="w-full text-xs text-left">
+        <div className="overflow-x-auto no-scrollbar rounded-2xl border border-darsil-border -mx-1 sm:mx-0">
+          <table className="w-full text-xs text-left min-w-[720px]">
             <thead className="bg-slate-900/90 text-slate-300 font-bold border-b border-darsil-border">
               <tr>
                 <th className="p-3">Fecha</th>

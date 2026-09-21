@@ -225,8 +225,9 @@ export default function CatalogView() {
         </div>
       ) : (
         <div className="bg-darsil-card rounded-2xl border border-darsil-border shadow-card-dark overflow-hidden">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-darsil-obsidian border-b border-darsil-border text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-300 min-w-[580px]">
+              <thead className="bg-darsil-obsidian border-b border-darsil-border text-slate-400 font-bold uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="p-3.5 w-24">Código</th>
                 <th className="p-3.5">Descripción Oficial del Servicio</th>
@@ -287,12 +288,13 @@ export default function CatalogView() {
             </tbody>
           </table>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Modal CRUD: Crear / Editar Servicio */}
       {modalOpen && editingItem && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-darsil-card border border-amber-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-3 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-darsil-card border border-amber-500/40 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
                 <Tag className="w-5 h-5 text-amber-400" />
