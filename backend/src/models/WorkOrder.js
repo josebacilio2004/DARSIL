@@ -72,14 +72,38 @@ const WorkOrderSchema = new mongoose.Schema({
       'EN_CAMINO',
       'RECEPCIONADO', 
       'EN_DIAGNOSTICO', 
+      'ESPERA_REPUESTOS',
+      'EN_REPARACION',
       'EN_PROCESO', 
       'PRUEBA_BANCO_24V', 
       'CONTROL_CALIDAD', 
+      'LISTO_ENTREGA',
       'FINALIZADO', 
       'ENTREGADO'
     ],
     default: 'RECEPCIONADO'
   },
+  priority: {
+    type: String,
+    enum: ['BAJA', 'MEDIA', 'ALTA', 'URGENTE'],
+    default: 'MEDIA'
+  },
+  progressPercent: {
+    type: Number,
+    default: 15,
+    min: 0,
+    max: 100
+  },
+  estimatedCompletionDate: {
+    type: Date
+  },
+  stageHistory: [{
+    stage: { type: String, required: true },
+    title: { type: String, default: '' },
+    notes: { type: String, default: '' },
+    updatedBy: { type: String, default: 'Darios Bacilio' },
+    timestamp: { type: Date, default: Date.now }
+  }],
 
   // Check-In Digital de Recepción
   checkInDate: { type: Date, default: Date.now },

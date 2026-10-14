@@ -1,6 +1,14 @@
 export const getApiUrl = () => {
   if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     let saved = window.localStorage.getItem('darsil_api_url');
+
+    // En entorno local de desarrollo, purgar automáticamente URLs remotas de Render o puertos internos huérfanos
+    if (isLocalhost && saved && (saved.includes('onrender.com') || saved.includes(':4000'))) {
+      window.localStorage.removeItem('darsil_api_url');
+      saved = null;
+    }
+
     if (saved) {
       if (saved.includes('darsil.onrender.com')) {
         saved = saved.replace('darsil.onrender.com', 'darsil-backend.onrender.com');
@@ -9,8 +17,8 @@ export const getApiUrl = () => {
       return saved.replace(/\/$/, '');
     }
     if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL.replace(/\/$/, '');
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return window.location.port === '3005' ? '/api' : 'http://localhost:4000/api';
+    if (isLocalhost) {
+      return window.location.port === '3005' ? '/api' : 'http://localhost:4001/api';
     }
   }
   return 'https://darsil-backend.onrender.com/api';
@@ -27,13 +35,26 @@ export const setApiUrl = (url) => {
 };
 
 export const getPublicPdfUrl = (type, id) => {
-  let base = getApiUrl();
-  // Si base es relativo (/api), localhost, 127.0.0.1 o github.io, usar el backend oficial de Render para que clientes en WhatsApp o web siempre puedan abrir el PDF
-  if (!base || base.startsWith('/') || base.includes('localhost') || base.includes('127.0.0.1') || base.includes('github.io')) {
-    base = 'https://darsil-backend.onrender.com/api';
+  if (!id) return '';
+  const cleanType = String(type || '').toLowerCase();
+  let path = `quotes/${id}/pdf`;
+  if (cleanType.includes('work') || cleanType.includes('order')) {
+    path = `work-orders/${id}/pdf`;
+  } else if (cleanType.includes('invoice') || cleanType.includes('factura')) {
+    path = `invoices/${id}/pdf`;
+  } else if (cleanType.includes('contract') || cleanType.includes('contrato')) {
+    path = `financial/schedules/${id}/contract-pdf`;
+  } else if (cleanType.includes('paz') || cleanType.includes('salvo')) {
+    path = `financial/schedules/${id}/paz-y-salvo-pdf`;
   }
-  const endpoint = (type === 'work-order' || type === 'workorders' || type === 'workOrder') ? 'work-orders' : 'quotes';
-  return `${base}/${endpoint}/${id}/pdf`;
+
+  const base = getApiUrl();
+  // Si estamos alojados en GitHub Pages público, usar el backend de producción en Render
+  if (typeof window !== 'undefined' && window.location.hostname.includes('github.io')) {
+    return `https://darsil-backend.onrender.com/api/${path}`;
+  }
+
+  return `${base}/${path}`;
 };
 
 export const api = {
@@ -395,6 +416,48 @@ export const api = {
     });
     return res.json();
   },
+  // Torre de Control Técnico & Kanban Taller
+  getKanbanOrders: async (params = {}) => {
+    try {
+      const query = new URLSearchParams(params).toString();
+      const res = await fetch(`${getApiUrl()}/work-orders/kanban?${query}`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  updateKanbanStage: async (id, data) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/work-orders/${id}/kanban-stage`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  getPublicTracking: async (identifier) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/work-orders/track/${encodeURIComponent(identifier)}`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  notifyTrackingWhatsApp: async (id, data = {}) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/work-orders/${id}/notify-tracking`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
   validateVehiclePlate: async (plate, model = '') => {
     try {
       const query = new URLSearchParams({ plate, model }).toString();
@@ -412,7 +475,246 @@ export const api = {
     } catch (err) {
       return { success: false, message: err.message };
     }
-  }
+  },
+
+  // Facturación Electrónica SUNAT UBL 2.1
+  getInvoices: async (params = {}) => {
+    try {
+      const query = new URLSearchParams(params).toString();
+      const res = await fetch(`${getApiUrl()}/invoices?${query}`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  getInvoiceById: async (id) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/invoices/${id}`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  createInvoice: async (data) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/invoices`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  getInvoicePdfUrl: (id) => {
+    return getPublicPdfUrl('invoices', id);
+  },
+  getInvoiceXmlUrl: (id) => {
+    return `${getApiUrl()}/invoices/${id}/xml`;
+  },
+  getInvoiceCdrUrl: (id) => {
+    return `${getApiUrl()}/invoices/${id}/cdr`;
+  },
+
+  // Bot Automatizador CRM & WhatsApp
+  getWhatsAppBotStatus: async () => {
+    try {
+      const res = await fetch(`${getApiUrl()}/whatsapp/status`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  getWhatsAppQr: async () => {
+    try {
+      const res = await fetch(`${getApiUrl()}/whatsapp/qr`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  pairWhatsAppBot: async (phone) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/whatsapp/pair`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  disconnectWhatsAppBot: async () => {
+    try {
+      const res = await fetch(`${getApiUrl()}/whatsapp/disconnect`, {
+        method: 'POST',
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  updateWhatsAppConfig: async (config) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/whatsapp/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  sendWhatsAppTestMessage: async (phone, message, mediaUrl = '') => {
+    try {
+      const res = await fetch(`${getApiUrl()}/whatsapp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        phone,
+        recipientPhone: phone,
+        message,
+        messageText: message,
+        mediaUrl
+      }),
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  getWhatsAppLogs: async (params = {}) => {
+    try {
+      const query = new URLSearchParams(params).toString();
+      const res = await fetch(`${getApiUrl()}/whatsapp/logs?${query}`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  // Gestión Financiera & Cuentas por Cobrar
+  getFinancialSchedules: async (params = {}) => {
+    try {
+      const query = new URLSearchParams(params).toString();
+      const res = await fetch(`${getApiUrl()}/financial/schedules?${query}`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  getFinancialScheduleById: async (id) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/financial/schedules/${id}`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  createFinancialSchedule: async (data) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/financial/schedules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  registerPaymentSchedule: async (scheduleId, data) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/financial/schedules/${scheduleId}/payments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  sendScheduleReminder: async (scheduleId, installmentIndex = 0) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/financial/schedules/${scheduleId}/remind/${installmentIndex}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  sendAdvisorAlert: async (scheduleId) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/financial/schedules/${scheduleId}/alert-advisor`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  resendContractWhatsApp: async (scheduleId) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/financial/schedules/${scheduleId}/resend-contract-whatsapp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  resendPazYSalvoWhatsApp: async (scheduleId) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/financial/schedules/${scheduleId}/resend-paz-y-salvo-whatsapp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  resendReceiptWhatsApp: async (scheduleId, receiptIndex = 0) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/financial/schedules/${scheduleId}/resend-receipt-whatsapp/${receiptIndex}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  getContractPdfUrl: (id) => getPublicPdfUrl('contract', id),
+  getPazYSalvoPdfUrl: (id) => getPublicPdfUrl('paz-y-salvo', id),
+  getReceiptPdfUrl: (scheduleId, receiptIndex) => `${getApiUrl()}/financial/schedules/${scheduleId}/receipt-pdf/${receiptIndex}`,
+  getBIMetrics: async () => {
+    try {
+      const res = await fetch(`${getApiUrl()}/financial/bi-metrics`);
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+  getBIAdvisorInsight: async (data = {}) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/financial/bi-advisor`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
 };
 
 function getClientSunarpData(plate) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
+  Coins,
   LayoutDashboard, 
   FileText, 
   Wrench, 
@@ -19,7 +20,11 @@ import {
   Menu,
   ClipboardList,
   Package,
-  BarChart3
+  BarChart3,
+  Receipt,
+  Bot,
+  Activity,
+  TrendingUp
 } from 'lucide-react';
 import { getApiUrl, setApiUrl } from '../services/api';
 
@@ -73,6 +78,7 @@ export default function Sidebar({
       title: 'OPERACIONES & TALLER',
       items: [
         { id: 'dashboard', label: 'Dashboard General', icon: LayoutDashboard, badge: null },
+        { id: 'torre-control', label: 'Torre de Control Taller', icon: Activity, badge: 'En Vivo' },
         { id: 'workorders', label: 'Órdenes de Trabajo & OT', icon: ClipboardList, badge: 'Taller' },
         { id: 'quotes', label: 'Cotizaciones', icon: FileText, badge: quotes.length ? String(quotes.length) : null },
         { id: 'catalog', label: 'Catálogo MO', icon: Wrench, badge: '25' }
@@ -87,8 +93,17 @@ export default function Sidebar({
     {
       title: 'GERENCIA & CONTABILIDAD',
       items: [
+        { id: 'billing', label: 'Facturación SUNAT', icon: Receipt, badge: 'UBL 2.1' },
+        { id: 'finance-bi', label: 'Panel BI & Finanzas', icon: TrendingUp, badge: 'BI' },
+        { id: 'financial', label: 'Gestión Financiera & Cobros', icon: Coins, badge: 'A-Z' },
         { id: 'reports', label: 'Reportes & Libro Ventas', icon: BarChart3, badge: 'Excel' },
         { id: 'company', label: 'Datos Bancarios & Taller', icon: ShieldCheck, badge: null }
+      ]
+    },
+    {
+      title: 'AUTOMATIZACIÓN & CRM',
+      items: [
+        { id: 'whatsapp', label: 'Bot CRM & WhatsApp', icon: Bot, badge: 'Auto' }
       ]
     },
     {

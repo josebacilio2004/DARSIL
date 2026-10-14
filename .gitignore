@@ -1,4 +1,4 @@
-﻿# Node & dependencies
+# Node & dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -22,6 +22,14 @@ mobile/android/local.properties
 # Docker uploads (preservar sólo assets oficiales)
 backend/uploads/quotes/*
 !backend/uploads/quotes/.gitkeep
+backend/uploads/work-orders/*
+!backend/uploads/work-orders/.gitkeep
+backend/uploads/invoices/*
+!backend/uploads/invoices/.gitkeep
+backend/uploads/contracts/*
+!backend/uploads/contracts/.gitkeep
+backend/auth_info_baileys/
+auth_info_baileys/
 
 # OS generated
 Thumbs.db

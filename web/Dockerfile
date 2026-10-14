@@ -1,4 +1,4 @@
-﻿# Etapa 1: Build
+# Etapa 1: Build
 FROM node:20-alpine AS build
 
 WORKDIR /app
@@ -7,6 +7,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+ENV BUILD_OUTDIR=/app/dist
 RUN npm run build
 
 # Etapa 2: Servir con NGINX

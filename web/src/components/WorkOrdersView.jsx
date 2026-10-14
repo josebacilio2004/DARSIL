@@ -904,7 +904,7 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
 
   // Generar Cotización Automática en 1 Clic
   const handleGenerateQuote = async () => {
-    if (!selectedOrder) return;
+    if (!selectedOrder || autoQuoteLoading) return;
     const checkPlate = (diagPlate || selectedOrder.plate || '').trim();
     const checkModel = (diagModel || selectedOrder.model || '').trim();
     if (checkPlate && checkPlate.toUpperCase() !== 'POR ASIGNAR') {
@@ -1391,14 +1391,35 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                         type="button"
                         onClick={async () => {
                           if (onSelectQuote) {
-                            try {
-                              const qRes = await api.getQuoteById(order.generatedQuoteId || order.quoteId);
-                              if (qRes?.success && qRes.data) {
-                                onSelectQuote(qRes.data);
-                                return;
-                              }
-                            } catch (e) {}
-                            onSelectQuote({ _id: order.generatedQuoteId || order.quoteId, quoteNumber: quoteNum });
+                            const targetId = order.generatedQuoteId || order.quoteId;
+                            if (targetId) {
+                              try {
+                                const qRes = await api.getQuoteById(targetId);
+                                if (qRes?.success && qRes.data) {
+                                  onSelectQuote(qRes.data);
+                                  return;
+                                }
+                              } catch (e) {}
+                            }
+                            if (quoteNum) {
+                              try {
+                                const qRes = await api.getQuoteById(quoteNum);
+                                if (qRes?.success && qRes.data) {
+                                  onSelectQuote(qRes.data);
+                                  return;
+                                }
+                              } catch (e) {}
+                            }
+                            if (order._id || order.orderNumber) {
+                              try {
+                                const qRes = await api.getQuoteById(order._id || order.orderNumber);
+                                if (qRes?.success && qRes.data) {
+                                  onSelectQuote(qRes.data);
+                                  return;
+                                }
+                              } catch (e) {}
+                            }
+                            alert('La cotización vinculada no está disponible o fue actualizada.');
                           }
                         }}
                         className="text-[10px] underline font-semibold hover:text-white"

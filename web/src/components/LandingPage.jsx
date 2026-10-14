@@ -50,6 +50,34 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
   const [foundQuote, setFoundQuote] = useState(null);
   const [searchError, setSearchError] = useState('');
 
+  // Estado de Trazabilidad en Tiempo Real (Tracking OT / Placa)
+  const [activeTrackingData, setActiveTrackingData] = useState(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingSearchType, setTrackingSearchType] = useState('taller'); // 'taller' o 'cotizacion'
+  const [copiedTrackingUrl, setCopiedTrackingUrl] = useState(false);
+
+  // Escuchar Hash para enlaces directos como #tracking/OT-2026-110 o #tracking/KTM758
+  useEffect(() => {
+    const handleHashCheck = () => {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#tracking/')) {
+        const id = decodeURIComponent(hash.replace('#tracking/', '')).trim();
+        if (id) {
+          setSearchQuery(id);
+          setTrackingSearchType('taller');
+          fetchLiveTracking(id);
+          setTimeout(() => {
+            const el = document.getElementById('rastreador');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 300);
+        }
+      }
+    };
+    handleHashCheck();
+    window.addEventListener('hashchange', handleHashCheck);
+    return () => window.removeEventListener('hashchange', handleHashCheck);
+  }, []);
+
   // Estado de Navegación Activa, Scroll y Menú Móvil
   const [activeNav, setActiveNav] = useState('inicio');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -1064,17 +1092,56 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
     }
   ];
 
-  const handleSearch = (e) => {
+  const fetchLiveTracking = async (identifier) => {
+    if (!identifier) return;
+    try {
+      setTrackingLoading(true);
+      setSearchError('');
+      setFoundQuote(null);
+      setActiveTrackingData(null);
+      const res = await api.getPublicTracking(identifier);
+      if (res?.success && res.data) {
+        setActiveTrackingData(res.data);
+      } else {
+        setSearchError(res?.message || `No se encontró registro de taller para: "${identifier}". Verifica la placa o número de OT.`);
+      }
+    } catch (err) {
+      setSearchError('Error consultando el sistema de telemetría de taller: ' + err.message);
+    } finally {
+      setTrackingLoading(false);
+    }
+  };
+
+  const handleSearch = async (e) => {
     e.preventDefault();
     setSearchError('');
     setFoundQuote(null);
+    setActiveTrackingData(null);
 
     const q = searchQuery.trim().toUpperCase();
     if (!q) {
-      setSearchError('Por favor ingresa un número de cotización o placa para consultar.');
+      setSearchError('Por favor ingresa un número de OT, cotización o placa para consultar.');
       return;
     }
 
+    // 1. Si busca explícitamente taller o tiene formato de OT o placa
+    if (trackingSearchType === 'taller' || q.startsWith('OT-') || !q.startsWith('DA-')) {
+      try {
+        setTrackingLoading(true);
+        const trackRes = await api.getPublicTracking(q);
+        if (trackRes?.success && trackRes.data) {
+          setActiveTrackingData(trackRes.data);
+          window.location.hash = `#tracking/${trackRes.data.orderNumber}`;
+          setTrackingLoading(false);
+          return;
+        }
+      } catch (err) {
+      } finally {
+        setTrackingLoading(false);
+      }
+    }
+
+    // 2. Búsqueda en cotizaciones
     const match = quotes.find(item => 
       (item.quoteNumber && item.quoteNumber.toUpperCase().includes(q)) ||
       (item.plate && item.plate.toUpperCase().includes(q)) ||
@@ -1084,7 +1151,21 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
     if (match) {
       setFoundQuote(match);
     } else {
-      setSearchError(`No encontramos una cotización registrada con: "${searchQuery}". Verifica el número (ej. DA-2026-001) o la placa.`);
+      // 3. Intento final en tracking
+      try {
+        setTrackingLoading(true);
+        const trackRes = await api.getPublicTracking(q);
+        if (trackRes?.success && trackRes.data) {
+          setActiveTrackingData(trackRes.data);
+          window.location.hash = `#tracking/${trackRes.data.orderNumber}`;
+          setTrackingLoading(false);
+          return;
+        }
+      } catch (err) {}
+      finally {
+        setTrackingLoading(false);
+      }
+      setSearchError(`No encontramos una orden de taller o cotización con: "${searchQuery}". Verifica el número (ej. OT-2026-110, DA-2026-001) o la placa.`);
     }
   };
 
@@ -2024,16 +2105,48 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           
           <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-bold uppercase tracking-wider mb-4">
-            <Search className="w-3.5 h-3.5 text-amber-400" />
-            <span>Portal de Consulta para Clientes</span>
+            <span className="flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <span>Portal de Trazabilidad & Telemetría en Tiempo Real</span>
+            </span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
-            Rastrea el Estado de tu Cotización o Vehículo
+            Rastrea tu Unidad en Taller o Consulta tu Cotización
           </h2>
-          <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto mb-8">
-            Ingresa el número de cotización oficial (ej. DA-2026-001) o la placa de tu unidad para consultar presupuesto, estado técnico y descargar el documento PDF.
+          <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto mb-6">
+            Ingresa tu Orden de Trabajo (ej. <strong>OT-2026-110</strong>), Placa vehicular (ej. <strong>KTM-758</strong>) o Cotización para ver telemetría de taller, fase de reparación en vivo y actas oficiales.
           </p>
+
+          {/* Selector de Modo: Taller vs Cotización */}
+          <div className="flex justify-center mb-6">
+            <div className="bg-slate-900/90 p-1 rounded-2xl border border-white/10 flex items-center gap-1 shadow-lg">
+              <button
+                type="button"
+                onClick={() => { setTrackingSearchType('taller'); setSearchError(''); }}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 ${
+                  trackingSearchType === 'taller' 
+                    ? 'bg-amber-400 text-slate-950 shadow-gold-glow' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5" />
+                <span>Trazabilidad de Taller en Vivo (OT / Placa)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setTrackingSearchType('cotizacion'); setSearchError(''); }}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 ${
+                  trackingSearchType === 'cotizacion' 
+                    ? 'bg-amber-400 text-slate-950 shadow-gold-glow' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Cotización Oficial</span>
+              </button>
+            </div>
+          </div>
 
           <div className="bg-slate-900/80 backdrop-blur-2xl p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.15)] w-full overflow-hidden">
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2.5 w-full">
@@ -2042,27 +2155,168 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Ingresa tu Placa (ej. ABC-123) o N° Cotización"
+                  placeholder={
+                    trackingSearchType === 'taller' 
+                      ? "Ej: OT-2026-110 o Placa (KTM758)" 
+                      : "Ej: DA-2026-129 o RUC/DNI"
+                  }
                   className="w-full bg-black/60 border border-white/20 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 transition uppercase tracking-wider font-mono"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black px-6 py-3 rounded-xl text-xs sm:text-sm shadow-gold-glow hover:brightness-110 active:scale-95 transition shrink-0 flex items-center justify-center space-x-2"
+                disabled={trackingLoading}
+                className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black px-6 py-3 rounded-xl text-xs sm:text-sm shadow-gold-glow hover:brightness-110 active:scale-95 transition shrink-0 flex items-center justify-center space-x-2 disabled:opacity-50"
               >
-                <Search className="w-4 h-4" />
-                <span>Consultar Estado</span>
+                {trackingLoading ? (
+                  <RotateCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4 stroke-[3]" />
+                )}
+                <span>{trackingLoading ? 'Consultando...' : 'Consultar en Vivo'}</span>
               </button>
             </form>
 
             {/* Mensaje de Error */}
             {searchError && (
-              <div className="mt-4 p-3 bg-red-500/15 border border-red-500/30 rounded-xl text-red-300 text-xs text-left">
+              <div className="mt-4 p-3 bg-red-500/15 border border-red-500/30 rounded-xl text-red-300 text-xs text-left animate-in fade-in">
                 {searchError}
               </div>
             )}
 
-            {/* Tarjeta de Cotización Encontrada */}
+            {/* FICHA 1: TRAZABILIDAD Y TELEMETRÍA EN VIVO DE TALLER */}
+            {activeTrackingData && (
+              <div className="mt-6 bg-black/90 rounded-2xl border border-amber-500/50 text-left shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+                {/* Cabecera de Telemetría */}
+                <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-4 sm:p-5 border-b border-white/10">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        {/* Placa estilo vehicular */}
+                        <div className="bg-yellow-400 text-slate-950 px-2.5 py-0.5 rounded-md font-mono font-black text-sm shadow">
+                          {activeTrackingData.plate || 'SIN PLACA'}
+                        </div>
+                        <h4 className="text-base sm:text-lg font-black text-white">
+                          {activeTrackingData.model || 'Unidad de Carga'}
+                        </h4>
+                      </div>
+                      <div className="text-xs text-slate-400 font-mono">
+                        N° Orden: <strong className="text-amber-400">{activeTrackingData.orderNumber}</strong> • Cliente: <span className="text-white">{activeTrackingData.clientName}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      {/* Badge de Fase */}
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-black uppercase">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        {activeTrackingData.currentStage || activeTrackingData.currentStatus}
+                      </span>
+                      <div className="text-[10px] text-slate-400 font-mono mt-1">
+                        Avance: <strong className="text-amber-400">{activeTrackingData.progressPercent || 25}%</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Barra de Progreso */}
+                  <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800 mt-3">
+                    <div 
+                      className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400 rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min(100, Math.max(10, activeTrackingData.progressPercent || 25))}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Telemetría de Ingreso (Odómetro, Horómetro, Combustible, Técnico) */}
+                <div className="p-4 sm:p-5 space-y-5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-slate-950/80 p-3 rounded-xl border border-white/10 text-xs">
+                    <div>
+                      <span className="text-slate-500 block text-[10px] uppercase font-bold">Odómetro Actual</span>
+                      <span className="font-mono text-white font-bold">{activeTrackingData.mileage ? `${activeTrackingData.mileage} km` : 'Registrado'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px] uppercase font-bold">Horómetro Motor</span>
+                      <span className="font-mono text-white font-bold">{activeTrackingData.hourmeter ? `${activeTrackingData.hourmeter} hrs` : 'Registrado'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px] uppercase font-bold">Combustible</span>
+                      <span className="font-mono text-amber-400 font-bold">{activeTrackingData.fuelLevel || '1/2'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px] uppercase font-bold">Técnico Líder</span>
+                      <span className="font-bold text-white truncate block">{activeTrackingData.assignedMechanic || 'Darios Bacilio'}</span>
+                    </div>
+                  </div>
+
+                  {/* Falla Reportada / Diagnóstico */}
+                  {activeTrackingData.reportedFault && (
+                    <div className="bg-slate-950/60 p-3 rounded-xl border border-white/10 text-xs">
+                      <span className="text-slate-400 block text-[10px] uppercase font-black mb-1">
+                        Motivo de Ingreso & Diagnóstico Inicial:
+                      </span>
+                      <p className="text-slate-200 leading-relaxed">{activeTrackingData.reportedFault}</p>
+                    </div>
+                  )}
+
+                  {/* Línea de Tiempo de Fases de Taller */}
+                  <div>
+                    <div className="text-xs font-black uppercase text-amber-400 tracking-wider mb-3 flex items-center gap-1.5">
+                      <Clock className="w-4 h-4" />
+                      Línea de Tiempo & Trazabilidad en Taller
+                    </div>
+
+                    <div className="space-y-3 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
+                      {(activeTrackingData.timeline || []).map((t, idx) => (
+                        <div key={idx} className="flex items-start gap-3 relative pl-0.5">
+                          <div className="w-5 h-5 rounded-full bg-slate-900 border border-amber-400 text-amber-400 flex items-center justify-center shrink-0 z-10 text-[9px] font-black">
+                            {idx + 1}
+                          </div>
+                          <div className="bg-slate-950 border border-white/10 p-2.5 rounded-xl flex-1 space-y-0.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-bold text-white">{t.title}</span>
+                              <span className="text-[10px] font-mono text-slate-500">
+                                {new Date(t.timestamp).toLocaleDateString('es-PE')} {new Date(t.timestamp).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            {t.notes && <p className="text-xs text-slate-300">{t.notes}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Acciones del Cliente */}
+                  <div className="pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const trackingUrl = `${window.location.origin}/#tracking/${activeTrackingData.orderNumber}`;
+                        navigator.clipboard.writeText(trackingUrl);
+                        setCopiedTrackingUrl(true);
+                        setTimeout(() => setCopiedTrackingUrl(false), 2000);
+                      }}
+                      className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold border border-white/20 transition flex items-center gap-1.5"
+                    >
+                      <Share2 className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{copiedTrackingUrl ? '¡Enlace Copiado!' : 'Copiar Enlace'}</span>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`https://api.whatsapp.com/send?phone=51934787006&text=${encodeURIComponent(`Hola DARSIL, deseo consultar sobre el estado de mi unidad ${activeTrackingData.plate || ''} bajo la orden ${activeTrackingData.orderNumber}.`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow"
+                      >
+                        <Phone className="w-4 h-4" />
+                        <span>Consultar Asesor WhatsApp</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* FICHA 2: COTIZACIÓN ENCONTRADA */}
             {foundQuote && (
               <div className="mt-6 p-5 bg-black/80 rounded-2xl border border-emerald-500/40 text-left shadow-2xl space-y-4 animate-in fade-in slide-in-from-bottom-2">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">

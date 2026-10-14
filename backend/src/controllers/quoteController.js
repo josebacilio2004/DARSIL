@@ -1,10 +1,11 @@
+const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
 const Quote = require('../models/Quote');
 const CompanyConfig = require('../models/CompanyConfig');
 const Client = require('../models/Client');
 const Vehicle = require('../models/Vehicle');
-const { generateQuotePdf } = require('../services/pdfService');
+const { generateQuotePdf, renderTallerHtml } = require('../services/pdfService');
 const { generateWhatsAppShareLink } = require('../services/integrationService');
 const { getNextAtomicQuoteNumber } = require('../services/sequenceService');
 const { validatePlateAndModel, syncVehicleRecord } = require('../services/vehicleValidationService');
@@ -35,7 +36,46 @@ exports.getQuotes = async (req, res) => {
 
 exports.getQuoteById = async (req, res) => {
   try {
-    const quote = await Quote.findById(req.params.id);
+    let quote;
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      quote = await Quote.findById(req.params.id);
+    }
+    if (!quote) {
+      quote = await Quote.findOne({ quoteNumber: req.params.id });
+    }
+    // Si req.params.id corresponde a una Orden de Trabajo (por ObjectId o número OT-2026-xxx)
+    if (!quote) {
+      try {
+        const WorkOrder = require('../models/WorkOrder');
+        let order = null;
+        if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+          order = await WorkOrder.findById(req.params.id);
+        }
+        if (!order) {
+          order = await WorkOrder.findOne({ orderNumber: req.params.id });
+        }
+        if (order) {
+          const qId = order.generatedQuoteId || order.quoteId;
+          if (qId && mongoose.Types.ObjectId.isValid(qId)) {
+            quote = await Quote.findById(qId);
+          }
+          if (!quote) {
+            quote = await Quote.findOne({
+              $or: [
+                { workOrderId: order._id },
+                { originWorkOrderNumber: order.orderNumber },
+                ...(order.quoteNumber ? [{ quoteNumber: order.quoteNumber }] : [])
+              ]
+            }).sort({ createdAt: -1 });
+          }
+        }
+      } catch (errWo) {
+        console.warn('Aviso en búsqueda OT desde Quote:', errWo.message);
+      }
+    }
+    if (!quote && (req.params.id === 'sample' || req.params.id === 'demo')) {
+      quote = await Quote.findOne().sort({ createdAt: -1 });
+    }
     if (!quote) {
       return res.status(404).json({ success: false, message: 'Cotización no encontrada' });
     }
@@ -185,6 +225,19 @@ exports.createQuote = async (req, res) => {
 
     const whatsappInfo = generateWhatsAppShareLink(newQuote, `${req.protocol}://${req.get('host')}`);
 
+    // Disparar envío automático por WhatsApp Bot si el cliente tiene teléfono registrado
+    if (newQuote.clientPhone) {
+      try {
+        const { notifyQuoteIssued } = require('../services/whatsappBotService');
+        const pdfUrl = `${req.protocol}://${req.get('host')}/api/quotes/${newQuote._id}/pdf`;
+        notifyQuoteIssued(newQuote, pdfUrl).catch(err => 
+          console.warn('[WHATSAPP BOT] Aviso al despachar cotización automática:', err.message)
+        );
+      } catch (e) {
+        console.warn('[WHATSAPP BOT] Error ejecutando trigger de cotización:', e.message);
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: 'Cotización creada exitosamente',
@@ -276,6 +329,12 @@ exports.deleteQuote = async (req, res) => {
   try {
     const quote = await Quote.findByIdAndDelete(req.params.id);
     if (!quote) return res.status(404).json({ success: false, message: 'Cotización no encontrada' });
+
+    const quotePdfPath = path.join(__dirname, '../../uploads/quotes', `${quote.quoteNumber}.pdf`);
+    if (fs.existsSync(quotePdfPath)) {
+      try { fs.unlinkSync(quotePdfPath); } catch (e) {}
+    }
+
     res.json({ success: true, message: 'Cotización eliminada exitosamente' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -315,25 +374,88 @@ exports.addSignature = async (req, res) => {
 
 exports.downloadPdf = async (req, res) => {
   try {
-    const quote = await Quote.findById(req.params.id);
-    if (!quote) return res.status(404).json({ success: false, message: 'Cotización no encontrada' });
+    let quote;
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      quote = await Quote.findById(req.params.id);
+    }
+    if (!quote) {
+      quote = await Quote.findOne({ quoteNumber: req.params.id });
+    }
+    if (!quote && (req.params.id === 'sample' || req.params.id === 'demo')) {
+      quote = await Quote.findOne().sort({ createdAt: -1 });
+    }
+    if (!quote) {
+      // Doble defensa: si req.params.id corresponde a una Orden de Trabajo (por ObjectId o número OT-2026-xxx)
+      try {
+        const WorkOrder = require('../models/WorkOrder');
+        let order = null;
+        if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+          order = await WorkOrder.findById(req.params.id);
+        }
+        if (!order) {
+          order = await WorkOrder.findOne({ orderNumber: req.params.id });
+        }
+        if (order) {
+          const qId = order.generatedQuoteId || order.quoteId;
+          if (qId && mongoose.Types.ObjectId.isValid(qId)) {
+            const linked = await Quote.findById(qId);
+            if (linked) quote = linked;
+          }
+          if (!quote) {
+            quote = await Quote.findOne({
+              $or: [
+                { workOrderId: order._id },
+                { originWorkOrderNumber: order.orderNumber },
+                ...(order.quoteNumber ? [{ quoteNumber: order.quoteNumber }] : [])
+              ]
+            }).sort({ createdAt: -1 });
+          }
+          if (!quote) {
+            const workOrderController = require('./workOrderController');
+            return workOrderController.getWorkOrderPdf(req, res);
+          }
+        }
+      } catch (errFallback) {
+        console.warn('Aviso en fallback OT desde Quote:', errFallback.message);
+      }
+      if (!quote) {
+        return res.status(404).json({ success: false, message: 'Cotización no encontrada' });
+      }
+    }
+
+    const company = await CompanyConfig.findOne() || {};
+
+    if (req.query.format === 'html') {
+      const html = renderTallerHtml(quote, company);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(html);
+    }
 
     const uploadsDir = path.join(__dirname, '../../uploads/quotes');
     const existingFile = path.join(uploadsDir, `${quote.quoteNumber}.pdf`);
 
     if (fs.existsSync(existingFile)) {
-      const buffer = fs.readFileSync(existingFile);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="${quote.quoteNumber}.pdf"`);
-      return res.send(buffer);
+      const stat = fs.statSync(existingFile);
+      const quoteTime = new Date(quote.updatedAt || quote.createdAt).getTime();
+      if (stat.mtimeMs >= quoteTime - 2000) {
+        const buffer = fs.readFileSync(existingFile);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${quote.quoteNumber}.pdf"`);
+        return res.send(buffer);
+      }
     }
 
-    const company = await CompanyConfig.findOne() || {};
-    const pdfResult = await generateQuotePdf(quote, company);
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${quote.quoteNumber}.pdf"`);
-    res.send(pdfResult.buffer);
+    try {
+      const pdfResult = await generateQuotePdf(quote, company);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${quote.quoteNumber}.pdf"`);
+      return res.send(pdfResult.buffer);
+    } catch (pdfErr) {
+      console.warn('[COTIZACION] Error al generar PDF con Puppeteer, enviando vista HTML:', pdfErr.message);
+      const html = renderTallerHtml(quote, company);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(html);
+    }
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

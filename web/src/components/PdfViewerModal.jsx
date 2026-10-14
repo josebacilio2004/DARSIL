@@ -5,8 +5,14 @@ import { api } from '../services/api';
 export default function PdfViewerModal({ quote, onClose, onRefresh, onOpenMap }) {
   if (!quote) return null;
 
-  const isWorkOrder = Boolean(quote.isWorkOrder || quote.orderNumber);
-  const docId = quote._id;
+  const isWorkOrder = Boolean(
+    quote.isWorkOrder === true ||
+    Boolean(quote.orderNumber) ||
+    quote.tasks !== undefined
+  );
+  const docId = isWorkOrder
+    ? (quote._id || quote.orderNumber)
+    : (quote._id || quote.quoteNumber);
   const pdfUrl = isWorkOrder ? api.getWorkOrderPdfUrl(docId) : api.getPdfUrl(docId);
   const docNumber = isWorkOrder ? (quote.orderNumber || 'ORDEN DE TRABAJO') : (quote.quoteNumber || 'COTIZACIÓN');
   const clientName = quote.clientName || 'Cliente DARSIL';

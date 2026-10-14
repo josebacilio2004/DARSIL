@@ -4,6 +4,32 @@ const path = require('path');
 
 const CHROME_PATH = process.env.CHROME_PATH || '/usr/bin/chromium';
 
+async function launchPuppeteerCore() {
+  const executablePath = process.env.CHROME_PATH || 
+    (fs.existsSync('/usr/bin/chromium') 
+      ? '/usr/bin/chromium' 
+      : fs.existsSync('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe') 
+        ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' 
+        : '/usr/bin/google-chrome');
+
+  return await puppeteer.launch({
+    executablePath,
+    headless: 'new',
+    timeout: 30000,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-first-run',
+      '--no-proxy-server',
+      '--disable-extensions',
+      '--font-render-hinting=none'
+    ]
+  });
+}
+
+
 function formatCurrency(amount) {
   return Number(amount || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -895,21 +921,7 @@ async function generateQuotePdf(quote, company) {
 
   let browser;
   try {
-    browser = await puppeteer.launch({
-      executablePath: process.env.CHROME_PATH || '/usr/bin/chromium',
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-extensions',
-        '--font-render-hinting=none'
-      ]
-    });
+    browser = await launchPuppeteerCore();
 
     const page = await browser.newPage();
     await page.setContent(html, { 
@@ -961,21 +973,7 @@ async function generateWorkOrderPdf(order, company) {
 
   let browser;
   try {
-    browser = await puppeteer.launch({
-      executablePath: process.env.CHROME_PATH || '/usr/bin/chromium',
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-extensions',
-        '--font-render-hinting=none'
-      ]
-    });
+    browser = await launchPuppeteerCore();
 
     const page = await browser.newPage();
     await page.setContent(html, { 
@@ -1013,9 +1011,879 @@ async function generateWorkOrderPdf(order, company) {
   }
 }
 
+/**
+ * Renderiza el HTML para Factura o Boleta Electrónica SUNAT UBL 2.1
+ */
+function renderInvoiceHtml(invoice, company) {
+  const logoSrc = getLogoDataUri();
+  const docTitle = invoice.invoiceType === '01' ? 'FACTURA ELECTRÓNICA' : (invoice.invoiceType === '03' ? 'BOLETA DE VENTA ELECTRÓNICA' : 'NOTA DE CRÉDITO');
+  const rucEmisor = company?.ruc || '20608765432';
+  const razonEmisor = company?.companyName || 'DARSIL AUTOMOTIVE SOLUTIONS S.A.C.';
+  const direccionEmisor = company?.address || 'Villa El Salvador, Lima, Lima';
+  const telefonoEmisor = company?.phone || '934787006';
+
+  const issueDateStr = formatDate(invoice.issueDate);
+  const qrImageSrc = invoice.sunatResponse?.qrCode || '';
+  const hashVal = invoice.sunatResponse?.hash || '';
+
+  const rowsHtml = (invoice.items || []).map((it, idx) => `
+    <tr style="border-bottom: 1px solid #e2e8f0; font-size: 9px;">
+      <td style="padding: 6px; text-align: center; color: #64748b;">${idx + 1}</td>
+      <td style="padding: 6px; text-align: center; font-weight: bold;">${it.quantity}</td>
+      <td style="padding: 6px; text-align: center; color: #475569;">${it.unit || 'NIU'}</td>
+      <td style="padding: 6px; font-family: monospace; font-weight: bold; color: #0f294a;">${it.code || '-'}</td>
+      <td style="padding: 6px; text-align: left; font-weight: 600; color: #1e293b;">${it.description}</td>
+      <td style="padding: 6px; text-align: right; font-family: monospace;">${formatCurrency(it.unitValue)}</td>
+      <td style="padding: 6px; text-align: right; font-family: monospace;">${formatCurrency(it.unitPrice)}</td>
+      <td style="padding: 6px; text-align: right; font-family: monospace; font-weight: bold; color: #0f294a;">${formatCurrency(it.total)}</td>
+    </tr>
+  `).join('');
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      color: #1e293b;
+      background: #fff;
+      padding: 15px 20px;
+      line-height: 1.3;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    .header-box { width: 100%; margin-bottom: 12px; }
+    .sunat-box {
+      width: 260px;
+      border: 2px solid #0f294a;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      background: #f8fafc;
+    }
+    .client-card {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      background: #fcfcfc;
+    }
+    .items-table th {
+      background: #0f294a;
+      color: #ffffff;
+      padding: 6px;
+      font-size: 9px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <!-- Encabezado Emisor vs Caja Tributaria SUNAT -->
+  <table class="header-box">
+    <tr>
+      <td style="width: 58%; vertical-align: top;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          ${logoSrc ? `<img src="${logoSrc}" style="max-height: 55px; max-width: 140px; object-fit: contain;" />` : ''}
+          <div>
+            <div style="font-size: 14px; font-weight: 900; color: #0f294a; letter-spacing: 0.5px;">${razonEmisor}</div>
+            <div style="font-size: 9px; font-weight: bold; color: #475569; margin-top: 2px;">ESPECIALISTAS EN ELECTRÓNICA PESADA & MECÁNICA INTEGRAL</div>
+            <div style="font-size: 9px; color: #64748b; margin-top: 1px;">Dirección: ${direccionEmisor}</div>
+            <div style="font-size: 9px; color: #64748b;">Central Telefónica: +51 ${telefonoEmisor} • contacto@darsil.com</div>
+          </div>
+        </div>
+      </td>
+      <td style="width: 42%; vertical-align: top; text-align: right;">
+        <div class="sunat-box" style="display: inline-block;">
+          <div style="font-size: 13px; font-weight: bold; color: #334155;">R.U.C. ${rucEmisor}</div>
+          <div style="font-size: 12px; font-weight: 900; color: #0f294a; margin: 4px 0; letter-spacing: 0.5px;">${docTitle}</div>
+          <div style="font-size: 14px; font-family: monospace; font-weight: 900; color: #e5a93c;">${invoice.fullNumber}</div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Datos del Cliente y Operación -->
+  <div class="client-card">
+    <table style="width: 100%; font-size: 9.5px;">
+      <tr>
+        <td style="width: 18%; font-weight: bold; color: #475569;">Señor(es):</td>
+        <td style="width: 48%; font-weight: 700; color: #0f294a;">${invoice.clientName}</td>
+        <td style="width: 16%; font-weight: bold; color: #475569;">Fecha Emisión:</td>
+        <td style="width: 18%; font-family: monospace; font-weight: bold;">${issueDateStr}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; color: #475569;">${invoice.clientDocType === '6' ? 'R.U.C.:' : 'D.N.I.:'}</td>
+        <td style="font-family: monospace; font-weight: bold;">${invoice.clientDoc}</td>
+        <td style="font-weight: bold; color: #475569;">Moneda:</td>
+        <td style="font-weight: bold;">SOLES (PEN)</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; color: #475569;">Dirección:</td>
+        <td style="color: #334155;">${invoice.clientAddress || 'Villa El Salvador, Lima, Lima'}</td>
+        <td style="font-weight: bold; color: #475569;">Forma de Pago:</td>
+        <td style="font-weight: 600;">${invoice.paymentCondition || 'Contado'}</td>
+      </tr>
+      ${invoice.plate ? `
+      <tr>
+        <td style="font-weight: bold; color: #475569;">Placa / Vehículo:</td>
+        <td style="color: #0f294a; font-weight: bold;">${invoice.plate} ${invoice.vehicleModel ? '• ' + invoice.vehicleModel : ''}</td>
+        <td style="font-weight: bold; color: #475569;">Doc. Ref:</td>
+        <td style="font-family: monospace; font-weight: bold; color: #0284c7;">${invoice.quoteNumber || invoice.workOrderNumber || 'TALLER DIRECTO'}</td>
+      </tr>
+      ` : ''}
+    </table>
+  </div>
+
+  <!-- Tabla de Partidas -->
+  <table class="items-table" style="margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden;">
+    <thead>
+      <tr>
+        <th style="width: 5%;">Ítem</th>
+        <th style="width: 7%;">Cant.</th>
+        <th style="width: 8%;">Unidad</th>
+        <th style="width: 12%;">Código</th>
+        <th style="width: 38%; text-align: left;">Descripción de Servicios / Repuestos</th>
+        <th style="width: 10%; text-align: right;">Val. Unit.</th>
+        <th style="width: 10%; text-align: right;">P. Venta</th>
+        <th style="width: 10%; text-align: right;">Importe</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml}
+    </tbody>
+  </table>
+
+  <!-- Pie de Comprobante: Total Letras, QR y Totales Tributarios -->
+  <table style="width: 100%; margin-top: 4px;">
+    <tr>
+      <td style="width: 60%; vertical-align: top; padding-right: 15px;">
+        <div style="font-weight: bold; font-size: 9.5px; color: #0f294a; margin-bottom: 6px;">
+          ${invoice.totals?.totalWords || ''}
+        </div>
+        
+        <table style="width: 100%; margin-top: 4px;">
+          <tr>
+            <td style="width: 85px; vertical-align: middle;">
+              ${qrImageSrc ? `<img src="${qrImageSrc}" style="width: 80px; height: 80px; border: 1px solid #cbd5e1; padding: 2px; border-radius: 4px;" />` : ''}
+            </td>
+            <td style="vertical-align: middle; padding-left: 8px; font-size: 8px; color: #64748b; line-height: 1.25;">
+              <div><b>Código Hash:</b> <span style="font-family: monospace;">${hashVal || 'c3VuYXQtdWJsLTIuMS1kYXJzaWw='}</span></div>
+              <div style="margin-top: 3px;">Representación impresa de la <b>${docTitle}</b> generada desde el sistema de facturación electrónica UBL 2.1 estándar SUNAT.</div>
+              <div style="margin-top: 3px; font-weight: bold; color: #0f294a;">Ambiente: ${invoice.environment === 'BETA' ? 'BETA - HOMOLOGACIÓN SUNAT (PRUEBAS)' : 'PRODUCCIÓN OFICIAL SUNAT'}</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+
+      <td style="width: 40%; vertical-align: top;">
+        <table style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 9.5px; background: #f8fafc;">
+          <tr>
+            <td style="padding: 5px 8px; color: #475569;">Op. Gravadas:</td>
+            <td style="padding: 5px 8px; text-align: right; font-family: monospace; font-weight: bold;">S/ ${formatCurrency(invoice.totals?.opGravadas)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 8px; color: #475569;">I.G.V. (18%):</td>
+            <td style="padding: 5px 8px; text-align: right; font-family: monospace; font-weight: bold;">S/ ${formatCurrency(invoice.totals?.igv)}</td>
+          </tr>
+          <tr style="background: #0f294a; color: #ffffff;">
+            <td style="padding: 6px 8px; font-weight: 900; font-size: 11px;">TOTAL A PAGAR:</td>
+            <td style="padding: 6px 8px; text-align: right; font-family: monospace; font-weight: 900; font-size: 12px; color: #fbbf24;">S/ ${formatCurrency(invoice.totals?.total)}</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Cuentas Bancarias del Taller -->
+  <div style="margin-top: 14px; border-top: 1px dashed #cbd5e1; padding-top: 6px; font-size: 8px; color: #64748b;">
+    <b>Cuentas Corrientes DARSIL S.A.C.:</b> SCOTIABANK Cta Cte Soles: 0747668929 (CCI: 00925120074766892907) • INTERBANK Cta Soles: 8983510612681 (CCI: 00389801351061268140)
+  </div>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Genera el archivo PDF de la Factura o Boleta Electrónica usando Puppeteer
+ */
+async function generateInvoicePdf(invoice, company) {
+  let browser = null;
+  try {
+    const uploadDir = path.join(__dirname, '../../uploads/invoices');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const outputPath = path.join(uploadDir, `${invoice.fullNumber}.pdf`);
+    const html = renderInvoiceHtml(invoice, company);
+
+    const executablePath = fs.existsSync(CHROME_PATH)
+      ? CHROME_PATH
+      : (process.platform === 'win32'
+          ? 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
+          : '/usr/bin/google-chrome');
+
+    browser = await launchPuppeteerCore();
+
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '6mm', right: '8mm', bottom: '6mm', left: '8mm' }
+    });
+
+    fs.writeFileSync(outputPath, pdfBuffer);
+
+    return {
+      filePath: outputPath,
+      fileName: `${invoice.fullNumber}.pdf`,
+      buffer: pdfBuffer,
+      urlPath: `/uploads/invoices/${invoice.fullNumber}.pdf`
+    };
+  } catch (error) {
+    console.error('Error al generar PDF de Factura Electrónica:', error);
+    throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
+
+/**
+ * Render HTML del Contrato de Servicios Técnicos y Convenio de Pago
+ */
+function renderContractHtml(schedule, company) {
+  const logoSrc = getLogoDataUri();
+  const fechaEmision = formatDate(schedule.createdAt || new Date());
+  const advisorClean = schedule.advisorName || 'Darios Bacilio';
+
+  const banksHtml = (company?.bankAccounts || []).map(b => `
+    <tr>
+      <td style="font-weight: bold; padding: 4px 6px; border: 1px solid #cbd5e1;">${b.bank}</td>
+      <td style="font-family: monospace; font-weight: bold; padding: 4px 6px; border: 1px solid #cbd5e1;">${b.accountNumber}</td>
+      <td style="font-family: monospace; font-weight: bold; padding: 4px 6px; border: 1px solid #cbd5e1;">${b.interbankAccount}</td>
+    </tr>
+  `).join('');
+
+  const installmentsHtml = (schedule.installments || []).map((inst, idx) => `
+    <tr style="background: ${idx % 2 === 0 ? '#f8fafc' : '#ffffff'};">
+      <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">Cuota N° ${inst.installmentNumber}</td>
+      <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #0284c7;">${formatDate(inst.dueDate)}</td>
+      <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; font-family: monospace;">S/ ${formatCurrency(inst.amount)}</td>
+      <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: center; font-size: 9px;">
+        <span style="display: inline-block; padding: 2px 6px; border-radius: 4px; font-weight: bold; background: ${inst.isPaid ? '#dcfce7; color: #166534;' : '#fef3c7; color: #92400e;'}">
+          ${inst.isPaid ? 'CANCELADO' : 'PENDIENTE'}
+        </span>
+      </td>
+    </tr>
+  `).join('');
+
+  const defaultClauses = [
+    {
+      title: 'PRIMERA: OBJETO DEL CONTRATO Y ALCANCE TÉCNICO',
+      content: `El presente contrato regula los términos y condiciones para la prestación de servicios especializados automotrices y mecatrónicos ejecutados por DARSIL AUTOMOTIVE SOLUTIONS S.A.C. a favor de ${schedule.clientName} (R.U.C./D.N.I. ${schedule.clientDoc || 'S/N'}), sobre la unidad vehicular con placa ${schedule.plate || 'POR ASIGNAR'} (${schedule.model || 'Unidad de Flota'}), según lo detallado en la Cotización Oficial N° ${schedule.quoteNumber}.`
+    },
+    {
+      title: 'SEGUNDA: CONTRAPRESTACIÓN Y CRONOGRAMA DE PAGOS ACORDADO',
+      content: `El monto total por los servicios técnicos y repuestos asciende a la suma de S/ ${formatCurrency(schedule.totalAmount)} (${schedule.currency === 'PEN' ? 'Soles' : 'Dólares'}). Ambas partes pactan libre y expresamente que dicho importe será cancelado mediante la modalidad de ${schedule.paymentType === 'PAGO_UNICO' ? 'PAGO ÚNICO en la fecha establecida' : 'PAGO EN PARTES / FRACCIONADO conforme a la tabla de cuotas y fechas de vencimiento cronológicas'} indicada en el presente documento.`
+    },
+    {
+      title: 'TERCERA: OBLIGACIÓN DE ABONO Y CUENTAS AUTORIZADAS',
+      content: 'Los pagos deberán realizarse única y exclusivamente en las cuentas bancarias institucionales oficiales de DARSIL AUTOMOTIVE SOLUTIONS S.A.C. indicadas al pie del presente contrato. Todo pago se considerará formalmente acreditado una vez remitido el comprobante o voucher de transferencia al asesor asignado y validado en tesorería.'
+    },
+    {
+      title: 'CUARTA: ENTREGA DE LA UNIDAD Y DERECHO DE RETENCIÓN',
+      content: 'Conforme a las disposiciones legales del Código de Comercio y normas aplicables, la empresa se reserva el derecho de retención de la unidad vehicular en caso de incumplimiento de las cuotas pactadas para el retiro. Si se acordó entrega previa al pago total, el cliente asume formal compromiso de honorar las cuotas pendientes en las fechas estipuladas.'
+    },
+    {
+      title: 'QUINTA: MORA, PENALIDADES E INTERESES',
+      content: 'El incumplimiento o retraso injustificado superior a 3 (tres) días hábiles en cualquiera de las cuotas pactadas generará un interés moratorio legal y facultará a DARSIL a suspender beneficios de crédito, garantías comerciales o emitir aviso formal ante centrales de riesgo.'
+    },
+    {
+      title: 'SEXTA: GARANTÍA TÉCNICA DARSIL',
+      content: 'DARSIL otorga garantía técnica sobre la mano de obra y repuestos genuinos instalados, supeditada al estricto cumplimiento del cronograma de pagos pactado. Al cancelar el 100% de la obligación, DARSIL emitirá la constancia oficial de Paz y Salvo y la Factura Electrónica SUNAT UBL 2.1.'
+    }
+  ];
+
+  const activeClauses = (schedule.clauses && schedule.clauses.length > 0) ? schedule.clauses : defaultClauses;
+
+  const clausesHtml = activeClauses.map((c, i) => `
+    <div style="margin-bottom: 7px; page-break-inside: avoid;">
+      <div style="font-weight: bold; color: #0f172a; font-size: 9.5px; margin-bottom: 2px;">${c.title}</div>
+      <p style="font-size: 8.5px; color: #334155; text-align: justify; line-height: 1.35;">${c.content}</p>
+    </div>
+  `).join('');
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9.5px;
+      color: #0f172a;
+      background: #fff;
+      padding: 18px 24px;
+      line-height: 1.3;
+    }
+    .header-table { width: 100%; margin-bottom: 8px; }
+    .logo-container { width: 30%; vertical-align: middle; }
+    .company-info { width: 40%; text-align: center; vertical-align: middle; font-size: 8.5px; color: #334155; line-height: 1.25; }
+    .doc-box {
+      width: 30%;
+      border: 2px solid #0284c7;
+      border-radius: 6px;
+      text-align: center;
+      padding: 8px 4px;
+      background: #f0f9ff;
+    }
+    .client-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+    .client-table td {
+      padding: 4px 6px;
+      font-size: 9px;
+      border: 1px solid #e2e8f0;
+    }
+    .section-title {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 4px 8px;
+      font-size: 9.5px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      border-radius: 3px;
+    }
+    .signature-table {
+      width: 100%;
+      margin-top: 15px;
+      page-break-inside: avoid;
+    }
+    .signature-box {
+      width: 45%;
+      border-top: 1px solid #64748b;
+      text-align: center;
+      padding-top: 5px;
+      font-size: 8.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CABECERA PRINCIPAL IDÉNTICA A COTIZACIÓN -->
+  <table class="header-table">
+    <tr>
+      <td class="logo-container">
+        ${logoSrc ? `<img src="${logoSrc}" style="max-width: 160px; height: auto;" />` : `<strong style="font-size: 16px; color: #0284c7;">DARSIL</strong>`}
+      </td>
+      <td class="company-info">
+        <strong style="font-size: 11px; color: #0f172a;">DARSIL AUTOMOTIVE SOLUTIONS S.A.C.</strong><br/>
+        <strong>R.U.C. 20608765432</strong><br/>
+        Tecnología • Diagnóstico • Mecatrónica Pesada<br/>
+        Villa El Salvador, Lima - Perú • Central: (01) 934 787 006<br/>
+        <span style="color: #0284c7;">operaciones@darsil.pe</span>
+      </td>
+      <td class="doc-box">
+        <div style="font-size: 8.5px; font-weight: bold; color: #0369a1; text-transform: uppercase;">CONTRATO & CONVENIO DE PAGO</div>
+        <div style="font-size: 11px; font-weight: 900; color: #0f172a; margin: 2px 0;">${schedule.contractNumber}</div>
+        <div style="font-size: 8px; color: #475569;">Cotización: <strong>${schedule.quoteNumber}</strong></div>
+        <div style="font-size: 8px; color: #475569;">Fecha: <strong>${fechaEmision}</strong></div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- CUADRO DE CLIENTE Y VEHÍCULO -->
+  <table class="client-table">
+    <tr>
+      <td style="width: 15%; background: #f8fafc; font-weight: bold;">SEÑOR(ES):</td>
+      <td style="width: 45%; font-weight: bold; color: #0f172a;">${schedule.clientName}</td>
+      <td style="width: 15%; background: #f8fafc; font-weight: bold;">R.U.C. / D.N.I.:</td>
+      <td style="width: 25%; font-family: monospace; font-weight: bold;">${schedule.clientDoc || 'S/N'}</td>
+    </tr>
+    <tr>
+      <td style="background: #f8fafc; font-weight: bold;">DIRECCIÓN:</td>
+      <td>${schedule.clientAddress || 'Villa El Salvador, Lima'}</td>
+      <td style="background: #f8fafc; font-weight: bold;">TELÉFONO:</td>
+      <td style="font-family: monospace;">${schedule.clientPhone || '934787006'}</td>
+    </tr>
+    <tr>
+      <td style="background: #f8fafc; font-weight: bold;">VEHÍCULO / PLACA:</td>
+      <td style="font-weight: bold; color: #0369a1;">${schedule.plate || 'POR ASIGNAR'} - ${schedule.model || 'Unidad de Transporte'}</td>
+      <td style="background: #f8fafc; font-weight: bold;">ASESOR TÉCNICO:</td>
+      <td style="font-weight: bold;">${advisorClean} (${schedule.advisorPhone || '934787006'})</td>
+    </tr>
+  </table>
+
+  <!-- CRONOGRAMA DE CUOTAS Y VENCIMIENTO -->
+  <div class="section-title">CRONOGRAMA DE CUOTAS Y VENCIMIENTOS ACORDADOS</div>
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+    <thead>
+      <tr style="background: #e2e8f0; font-size: 9px;">
+        <th style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: center;">N° CUOTA / CONCEPTO</th>
+        <th style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: center;">FECHA DE VENCIMIENTO</th>
+        <th style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: right;">IMPORTE DE CUOTA</th>
+        <th style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: center;">ESTADO</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${installmentsHtml}
+      <tr style="background: #f1f5f9; font-weight: bold;">
+        <td colspan="2" style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: right; text-transform: uppercase;">MONTO TOTAL DEL SERVICIO ACORDADO:</td>
+        <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-size: 11px; color: #0f172a;">S/ ${formatCurrency(schedule.totalAmount)}</td>
+        <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center; color: #0284c7;">${schedule.paymentType === 'PAGO_UNICO' ? 'PAGO ÚNICO' : 'FRACCIONADO'}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- CUENTAS BANCARIAS OFICIALES -->
+  <div style="margin-bottom: 8px;">
+    <div style="font-size: 8.5px; font-weight: bold; color: #334155; margin-bottom: 3px; text-transform: uppercase;">CUENTAS BANCARIAS OFICIALES AUTORIZADAS PARA ABONOS (DARSIL AUTOMOTIVE SOLUTIONS S.A.C.):</div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5px;">
+      <thead>
+        <tr style="background: #f1f5f9;">
+          <th style="padding: 3px 6px; border: 1px solid #cbd5e1; text-align: left;">Entidad Financiera</th>
+          <th style="padding: 3px 6px; border: 1px solid #cbd5e1; text-align: left;">Cuenta Corriente Soles</th>
+          <th style="padding: 3px 6px; border: 1px solid #cbd5e1; text-align: left;">Código Interbancario (CCI)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${banksHtml}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CLÁUSULAS CONTRACTUALES -->
+  <div class="section-title">CLÁUSULAS CONTRACTUALES Y ESTIPULACIONES DEL SERVICIO</div>
+  <div style="margin-top: 5px;">
+    ${clausesHtml}
+  </div>
+
+  <!-- FIRMAS DIGITALES / CONFORMIDAD -->
+  <table class="signature-table">
+    <tr>
+      <td style="width: 45%; text-align: center; vertical-align: bottom;">
+        ${schedule.advisorSignature ? `<img src="${schedule.advisorSignature}" style="max-height: 45px; margin-bottom: 2px;" />` : '<div style="height: 35px;"></div>'}
+        <div class="signature-box" style="margin: 0 auto;">
+          <strong>DARSIL AUTOMOTIVE SOLUTIONS S.A.C.</strong><br/>
+          Asesor Técnico / Representante Autorizado<br/>
+          D.N.I. / R.U.C. 20608765432
+        </div>
+      </td>
+      <td style="width: 10%;"></td>
+      <td style="width: 45%; text-align: center; vertical-align: bottom;">
+        ${schedule.clientSignature ? `<img src="${schedule.clientSignature}" style="max-height: 45px; margin-bottom: 2px;" />` : '<div style="height: 35px;"></div>'}
+        <div class="signature-box" style="margin: 0 auto;">
+          <strong>${schedule.clientName}</strong><br/>
+          Firma y Sello de Conformidad del Cliente<br/>
+          R.U.C. / D.N.I.: ${schedule.clientDoc || '.........................'}
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div style="margin-top: 15px; text-align: center; font-size: 7.5px; color: #94a3b8; border-top: 1px dashed #cbd5e1; padding-top: 4px;">
+    Documento emitido electrónicamente por el Sistema ERP DARSIL • Villa El Salvador, Lima • Conforme a Ley de Títulos Valores y Código Civil del Perú
+  </div>
+
+</body>
+</html>
+  `;
+}
+
+/**
+ * Render HTML del Recibo de Caja Digital Oficial
+ */
+function renderCashReceiptHtml(schedule, payment, company) {
+  const logoSrc = getLogoDataUri();
+  const fechaPago = formatDate(payment.paymentDate || new Date());
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      color: #0f172a;
+      background: #fff;
+      padding: 25px 35px;
+      line-height: 1.35;
+    }
+    .header-table { width: 100%; margin-bottom: 12px; }
+    .box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <table class="header-table">
+    <tr>
+      <td style="width: 35%;">
+        ${logoSrc ? `<img src="${logoSrc}" style="max-width: 160px; height: auto;" />` : `<strong style="font-size: 16px; color: #0284c7;">DARSIL</strong>`}
+      </td>
+      <td style="width: 35%; text-align: center; font-size: 9px; color: #475569;">
+        <strong style="font-size: 11px; color: #0f172a;">DARSIL AUTOMOTIVE SOLUTIONS S.A.C.</strong><br/>
+        R.U.C. 20608765432 • Villa El Salvador, Lima<br/>
+        Central: 934 787 006 • operaciones@darsil.pe
+      </td>
+      <td style="width: 30%; border: 2px solid #16a34a; background: #f0fdf4; text-align: center; padding: 8px; border-radius: 6px;">
+        <div style="font-size: 9px; font-weight: bold; color: #166534; text-transform: uppercase;">RECIBO DE CAJA DIGITAL</div>
+        <div style="font-size: 13px; font-weight: 900; color: #0f172a; margin: 2px 0;">${payment.receiptNumber}</div>
+        <div style="font-size: 8.5px; color: #475569;">Fecha: <strong>${fechaPago}</strong></div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="box" style="background: #f8fafc;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 9.5px;">
+      <tr>
+        <td style="width: 25%; font-weight: bold; padding: 3px 0;">RECIBIMOS DE:</td>
+        <td style="width: 75%; font-weight: bold; color: #0f172a; font-size: 11px;">${schedule.clientName}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; padding: 3px 0;">R.U.C. / D.N.I.:</td>
+        <td style="font-family: monospace; font-weight: bold;">${schedule.clientDoc || 'S/N'}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; padding: 3px 0;">UNIDAD / PLACA:</td>
+        <td style="color: #0284c7; font-weight: bold;">${schedule.plate || 'POR ASIGNAR'} - ${schedule.model || 'Vehículo'}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; padding: 3px 0;">CONCEPTO:</td>
+        <td>Abono a cuenta según Contrato <strong>${schedule.contractNumber}</strong> (Cotización ${schedule.quoteNumber})</td>
+      </tr>
+    </table>
+  </div>
+
+  <div style="background: #ecfdf5; border: 2px solid #059669; border-radius: 8px; padding: 14px; text-align: center; margin-bottom: 15px;">
+    <div style="font-size: 11px; text-transform: uppercase; font-weight: bold; color: #047857;">IMPORTE RECIBIDO Y ACREDITADO</div>
+    <div style="font-size: 26px; font-weight: 900; font-family: monospace; color: #065f46; margin: 4px 0;">S/ ${formatCurrency(payment.amount)}</div>
+    <div style="font-size: 9.5px; color: #047857;">Método: <strong>${payment.paymentMethod}</strong> • N° Operación: <strong>${payment.operationNumber || 'VOUCHER VERIFICADO'}</strong></div>
+  </div>
+
+  <!-- ESTADO DE CUENTA POST-ABONO -->
+  <div class="box">
+    <div style="font-weight: bold; font-size: 10px; margin-bottom: 6px; color: #0f172a; text-transform: uppercase;">ESTADO DE CUENTA ACTUALIZADO TRAS EL ABONO:</div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 9.5px;">
+      <tr>
+        <td style="padding: 4px; border: 1px solid #cbd5e1;">Monto Total del Contrato:</td>
+        <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-weight: bold;">S/ ${formatCurrency(schedule.totalAmount)}</td>
+      </tr>
+      <tr>
+        <td style="padding: 4px; border: 1px solid #cbd5e1; color: #166534;">Total Abonado Acumulado:</td>
+        <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-weight: bold; color: #166534;">S/ ${formatCurrency(schedule.paidAmount)}</td>
+      </tr>
+      <tr style="background: #fef2f2; font-weight: bold;">
+        <td style="padding: 6px 4px; border: 1px solid #cbd5e1; color: #b91c1c; font-size: 11px;">SALDO RESTANTE PENDIENTE POR COBRAR:</td>
+        <td style="padding: 6px 4px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-size: 13px; color: #b91c1c;">S/ ${formatCurrency(schedule.balance)}</td>
+      </tr>
+    </table>
+  </div>
+
+  <table style="width: 100%; margin-top: 30px;">
+    <tr>
+      <td style="width: 50%; text-align: center;">
+        <div style="width: 80%; border-top: 1px solid #64748b; margin: 0 auto; padding-top: 4px; font-size: 8.5px;">
+          <strong>DARSIL AUTOMOTIVE SOLUTIONS S.A.C.</strong><br/>
+          Caja Central & Tesorería
+        </div>
+      </td>
+      <td style="width: 50%; text-align: center;">
+        <div style="width: 80%; border-top: 1px solid #64748b; margin: 0 auto; padding-top: 4px; font-size: 8.5px;">
+          <strong>${schedule.clientName}</strong><br/>
+          Recibí Conforme / Cliente
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div style="margin-top: 25px; text-align: center; font-size: 8px; color: #94a3b8;">
+    Comprobante digital de control interno emitido por DARSIL ERP • No válido como comprobante tributario SUNAT
+  </div>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Render HTML del Certificado de Paz y Salvo Oficial
+ */
+function renderPazYSalvoHtml(schedule, company) {
+  const logoSrc = getLogoDataUri();
+  const fechaPazYSalvo = formatDate(new Date());
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      color: #0f172a;
+      background: #fff;
+      padding: 30px 45px;
+      line-height: 1.5;
+    }
+    .header-table { width: 100%; margin-bottom: 25px; }
+    .gold-box {
+      border: 3px double #d97706;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      background: #fffbeb;
+      margin-bottom: 25px;
+    }
+  </style>
+</head>
+<body>
+  <table class="header-table">
+    <tr>
+      <td style="width: 40%;">
+        ${logoSrc ? `<img src="${logoSrc}" style="max-width: 180px; height: auto;" />` : `<strong style="font-size: 20px; color: #0284c7;">DARSIL</strong>`}
+      </td>
+      <td style="width: 60%; text-align: right; font-size: 9px; color: #475569;">
+        <strong style="font-size: 12px; color: #0f172a;">DARSIL AUTOMOTIVE SOLUTIONS S.A.C.</strong><br/>
+        R.U.C. 20608765432 • Villa El Salvador, Lima<br/>
+        Tecnología • Diagnóstico • Mecatrónica Pesada
+      </td>
+    </tr>
+  </table>
+
+  <div class="gold-box">
+    <div style="font-size: 11px; font-weight: bold; color: #b45309; letter-spacing: 2px; text-transform: uppercase;">CERTIFICADO OFICIAL DE NO ADEUDO</div>
+    <div style="font-size: 22px; font-weight: 900; color: #0f172a; margin: 6px 0;">CONSTANCIA DE PAZ Y SALVO</div>
+    <div style="font-size: 10px; color: #64748b;">N° PYS-${schedule.contractNumber.replace(/[^0-9]/g, '') || '2026-001'}</div>
+  </div>
+
+  <div style="text-align: justify; margin-bottom: 20px; font-size: 11.5px; line-height: 1.6;">
+    <p style="margin-bottom: 14px;">
+      Por medio del presente documento, la empresa <strong>DARSIL AUTOMOTIVE SOLUTIONS S.A.C.</strong> (R.U.C. 20608765432), con domicilio legal y taller central en el distrito de Villa El Salvador, Lima:
+    </p>
+    <p style="margin-bottom: 14px; background: #f8fafc; padding: 12px; border-left: 4px solid #16a34a; border-radius: 4px;">
+      <strong>CERTIFICA Y HACE CONSTAR QUE:</strong><br/>
+      El cliente <strong>${schedule.clientName}</strong>, con R.U.C./D.N.I. <strong>${schedule.clientDoc || 'S/N'}</strong>, ha cumplido satisfactoriamente y en su totalidad con el pago del presupuesto correspondiente al Contrato <strong>${schedule.contractNumber}</strong> (Cotización Oficial N° ${schedule.quoteNumber}), por un importe total cancelado de <strong>S/ ${formatCurrency(schedule.totalAmount)} Soles</strong>.
+    </p>
+    <p style="margin-bottom: 14px;">
+      Dicho servicio técnico fue ejecutado a entera conformidad sobre la unidad vehicular:
+    </p>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 11px;">
+      <tr>
+        <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f1f5f9; width: 30%; font-weight: bold;">PLACA DEL VEHÍCULO:</td>
+        <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: bold; color: #0369a1;">${schedule.plate || 'POR ASIGNAR'}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">MODELO / CARROCERÍA:</td>
+        <td style="padding: 6px; border: 1px solid #cbd5e1;">${schedule.model || 'Unidad de Transporte'}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">ESTADO FINANCIERO:</td>
+        <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: 900; color: #166534;">100% CANCELADO (SALDO S/ 0.00)</td>
+      </tr>
+    </table>
+    <p>
+      En virtud de lo anterior, se declara a la mencionada persona y a la unidad automotriz <strong>COMPLETAMENTE LIBRES DE TODO ADEUDO, GRAVAMEN O RETENCIÓN</strong> por concepto de dichos trabajos, autorizándose la vigencia irrestricta de las garantías técnicas otorgadas y la expedición del comprobante de pago SUNAT correspondiente.
+    </p>
+  </div>
+
+  <div style="margin-top: 15px; font-size: 10px; color: #475569;">
+    Se expide la presente certificación a solicitud de la parte interesada en la ciudad de Lima, a los ${new Date().getDate()} días del mes de ${new Date().toLocaleString('es-PE', { month: 'long' })} del ${new Date().getFullYear()}.
+  </div>
+
+  <table style="width: 100%; margin-top: 45px;">
+    <tr>
+      <td style="width: 50%; text-align: center;">
+        <div style="width: 75%; border-top: 2px solid #0f172a; margin: 0 auto; padding-top: 6px;">
+          <strong>DARIOS BACILIO</strong><br/>
+          Gerencia General / Asesoría Técnica<br/>
+          DARSIL AUTOMOTIVE SOLUTIONS S.A.C.
+        </div>
+      </td>
+      <td style="width: 50%; text-align: center;">
+        <div style="width: 75%; border-top: 2px solid #0f172a; margin: 0 auto; padding-top: 6px;">
+          <strong>TESORERÍA Y CRÉDITOS</strong><br/>
+          Dpto. de Gestión Financiera<br/>
+          R.U.C. 20608765432
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Generador de PDF de Contrato & Convenio de Pago
+ */
+async function generateContractPdf(schedule, company) {
+  const uploadsDir = path.join(__dirname, '../../uploads/contracts');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  const safeNumber = (schedule.contractNumber || 'CONTRATO').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const outputPath = path.join(uploadsDir, `${safeNumber}.pdf`);
+  const html = renderContractHtml(schedule, company);
+
+  let browser = null;
+  try {
+    const executablePath = process.env.CHROME_PATH || 
+      (fs.existsSync('/usr/bin/chromium') 
+        ? '/usr/bin/chromium' 
+        : fs.existsSync('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe') 
+          ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' 
+          : '/usr/bin/google-chrome');
+
+    browser = await launchPuppeteerCore();
+
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '8mm', right: '8mm', bottom: '8mm', left: '8mm' }
+    });
+
+    fs.writeFileSync(outputPath, pdfBuffer);
+
+    return {
+      filePath: outputPath,
+      fileName: `${safeNumber}.pdf`,
+      buffer: pdfBuffer,
+      urlPath: `/uploads/contracts/${safeNumber}.pdf`
+    };
+  } finally {
+    if (browser) await browser.close();
+  }
+}
+
+/**
+ * Generador de PDF de Recibo de Caja Digital
+ */
+async function generateCashReceiptPdf(schedule, payment, company) {
+  const uploadsDir = path.join(__dirname, '../../uploads/receipts');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  const safeNumber = (payment.receiptNumber || 'RECIBO').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const outputPath = path.join(uploadsDir, `${safeNumber}.pdf`);
+  const html = renderCashReceiptHtml(schedule, payment, company);
+
+  let browser = null;
+  try {
+    const executablePath = process.env.CHROME_PATH || 
+      (fs.existsSync('/usr/bin/chromium') 
+        ? '/usr/bin/chromium' 
+        : fs.existsSync('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe') 
+          ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' 
+          : '/usr/bin/google-chrome');
+
+    browser = await launchPuppeteerCore();
+
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+    });
+
+    fs.writeFileSync(outputPath, pdfBuffer);
+
+    return {
+      filePath: outputPath,
+      fileName: `${safeNumber}.pdf`,
+      buffer: pdfBuffer,
+      urlPath: `/uploads/receipts/${safeNumber}.pdf`
+    };
+  } finally {
+    if (browser) await browser.close();
+  }
+}
+
+/**
+ * Generador de PDF de Constancia de Paz y Salvo
+ */
+async function generatePazYSalvoPdf(schedule, company) {
+  const uploadsDir = path.join(__dirname, '../../uploads/paz-y-salvo');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  const safeNumber = (schedule.contractNumber || 'PYS').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const outputPath = path.join(uploadsDir, `PazYSalvo_${safeNumber}.pdf`);
+  const html = renderPazYSalvoHtml(schedule, company);
+
+  let browser = null;
+  try {
+    const executablePath = process.env.CHROME_PATH || 
+      (fs.existsSync('/usr/bin/chromium') 
+        ? '/usr/bin/chromium' 
+        : fs.existsSync('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe') 
+          ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' 
+          : '/usr/bin/google-chrome');
+
+    browser = await launchPuppeteerCore();
+
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+    });
+
+    fs.writeFileSync(outputPath, pdfBuffer);
+
+    return {
+      filePath: outputPath,
+      fileName: `PazYSalvo_${safeNumber}.pdf`,
+      buffer: pdfBuffer,
+      urlPath: `/uploads/paz-y-salvo/PazYSalvo_${safeNumber}.pdf`
+    };
+  } finally {
+    if (browser) await browser.close();
+  }
+}
+
 module.exports = {
   generateQuotePdf,
   generateWorkOrderPdf,
+  generateInvoicePdf,
+  generateContractPdf,
+  generateCashReceiptPdf,
+  generatePazYSalvoPdf,
   renderTallerHtml,
-  renderWorkOrderHtml
+  renderWorkOrderHtml,
+  renderInvoiceHtml,
+  renderContractHtml,
+  renderCashReceiptHtml,
+  renderPazYSalvoHtml
 };
+

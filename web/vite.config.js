@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: './',
   build: {
-    outDir: '../docs',
+    outDir: process.env.BUILD_OUTDIR || '../docs',
     emptyOutDir: true
   },
   server: {

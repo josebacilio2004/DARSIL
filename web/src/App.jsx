@@ -13,6 +13,11 @@ import CompanyInfoView from './components/CompanyInfoView';
 import WorkOrdersView from './components/WorkOrdersView';
 import InventoryView from './components/InventoryView';
 import ReportsView from './components/ReportsView';
+import BillingView from './components/BillingView';
+import WhatsAppBotView from './components/WhatsAppBotView';
+import FinancialManagementView from './components/FinancialManagementView';
+import TorreControlView from './components/TorreControlView';
+import FinanceBIView from './components/FinanceBIView';
 import LoginModal from './components/LoginModal';
 import { api, getApiUrl } from './services/api';
 import { Menu, PlusCircle, Radio, Sparkles, ClipboardList, LayoutDashboard, FileText } from 'lucide-react';
@@ -228,7 +233,11 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             {/* Píldora de Estado */}
             <div className="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Render Cloud & Atlas Conectado</span>
+              <span>
+                {typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                  ? 'Docker Local (API :4001)'
+                  : 'Render Cloud & Atlas'}
+              </span>
             </div>
 
             {/* Botón Acción Rápida: Nueva Orden de Trabajo */}
@@ -286,6 +295,13 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             />
           )}
 
+          {/* Pestaña: Torre de Control Técnico & Kanban */}
+          {activeTab === 'torre-control' && (
+            <TorreControlView 
+              onNavigateToWorkOrder={() => setActiveTab('workorders')}
+            />
+          )}
+
           {/* Pestaña: Órdenes de Trabajo & Check-In Taller */}
           {activeTab === 'workorders' && (
             <WorkOrdersView
@@ -306,6 +322,34 @@ Quedamos a su entera disposición para coordinar la atención técnica.
           {/* Pestaña: Control de Inventario & Kardex */}
           {activeTab === 'inventory' && (
             <InventoryView />
+          )}
+
+          {/* Pestaña: Facturación Electrónica SUNAT */}
+          {activeTab === 'billing' && (
+            <BillingView 
+              quotes={quotes} 
+              onRefreshQuotes={fetchQuotes} 
+            />
+          )}
+
+          {/* Pestaña: Panel Ejecutivo BI & Finanzas */}
+          {activeTab === 'finance-bi' && (
+            <FinanceBIView 
+              onNavigateToFinancial={() => setActiveTab('financial')}
+            />
+          )}
+
+          {/* Pestaña: Gestión Financiera & Cobranzas */}
+          {activeTab === 'financial' && (
+            <FinancialManagementView 
+              quotes={quotes}
+              onRefreshQuotes={fetchQuotes}
+            />
+          )}
+
+          {/* Pestaña: Bot CRM & WhatsApp */}
+          {activeTab === 'whatsapp' && (
+            <WhatsAppBotView />
           )}
 
           {/* Pestaña: Reportes Ejecutivos & Contabilidad */}
@@ -374,7 +418,7 @@ Quedamos a su entera disposición para coordinar la atención técnica.
         <button
           onClick={() => setSidebarOpen(true)}
           className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
-            ['catalog', 'inventory', 'reports', 'company'].includes(activeTab) ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            ['catalog', 'inventory', 'reports', 'company', 'billing', 'whatsapp', 'financial', 'torre-control', 'finance-bi'].includes(activeTab) ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
           <Menu className="w-5 h-5" />

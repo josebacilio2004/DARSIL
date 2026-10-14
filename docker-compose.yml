@@ -1,5 +1,3 @@
-﻿version: '3.8'
-
 services:
   darsil_backend:
     build:
@@ -8,15 +6,16 @@ services:
     container_name: darsil_backend
     restart: unless-stopped
     ports:
-      - "4000:4000"
+      - "4001:4000"
     environment:
       - PORT=4000
       - MONGO_URI=mongodb://admin:touchid_secure_2026@touchid_mongo:27017/darsil_db?authSource=admin
       - CHROME_PATH=/usr/bin/chromium
-      - BASE_URL=http://localhost:4000
+      - BASE_URL=http://localhost:4001
       - NODE_ENV=production
     volumes:
       - darsil_uploads:/app/uploads
+      - darsil_auth_baileys:/app/auth_info_baileys
     networks:
       - darsil_net
       - bases_datos_locales_default
@@ -36,6 +35,7 @@ services:
 
 volumes:
   darsil_uploads:
+  darsil_auth_baileys:
 
 networks:
   darsil_net:
