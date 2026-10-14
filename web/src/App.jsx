@@ -22,8 +22,128 @@ import LoginModal from './components/LoginModal';
 import { api, getApiUrl } from './services/api';
 import { Menu, PlusCircle, Radio, Sparkles, ClipboardList, LayoutDashboard, FileText } from 'lucide-react';
 
+// Mapeo exhaustivo y canónico de módulos del ERP a Hashes en la URL
+const TAB_TO_CANONICAL_HASH = {
+  portal: '#inicio',
+  dashboard: '#dashboard',
+  'torre-control': '#torre-control',
+  workorders: '#ordenes-trabajo',
+  quotes: '#cotizaciones',
+  catalog: '#catalogo',
+  inventory: '#inventario',
+  billing: '#facturacion',
+  'finance-bi': '#bi',
+  financial: '#cobranzas',
+  whatsapp: '#whatsapp-bot',
+  reports: '#reportes',
+  company: '#configuracion',
+};
+
+const HASH_TO_TAB = {
+  // ERP Módulos
+  dashboard: 'dashboard',
+  'erp/dashboard': 'dashboard',
+  panel: 'dashboard',
+
+  'torre-control': 'torre-control',
+  torre: 'torre-control',
+  kanban: 'torre-control',
+  'erp/torre-control': 'torre-control',
+
+  'ordenes-trabajo': 'workorders',
+  workorders: 'workorders',
+  ot: 'workorders',
+  ots: 'workorders',
+  'erp/ordenes-trabajo': 'workorders',
+  'erp/workorders': 'workorders',
+
+  cotizaciones: 'quotes',
+  quotes: 'quotes',
+  coti: 'quotes',
+  'erp/cotizaciones': 'quotes',
+  'erp/quotes': 'quotes',
+
+  catalogo: 'catalog',
+  catalog: 'catalog',
+  'catalogo-mo': 'catalog',
+  'erp/catalogo': 'catalog',
+
+  inventario: 'inventory',
+  inventory: 'inventory',
+  kardex: 'inventory',
+  almacen: 'inventory',
+  'erp/inventario': 'inventory',
+
+  facturacion: 'billing',
+  billing: 'billing',
+  facturas: 'billing',
+  sunat: 'billing',
+  'erp/facturacion': 'billing',
+
+  bi: 'finance-bi',
+  'finance-bi': 'finance-bi',
+  finanzas: 'finance-bi',
+  'panel-bi': 'finance-bi',
+  'erp/bi': 'finance-bi',
+
+  cobranzas: 'financial',
+  financial: 'financial',
+  cobros: 'financial',
+  'gestion-financiera': 'financial',
+  'erp/cobranzas': 'financial',
+  'erp/financial': 'financial',
+
+  'whatsapp-bot': 'whatsapp',
+  whatsapp: 'whatsapp',
+  crm: 'whatsapp',
+  bot: 'whatsapp',
+  'erp/whatsapp': 'whatsapp',
+
+  reportes: 'reports',
+  reports: 'reports',
+  contabilidad: 'reports',
+  'erp/reportes': 'reports',
+
+  configuracion: 'company',
+  company: 'company',
+  bancos: 'company',
+  'datos-bancarios': 'company',
+  taller: 'company',
+  'erp/configuracion': 'company',
+};
+
+// Secciones del Landing Page
+const LANDING_HASHES = new Set([
+  'inicio',
+  'portal',
+  'nosotros',
+  'servicios',
+  'piezas3d',
+  'rastreador',
+  'contacto',
+  'ubicacion',
+  'reclamaciones',
+  'terminos',
+  'politicas',
+]);
+
+const getTabFromHash = (rawHash) => {
+  if (!rawHash) return 'portal';
+  const clean = rawHash.replace(/^#\/?/, '').trim().toLowerCase();
+  if (!clean) return 'portal';
+  if (clean.startsWith('tracking/')) return 'portal';
+  if (LANDING_HASHES.has(clean)) return 'portal';
+  if (HASH_TO_TAB[clean]) return HASH_TO_TAB[clean];
+  return 'portal';
+};
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState('portal'); // Iniciar en el portal público de clientes
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return getTabFromHash(window.location.hash);
+    }
+    return 'portal';
+  });
   const [quotes, setQuotes] = useState([]);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -77,6 +197,44 @@ export default function App() {
     fetchCompany();
   }, []);
 
+  // Sincronizar window.location.hash cuando cambia activeTab
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const currentHash = window.location.hash;
+    const currentTabFromHash = getTabFromHash(currentHash);
+
+    if (activeTab === 'portal') {
+      const clean = currentHash.replace(/^#\/?/, '').trim().toLowerCase();
+      // Si el hash actual es una sección válida de la Landing o un tracking, conservarla
+      if (!clean || (!LANDING_HASHES.has(clean) && !clean.startsWith('tracking/'))) {
+        window.location.hash = '#inicio';
+      }
+    } else {
+      const canonicalHash = TAB_TO_CANONICAL_HASH[activeTab] || '#dashboard';
+      if (currentTabFromHash !== activeTab) {
+        window.location.hash = canonicalHash;
+      }
+    }
+  }, [activeTab]);
+
+  // Escuchar cambios de hash (navegación con flechas Atrás / Adelante o enlaces directos)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleHashChange = () => {
+      const nextTab = getTabFromHash(window.location.hash);
+      if (nextTab !== activeTab) {
+        if (nextTab !== 'portal' && !authUser) {
+          setShowLoginModal(true);
+        } else {
+          setActiveTab(nextTab);
+        }
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [activeTab, authUser]);
+
   const handleShareWhatsApp = (q) => {
     const totalStr = 'S/ ' + Number(q.total || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 });
     const rawPhone = q.clientPhone ? String(q.clientPhone).replace(/\D/g, '') : '934787006';
@@ -107,6 +265,9 @@ Quedamos a su entera disposición para coordinar la atención técnica.
     localStorage.removeItem('darsil_auth_token');
     setAuthUser(null);
     setActiveTab('portal');
+    if (typeof window !== 'undefined') {
+      window.location.hash = '#inicio';
+    }
   };
 
   const handleSwitchToAdmin = () => {
@@ -153,7 +314,9 @@ Quedamos a su entera disposición para coordinar la atención técnica.
             onLoginSuccess={(user) => {
               setAuthUser(user);
               setShowLoginModal(false);
-              setActiveTab('dashboard');
+              const requestedTab = getTabFromHash(typeof window !== 'undefined' ? window.location.hash : '');
+              const destinationTab = requestedTab !== 'portal' ? requestedTab : 'dashboard';
+              setActiveTab(destinationTab);
             }}
             onCancel={() => setShowLoginModal(false)}
           />
@@ -169,9 +332,16 @@ Quedamos a su entera disposición para coordinar la atención técnica.
         <LoginModal
           onLoginSuccess={(user) => {
             setAuthUser(user);
-            setActiveTab('dashboard');
+            const requestedTab = getTabFromHash(typeof window !== 'undefined' ? window.location.hash : '');
+            const destinationTab = requestedTab !== 'portal' ? requestedTab : 'dashboard';
+            setActiveTab(destinationTab);
           }}
-          onCancel={() => setActiveTab('portal')}
+          onCancel={() => {
+            setActiveTab('portal');
+            if (typeof window !== 'undefined') {
+              window.location.hash = '#inicio';
+            }
+          }}
         />
       </div>
     );
@@ -218,10 +388,15 @@ Quedamos a su entera disposición para coordinar la atención técnica.
               <span className="text-slate-600 hidden sm:inline">/</span>
               <span className="font-black text-amber-400 tracking-wide uppercase truncate max-w-[105px] xs:max-w-[140px] sm:max-w-none text-[11px] sm:text-xs">
                 {activeTab === 'dashboard' ? 'Dashboard' :
-                 activeTab === 'quotes' ? 'Cotizaciones' :
+                 activeTab === 'torre-control' ? 'Torre de Control Taller' :
                  activeTab === 'workorders' ? 'Órdenes de Trabajo' :
+                 activeTab === 'quotes' ? 'Cotizaciones' :
                  activeTab === 'catalog' ? 'Catálogo MO' :
-                 activeTab === 'inventory' ? 'Inventario' :
+                 activeTab === 'inventory' ? 'Inventario & Kardex' :
+                 activeTab === 'billing' ? 'Facturación SUNAT' :
+                 activeTab === 'finance-bi' ? 'Panel BI & Finanzas' :
+                 activeTab === 'financial' ? 'Gestión Financiera' :
+                 activeTab === 'whatsapp' ? 'Bot CRM WhatsApp' :
                  activeTab === 'reports' ? 'Reportes' :
                  activeTab === 'company' ? 'Datos Bancarios' :
                  activeTab}

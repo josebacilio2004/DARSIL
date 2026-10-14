@@ -71,6 +71,14 @@ export default function LandingPage({ quotes = [], authUser, onSwitchToAdmin }) 
             if (el) el.scrollIntoView({ behavior: 'smooth' });
           }, 300);
         }
+      } else if (hash) {
+        const targetSection = hash.replace(/^#\/?/, '').trim();
+        if (targetSection && targetSection !== 'inicio' && targetSection !== 'portal') {
+          setTimeout(() => {
+            const el = document.getElementById(targetSection);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 300);
+        }
       }
     };
     handleHashCheck();
