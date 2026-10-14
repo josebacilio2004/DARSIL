@@ -28,7 +28,13 @@ import {
   Sparkles,
   Zap,
   Phone,
-  GripVertical
+  GripVertical,
+  Archive,
+  CheckSquare,
+  History,
+  RotateCcw,
+  Download,
+  Eye
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -70,6 +76,9 @@ export default function TorreControlView({ onNavigateToWorkOrder }) {
   const [priorityFilter, setPriorityFilter] = useState('TODAS');
   const [mechanicFilter, setMechanicFilter] = useState('TODOS');
 
+  const [activeViewMode, setActiveViewMode] = useState('ACTIVE'); // 'ACTIVE' | 'HISTORY'
+  const [deliveredOrders, setDeliveredOrders] = useState([]);
+
   // Modales
   const [selectedOrderForEdit, setSelectedOrderForEdit] = useState(null);
   const [trackingModalData, setTrackingModalData] = useState(null);
@@ -99,6 +108,7 @@ export default function TorreControlView({ onNavigateToWorkOrder }) {
       });
       if (res?.success && res.data) {
         setColumns(res.data.columns || {});
+        setDeliveredOrders(res.data.deliveredOrders || []);
         if (res.data.kpis) setKpis(res.data.kpis);
       }
     } catch (err) {
@@ -115,6 +125,57 @@ export default function TorreControlView({ onNavigateToWorkOrder }) {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     fetchKanban();
+  };
+
+  // Marcar vehículo como entregado al cliente y archivar al Historial
+  const handleDeliverOrder = async (order) => {
+    if (!order) return;
+    const confirmMsg = `¿Confirmar entrega y retiro para:\n\nPlaca: ${order.plate}\nOT: ${order.orderNumber}\nCliente: ${order.clientName}?\n\nAl confirmar, la orden se marcará como ENTREGADA y pasará al Historial de Taller para mantener el tablero operativo despejado.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await api.updateKanbanStage(order._id, {
+        stage: 'ENTREGADO',
+        progressPercent: 100,
+        notes: 'Vehículo entregado y retirado satisfactoriamente del taller.',
+        notifyClient: false
+      });
+      if (res?.success) {
+        setActionFeedback({
+          type: 'success',
+          msg: `¡Unidad ${order.plate} archivada con éxito en el Historial de Entregados!`
+        });
+        fetchKanban();
+      } else {
+        alert(res?.message || 'Error al archivar orden');
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  // Reactivar orden de trabajo desde el Historial
+  const handleReactivateOrder = async (order) => {
+    if (!order) return;
+    if (!window.confirm(`¿Deseas reactivar la orden ${order.orderNumber} (${order.plate}) y reingresarla a la Torre de Control Activa?`)) return;
+
+    try {
+      const res = await api.updateKanbanStage(order._id, {
+        stage: 'RECEPCIONADO',
+        progressPercent: 20,
+        notes: 'Reingreso técnico de unidad desde Historial.',
+        notifyClient: false
+      });
+      if (res?.success) {
+        setActionFeedback({
+          type: 'success',
+          msg: `Unidad ${order.plate} reingresada a la fase de Recepción en el tablero activo.`
+        });
+        fetchKanban();
+      }
+    } catch (err) {
+      alert('Error reactivando orden: ' + err.message);
+    }
   };
 
   const openEditModal = (order) => {
@@ -397,6 +458,53 @@ export default function TorreControlView({ onNavigateToWorkOrder }) {
         ))}
       </div>
 
+      {/* Selector de Modo: Activas en Taller vs Historial de Entregados */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 p-1 bg-slate-950 border border-darsil-border rounded-2xl w-fit">
+          <button
+            type="button"
+            onClick={() => setActiveViewMode('ACTIVE')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
+              activeViewMode === 'ACTIVE'
+                ? 'bg-amber-500 text-slate-950 shadow-gold-glow font-black'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Car className="w-4 h-4" />
+            <span>Torre de Control Activa</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+              activeViewMode === 'ACTIVE' ? 'bg-slate-950 text-amber-400' : 'bg-slate-800 text-slate-300'
+            }`}>
+              {kpis.totalActive || 0}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveViewMode('HISTORY')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
+              activeViewMode === 'HISTORY'
+                ? 'bg-emerald-500 text-slate-950 shadow-md font-black'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Archive className="w-4 h-4" />
+            <span>Historial de Entregados</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+              activeViewMode === 'HISTORY' ? 'bg-slate-950 text-emerald-400' : 'bg-slate-800 text-slate-300'
+            }`}>
+              {deliveredOrders.length}
+            </span>
+          </button>
+        </div>
+
+        <div className="text-xs text-slate-400">
+          {activeViewMode === 'ACTIVE' 
+            ? 'Monitoreando vehículos actualmente en taller por fases operativas'
+            : 'Archivo permanente de vehículos despachados y retirados'}
+        </div>
+      </div>
+
       {/* Barra de Filtros y Búsqueda */}
       <div className="bg-darsil-card border border-darsil-border p-3.5 rounded-2xl shadow-lg flex flex-col md:flex-row items-center justify-between gap-3">
         <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
@@ -442,8 +550,9 @@ export default function TorreControlView({ onNavigateToWorkOrder }) {
         </div>
       </div>
 
-      {/* Tablero Kanban - 6 Fases */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 items-start">
+      {activeViewMode === 'ACTIVE' ? (
+        /* Tablero Kanban - 6 Fases */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 items-start">
         {STAGES.map((stage) => {
           const ordersInStage = columns[stage.id] || [];
 
@@ -623,6 +732,19 @@ export default function TorreControlView({ onNavigateToWorkOrder }) {
                           </button>
                         </div>
 
+                        {/* Botón Destacado: Entregar y Archivar (Solo en fase 6: Listo para Retiro) */}
+                        {stage.id === 'LISTO_ENTREGA' && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeliverOrder(order)}
+                            className="w-full mt-1.5 py-1.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 font-black text-[10px] flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition"
+                            title="Marcar como entregado y retirar del tablero operativo"
+                          >
+                            <CheckSquare className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <span>Entregar y Archivar</span>
+                          </button>
+                        )}
+
                       </div>
                     );
                   })
@@ -632,6 +754,107 @@ export default function TorreControlView({ onNavigateToWorkOrder }) {
           );
         })}
       </div>
+      ) : (
+        /* Apartado de Historial de Unidades Entregadas */
+        <div className="bg-darsil-card border border-darsil-border rounded-2xl p-5 shadow-2xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-darsil-border pb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <Archive className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white flex items-center gap-2">
+                  <span>Archivo de Unidades Entregadas</span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold">
+                    {deliveredOrders.length} {deliveredOrders.length === 1 ? 'servicio' : 'servicios'}
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Registro histórico permanente de todos los vehículos que culminaron su servicio técnico y fueron retirados por el cliente.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {deliveredOrders.length === 0 ? (
+            <div className="p-12 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-2xl">
+              No hay órdenes archivadas en el historial todavía. Cuando marques una unidad como "Entregar y Archivar" en la última fase del tablero activo, aparecerá archivada aquí.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {deliveredOrders.map(order => (
+                <div key={order._id} className="bg-darsil-obsidian border border-darsil-border rounded-2xl p-4 space-y-3 hover:border-emerald-500/40 transition shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="bg-amber-400 text-slate-950 font-mono font-black text-xs px-2.5 py-1 rounded-lg shadow-sm">
+                        {order.plate}
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                        ENTREGADO
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-400">{order.orderNumber}</span>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-bold text-white truncate">{order.clientName}</h4>
+                    <p className="text-[11px] text-slate-400">{order.model || 'Vehículo General'}</p>
+                  </div>
+
+                  <div className="text-[11px] bg-black/40 p-2.5 rounded-xl border border-darsil-border/60 text-slate-300 space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Técnico Responsable:</span>
+                      <span className="font-semibold text-slate-200">{order.assignedMechanic || 'Darios Bacilio'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Ingreso a Taller:</span>
+                      <span className="font-mono text-slate-300">{new Date(order.createdAt).toLocaleDateString('es-PE')}</span>
+                    </div>
+                    {order.deliveredAt && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Fecha de Entrega:</span>
+                        <span className="font-mono text-emerald-300 font-bold">{new Date(order.deliveredAt).toLocaleDateString('es-PE')}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-darsil-border/60">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenTracking(order.orderNumber)}
+                      className="px-2 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 text-[10px] font-bold border border-sky-500/30 flex items-center justify-center gap-1 transition"
+                      title="Ver Trazabilidad"
+                    >
+                      <Activity className="w-3 h-3" />
+                      <span>Tracking</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSendWhatsAppNotification(order)}
+                      className="px-2 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 flex items-center justify-center gap-1 transition"
+                      title="WhatsApp"
+                    >
+                      <Send className="w-3 h-3" />
+                      <span>WhatsApp</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleReactivateOrder(order)}
+                      className="px-2 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[10px] font-bold border border-amber-500/30 flex items-center justify-center gap-1 transition"
+                      title="Reactivar servicio en el tablero activo"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Reingreso</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Modal Ajustar Fase & Telemetría */}
       {selectedOrderForEdit && (

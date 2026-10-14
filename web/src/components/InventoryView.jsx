@@ -148,6 +148,28 @@ export default function InventoryView() {
     }
   };
 
+  const handleDeleteItem = async (item) => {
+    if (!item) return;
+    const confirmMsg = `¿Estás seguro de que deseas eliminar permanentemente el ítem:\n\n"${item.name}" (SKU: ${item.sku})?\n\nEsta acción lo retirará del inventario activo y del catálogo de taller.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await api.deleteInventoryItem(item._id);
+      if (res?.success) {
+        alert('Ítem eliminado correctamente del inventario.');
+        if (showItemModal) {
+          setShowItemModal(false);
+        }
+        fetchInventory();
+        fetchSummary();
+      } else {
+        alert(res?.message || 'Error al eliminar el ítem');
+      }
+    } catch (err) {
+      alert('Error de conexión al eliminar: ' + err.message);
+    }
+  };
+
   const fetchInventory = async () => {
     try {
       setLoading(true);
@@ -637,6 +659,13 @@ export default function InventoryView() {
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
+                        <button
+                          onClick={() => handleDeleteItem(item)}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 hover:border-rose-500/50 transition"
+                          title="Eliminar Ítem del Inventario"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -807,20 +836,32 @@ export default function InventoryView() {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-3 border-t border-darsil-border">
-                <button
-                  type="button"
-                  onClick={() => setShowItemModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-gold-glow"
-                >
-                  Guardar en Inventario
-                </button>
+              <div className="flex items-center justify-between pt-3 border-t border-darsil-border">
+                {editingItem ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteItem(editingItem)}
+                    className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold flex items-center space-x-1.5 transition"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Eliminar Ítem</span>
+                  </button>
+                ) : <div />}
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowItemModal(false)}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-gold-glow"
+                  >
+                    Guardar en Inventario
+                  </button>
+                </div>
               </div>
             </form>
           </div>

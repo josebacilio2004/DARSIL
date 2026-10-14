@@ -9,6 +9,15 @@ const CompanyConfigSchema = new mongoose.Schema({
   coverage: { type: String, default: 'Lima y alrededores / Cobertura nacional para comisiones' },
   workshopAddress: { type: String, default: 'Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima' },
   workshopCity: { type: String, default: 'Lima' },
+  
+  // Datos Oficiales del Asesor Técnico Responsable (Dario Bacilio)
+  advisorName: { type: String, default: 'Dario Bacilio' },
+  advisorRuc: { type: String, default: '' },
+  advisorBusinessName: { type: String, default: 'DARSIL AUTOMOTIVE SOLUTIONS' },
+  advisorPhone: { type: String, default: '934787006' },
+  advisorAddress: { type: String, default: 'Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima' },
+  advisorEmail: { type: String, default: 'rubenbasil24@gmail.com' },
+  advisorRole: { type: String, default: 'Asesor Técnico Responsable & Especialista Automotriz' },
   workshopCoords: {
     lng: { type: Number, default: -76.9535 },
     lat: { type: Number, default: -12.2085 }

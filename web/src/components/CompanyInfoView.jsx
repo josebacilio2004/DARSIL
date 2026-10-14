@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Phone, Mail, MapPin, Building, CreditCard, Plus, Trash2, Edit2, CheckCircle, Fuel, Save, Loader2 } from 'lucide-react';
+import { ShieldCheck, Phone, Mail, MapPin, Building, CreditCard, Plus, Trash2, Edit2, CheckCircle, Fuel, Save, Loader2, UserCheck, Briefcase, FileText } from 'lucide-react';
 import { api } from '../services/api';
 import InteractiveVisaCard from './InteractiveVisaCard';
 
 export default function CompanyInfoView() {
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Estados para formulario del Asesor Técnico (Dario Bacilio) & Razón Social
+  const [advisorName, setAdvisorName] = useState('Dario Bacilio');
+  const [advisorRuc, setAdvisorRuc] = useState('');
+  const [advisorBusinessName, setAdvisorBusinessName] = useState('DARSIL AUTOMOTIVE SOLUTIONS');
+  const [advisorPhone, setAdvisorPhone] = useState('934787006');
+  const [advisorAddress, setAdvisorAddress] = useState('Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima');
+  const [advisorEmail, setAdvisorEmail] = useState('rubenbasil24@gmail.com');
+  const [advisorRole, setAdvisorRole] = useState('Asesor Técnico Responsable & Especialista Automotriz');
+  const [savingAdvisor, setSavingAdvisor] = useState(false);
 
   // Estados para formulario de Taller
   const [workshopAddress, setWorkshopAddress] = useState('');
@@ -30,6 +40,14 @@ export default function CompanyInfoView() {
       const res = await api.getCompany();
       if (res.success && res.data) {
         setCompany(res.data);
+        setAdvisorName(res.data.advisorName || 'Dario Bacilio');
+        setAdvisorRuc(res.data.advisorRuc || '');
+        setAdvisorBusinessName(res.data.advisorBusinessName || res.data.name || 'DARSIL AUTOMOTIVE SOLUTIONS');
+        setAdvisorPhone(res.data.advisorPhone || res.data.phones?.[0] || '934787006');
+        setAdvisorAddress(res.data.advisorAddress || res.data.workshopAddress || 'Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima');
+        setAdvisorEmail(res.data.advisorEmail || res.data.emails?.[0] || 'rubenbasil24@gmail.com');
+        setAdvisorRole(res.data.advisorRole || 'Asesor Técnico Responsable & Especialista Automotriz');
+
         setWorkshopAddress(res.data.workshopAddress || 'Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima');
         setPhone(res.data.phones?.[0] || '934787006');
         setEmail(res.data.emails?.[0] || 'rubenbasil24@gmail.com');
@@ -46,6 +64,34 @@ export default function CompanyInfoView() {
   useEffect(() => {
     fetchCompanyData();
   }, []);
+
+  // Guardar datos del Asesor Técnico (Dario Bacilio) & Razón Social
+  const handleSaveAdvisor = async (e) => {
+    e.preventDefault();
+    setSavingAdvisor(true);
+    try {
+      const res = await api.updateCompany({
+        advisorName,
+        advisorRuc,
+        advisorBusinessName,
+        advisorPhone,
+        advisorAddress,
+        advisorEmail,
+        advisorRole,
+        name: advisorBusinessName || 'DARSIL AUTOMOTIVE SOLUTIONS'
+      });
+      if (res.success) {
+        alert('¡Datos del Asesor Técnico Dario Bacilio actualizados con éxito en todo el ERP!');
+        fetchCompanyData();
+      } else {
+        alert('Error: ' + res.message);
+      }
+    } catch (err) {
+      alert('Error al guardar: ' + err.message);
+    } finally {
+      setSavingAdvisor(false);
+    }
+  };
 
   // Guardar datos generales del taller
   const handleSaveWorkshop = async (e) => {
@@ -182,6 +228,121 @@ export default function CompanyInfoView() {
             Configura las cuentas bancarias oficiales impresas en el PDF y los parámetros de logística para cálculo de rutas con Mapbox.
           </p>
         </div>
+      </div>
+
+      {/* 1. Módulo Oficial de Configuración: Asesor Técnico (Dario Bacilio) & Razón Social */}
+      <div className="bg-darsil-card border border-darsil-border p-6 rounded-3xl shadow-card-dark space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-darsil-border pb-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <UserCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2 text-white font-bold text-base">
+                <span>Ficha del Asesor Técnico Responsable & Razón Social</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">Dario Bacilio</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Configura los datos fiscales y de contacto que se imprimen en Cotizaciones, Órdenes de Trabajo y notificaciones.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveAdvisor} className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div>
+            <label className="block text-slate-400 font-semibold mb-1">Nombre del Asesor Técnico Responsable:</label>
+            <input
+              type="text"
+              required
+              value={advisorName}
+              onChange={(e) => setAdvisorName(e.target.value)}
+              placeholder="Ej. Dario Bacilio"
+              className="w-full bg-darsil-obsidian border border-darsil-border rounded-xl px-3.5 py-2.5 text-white font-bold outline-none focus:border-amber-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-slate-400 font-semibold mb-1">RUC de la Empresa / Asesor:</label>
+            <input
+              type="text"
+              value={advisorRuc}
+              onChange={(e) => setAdvisorRuc(e.target.value)}
+              placeholder="Ej. 10456789012 o 20600000001"
+              className="w-full bg-darsil-obsidian border border-darsil-border rounded-xl px-3.5 py-2.5 text-amber-300 font-mono font-bold outline-none focus:border-amber-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-slate-400 font-semibold mb-1">Razón Social / Nombre Comercial:</label>
+            <input
+              type="text"
+              required
+              value={advisorBusinessName}
+              onChange={(e) => setAdvisorBusinessName(e.target.value)}
+              placeholder="Ej. DARSIL AUTOMOTIVE SOLUTIONS / DARSIL E.I.R.L."
+              className="w-full bg-darsil-obsidian border border-darsil-border rounded-xl px-3.5 py-2.5 text-white font-semibold outline-none focus:border-amber-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-slate-400 font-semibold mb-1">Cargo / Especialidad Técnica:</label>
+            <input
+              type="text"
+              value={advisorRole}
+              onChange={(e) => setAdvisorRole(e.target.value)}
+              placeholder="Ej. Asesor Técnico Responsable & Especialista Automotriz"
+              className="w-full bg-darsil-obsidian border border-darsil-border rounded-xl px-3.5 py-2.5 text-slate-200 outline-none focus:border-amber-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-slate-400 font-semibold mb-1">Número de Celular / WhatsApp Oficial:</label>
+            <input
+              type="text"
+              required
+              value={advisorPhone}
+              onChange={(e) => setAdvisorPhone(e.target.value)}
+              placeholder="Ej. 934787006"
+              className="w-full bg-darsil-obsidian border border-darsil-border rounded-xl px-3.5 py-2.5 text-emerald-400 font-mono font-bold outline-none focus:border-amber-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-slate-400 font-semibold mb-1">Correo Electrónico Institucional:</label>
+            <input
+              type="email"
+              required
+              value={advisorEmail}
+              onChange={(e) => setAdvisorEmail(e.target.value)}
+              placeholder="Ej. rubenbasil24@gmail.com"
+              className="w-full bg-darsil-obsidian border border-darsil-border rounded-xl px-3.5 py-2.5 text-white outline-none focus:border-amber-400"
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="block text-slate-400 font-semibold mb-1">Dirección de Taller / Domicilio Legal:</label>
+            <input
+              type="text"
+              required
+              value={advisorAddress}
+              onChange={(e) => setAdvisorAddress(e.target.value)}
+              placeholder="Ej. Av. Los Forestales MZ I1, Villa El Salvador, Lima, Lima"
+              className="w-full bg-darsil-obsidian border border-darsil-border rounded-xl px-3.5 py-2.5 text-white outline-none focus:border-amber-400"
+            />
+          </div>
+
+          <div className="sm:col-span-2 flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={savingAdvisor}
+              className="bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 text-slate-950 px-6 py-2.5 rounded-xl font-black text-xs flex items-center space-x-2 shadow-gold-glow active:scale-95 transition"
+            >
+              {savingAdvisor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              <span>Guardar Ficha del Asesor Técnico</span>
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* CRUD de Cuentas Bancarias con Tarjeta VISA Interactiva */}

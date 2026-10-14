@@ -675,12 +675,13 @@ const KANBAN_STAGES = [
 function normalizeKanbanStage(status) {
   if (!status) return 'RECEPCIONADO';
   const s = status.toUpperCase();
+  if (s === 'ENTREGADO' || s === 'ARCHIVADO') return 'ENTREGADO';
   if (s === 'DESPACHADO' || s === 'EN_CAMINO' || s === 'RECEPCIONADO') return 'RECEPCIONADO';
   if (s === 'EN_DIAGNOSTICO') return 'EN_DIAGNOSTICO';
   if (s === 'ESPERA_REPUESTOS') return 'ESPERA_REPUESTOS';
   if (s === 'EN_REPARACION' || s === 'EN_PROCESO') return 'EN_REPARACION';
   if (s === 'CONTROL_CALIDAD' || s === 'PRUEBA_BANCO_24V') return 'CONTROL_CALIDAD';
-  if (s === 'LISTO_ENTREGA' || s === 'FINALIZADO' || s === 'ENTREGADO') return 'LISTO_ENTREGA';
+  if (s === 'LISTO_ENTREGA' || s === 'FINALIZADO') return 'LISTO_ENTREGA';
   return 'RECEPCIONADO';
 }
 
@@ -716,6 +717,9 @@ exports.getKanbanOrders = async (req, res) => {
       LISTO_ENTREGA: []
     };
 
+    const deliveredOrders = [];
+    const activeOrders = [];
+
     let countUrgent = 0;
     let countInDiagnosis = 0;
     let countWaitingParts = 0;
@@ -737,17 +741,22 @@ exports.getKanbanOrders = async (req, res) => {
       doc.elapsedHours = elapsedHours;
       doc.elapsedDays = Math.floor(elapsedHours / 24);
 
-      if (doc.priority === 'URGENTE') countUrgent++;
-      if (canonicalStage === 'EN_DIAGNOSTICO') countInDiagnosis++;
-      else if (canonicalStage === 'ESPERA_REPUESTOS') countWaitingParts++;
-      else if (canonicalStage === 'EN_REPARACION') countInRepair++;
-      else if (canonicalStage === 'CONTROL_CALIDAD') countQuality++;
-      else if (canonicalStage === 'LISTO_ENTREGA') countReady++;
-
-      if (columns[canonicalStage]) {
-        columns[canonicalStage].push(doc);
+      if (canonicalStage === 'ENTREGADO') {
+        deliveredOrders.push(doc);
       } else {
-        columns.RECEPCIONADO.push(doc);
+        activeOrders.push(doc);
+        if (doc.priority === 'URGENTE') countUrgent++;
+        if (canonicalStage === 'EN_DIAGNOSTICO') countInDiagnosis++;
+        else if (canonicalStage === 'ESPERA_REPUESTOS') countWaitingParts++;
+        else if (canonicalStage === 'EN_REPARACION') countInRepair++;
+        else if (canonicalStage === 'CONTROL_CALIDAD') countQuality++;
+        else if (canonicalStage === 'LISTO_ENTREGA') countReady++;
+
+        if (columns[canonicalStage]) {
+          columns[canonicalStage].push(doc);
+        } else {
+          columns.RECEPCIONADO.push(doc);
+        }
       }
     });
 
@@ -755,8 +764,10 @@ exports.getKanbanOrders = async (req, res) => {
       success: true,
       data: {
         columns,
+        deliveredOrders,
         kpis: {
-          totalActive: orders.length,
+          totalActive: activeOrders.length,
+          totalDelivered: deliveredOrders.length,
           inDiagnosis: countInDiagnosis,
           waitingParts: countWaitingParts,
           inRepair: countInRepair,
@@ -781,13 +792,18 @@ exports.updateKanbanStage = async (req, res) => {
     if (!order) return res.status(404).json({ success: false, message: 'Orden de trabajo no encontrada' });
 
     if (stage) order.status = stage;
+    if (stage === 'ENTREGADO') {
+      order.deliveredAt = new Date();
+      order.progressPercent = 100;
+    }
     if (priority) order.priority = priority;
     if (progressPercent !== undefined) order.progressPercent = Math.min(100, Math.max(0, Number(progressPercent)));
     if (assignedMechanic) order.assignedMechanic = assignedMechanic;
     if (estimatedCompletionDate) order.estimatedCompletionDate = new Date(estimatedCompletionDate);
 
     if (!Array.isArray(order.stageHistory)) order.stageHistory = [];
-    const stageInfo = KANBAN_STAGES.find(s => s.id === stage) || { label: stage };
+    const stageInfo = KANBAN_STAGES.find(s => s.id === stage) || 
+      (stage === 'ENTREGADO' ? { label: '7. Entregado al Cliente (Archivado en Historial)' } : { label: stage });
     order.stageHistory.push({
       stage: stage || order.status,
       title: stageInfo.label,

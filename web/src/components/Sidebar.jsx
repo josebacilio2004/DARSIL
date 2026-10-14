@@ -97,7 +97,7 @@ export default function Sidebar({
         { id: 'finance-bi', label: 'Panel BI & Finanzas', icon: TrendingUp, badge: 'BI' },
         { id: 'financial', label: 'Gestión Financiera & Cobros', icon: Coins, badge: 'A-Z' },
         { id: 'reports', label: 'Reportes & Libro Ventas', icon: BarChart3, badge: 'Excel' },
-        { id: 'company', label: 'Datos Bancarios & Taller', icon: ShieldCheck, badge: null }
+        { id: 'company', label: 'Asesor, Taller & Bancos', icon: ShieldCheck, badge: 'Dario' }
       ]
     },
     {
