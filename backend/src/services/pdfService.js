@@ -46,6 +46,24 @@ function formatCurrency(amount) {
   return Number(amount || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function isExcludedObservationNote(str) {
+  if (!str || typeof str !== 'string') return true;
+  const s = str.trim().toLowerCase();
+  return (
+    s.length === 0 ||
+    s.includes('cotización válida') ||
+    s.includes('cotizacion valida') ||
+    s.includes('válida por') ||
+    s.includes('valida por') ||
+    s.includes('días hábiles') ||
+    s.includes('dias habiles') ||
+    s.includes('días calendario') ||
+    s.includes('dias calendario') ||
+    s.startsWith('nota: cotización actualizada automáticamente') ||
+    s.startsWith('nota: cotizacion actualizada automaticamente')
+  );
+}
+
 /**
  * Renderiza la lista de condiciones comerciales y observaciones en formato de lista vertical
  */
@@ -56,24 +74,24 @@ function renderObservationsList(paymentCondition, commercialConditions = [], not
     const parts = paymentCondition
       .split(/\r?\n|•|\s+-\s+|;/)
       .map(s => s.trim())
-      .filter(s => s.length > 0);
+      .filter(s => !isExcludedObservationNote(s));
     items.push(...parts);
   }
 
   if (Array.isArray(commercialConditions)) {
     commercialConditions.forEach(c => {
-      if (c && typeof c === 'string' && c.trim()) {
+      if (c && typeof c === 'string' && !isExcludedObservationNote(c)) {
         const cClean = c.trim();
         if (!items.includes(cClean)) items.push(cClean);
       }
     });
   }
 
-  if (notes && typeof notes === 'string' && notes.trim() && !notes.toLowerCase().startsWith('nota: cotización actualizada automáticamente')) {
+  if (notes && typeof notes === 'string' && !isExcludedObservationNote(notes)) {
     const noteParts = notes
       .split(/\r?\n|•/)
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.toLowerCase().startsWith('nota: cotización actualizada automáticamente'));
+      .filter(s => !isExcludedObservationNote(s));
     items.push(...noteParts);
   }
 
@@ -570,7 +588,6 @@ function renderTallerHtml(quote, company) {
   </table>
 
   <!-- Pie de página -->
-  <div class="footer-note">${quote.notes || `Nota: Cotización válida por ${validityDays} días calendario desde su emisión.`}</div>
   <div class="doc-type-bottom">Cotización</div>
 
 </body>

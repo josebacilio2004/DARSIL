@@ -90,7 +90,7 @@ const QuoteSchema = new mongoose.Schema({
   
   // Observaciones y Notas
   paymentCondition: { type: String, default: 'Condición de pago 07 días despues de realizar el servicio.' },
-  notes: { type: String, default: 'Nota: Cotización válida por 15 días hábiles desde su emisión.' },
+  notes: { type: String, default: '' },
   
   // Firmas
   clientSignature: { type: String, default: null }, // Base64 PNG
