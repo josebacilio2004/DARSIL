@@ -5,17 +5,30 @@ const path = require('path');
 const CHROME_PATH = process.env.CHROME_PATH || '/usr/bin/chromium';
 
 async function launchPuppeteerCore() {
-  const executablePath = process.env.CHROME_PATH || 
-    (fs.existsSync('/usr/bin/chromium') 
-      ? '/usr/bin/chromium' 
-      : fs.existsSync('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe') 
-        ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' 
-        : '/usr/bin/google-chrome');
+  const customPath = process.env.CHROME_PATH;
+  let executablePath = null;
+  if (customPath && fs.existsSync(customPath)) {
+    executablePath = customPath;
+  } else if (fs.existsSync('/usr/bin/chromium')) {
+    executablePath = '/usr/bin/chromium';
+  } else if (fs.existsSync('/usr/bin/chromium-browser')) {
+    executablePath = '/usr/bin/chromium-browser';
+  } else if (fs.existsSync('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe')) {
+    executablePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+  } else if (fs.existsSync('C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe')) {
+    executablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
+  } else if (fs.existsSync('/usr/bin/google-chrome')) {
+    executablePath = '/usr/bin/google-chrome';
+  }
+
+  if (!executablePath) {
+    throw new Error('Chromium binary not found on host (instant fallback to printable HTML)');
+  }
 
   return await puppeteer.launch({
     executablePath,
     headless: 'new',
-    timeout: 30000,
+    timeout: 7000,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -29,9 +42,62 @@ async function launchPuppeteerCore() {
   });
 }
 
-
 function formatCurrency(amount) {
   return Number(amount || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
+ * Renderiza la lista de condiciones comerciales y observaciones en formato de lista vertical
+ */
+function renderObservationsList(paymentCondition, commercialConditions = [], notes = '') {
+  const items = [];
+
+  if (paymentCondition && typeof paymentCondition === 'string') {
+    const parts = paymentCondition
+      .split(/\r?\n|•|\s+-\s+|;/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+    items.push(...parts);
+  }
+
+  if (Array.isArray(commercialConditions)) {
+    commercialConditions.forEach(c => {
+      if (c && typeof c === 'string' && c.trim()) {
+        const cClean = c.trim();
+        if (!items.includes(cClean)) items.push(cClean);
+      }
+    });
+  }
+
+  if (notes && typeof notes === 'string' && notes.trim() && !notes.toLowerCase().startsWith('nota: cotización actualizada automáticamente')) {
+    const noteParts = notes
+      .split(/\r?\n|•/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.toLowerCase().startsWith('nota: cotización actualizada automáticamente'));
+    items.push(...noteParts);
+  }
+
+  // Deduplicación preservando orden
+  const uniqueItems = [];
+  const seen = new Set();
+  items.forEach(it => {
+    const key = it.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueItems.push(it);
+    }
+  });
+
+  if (uniqueItems.length === 0) {
+    uniqueItems.push('Condición de pago 07 días despues de realizar el servicio.');
+  }
+
+  return uniqueItems.map(item => `
+    <div class="obs-item">
+      <span class="obs-bullet">•</span>
+      <span class="obs-item-text">${item}</span>
+    </div>
+  `).join('');
 }
 
 let cachedLogoBase64 = null;
@@ -250,19 +316,45 @@ function renderTallerHtml(quote, company) {
       padding: 2px 0;
     }
 
-    /* Observaciones */
+    /* Observaciones y Términos Comerciales */
     .obs-section {
-      margin-bottom: 18px;
-      font-size: 9.5px;
+      margin-top: 10px;
+      margin-bottom: 14px;
+      padding: 7px 12px;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 3.5px solid #0f294a;
+      border-radius: 4px;
     }
     .obs-title {
-      font-style: italic;
-      font-weight: bold;
-      margin-bottom: 2px;
+      font-weight: 800;
+      color: #0f294a;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-size: 8.5px;
     }
-    .obs-text {
-      font-style: italic;
-      color: #2d3748;
+    .obs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .obs-item {
+      display: flex;
+      align-items: flex-start;
+      color: #334155;
+      line-height: 1.35;
+      font-size: 8.5px;
+    }
+    .obs-bullet {
+      color: #d97706;
+      font-weight: 900;
+      font-size: 11px;
+      margin-right: 6px;
+      line-height: 1;
+    }
+    .obs-item-text {
+      font-weight: 600;
     }
 
     /* Firmas */
@@ -453,10 +545,12 @@ function renderTallerHtml(quote, company) {
     </tbody>
   </table>
 
-  <!-- Observaciones -->
+  <!-- Observaciones y Términos Comerciales -->
   <div class="obs-section">
     <div class="obs-title">Condición de Pago & Observaciones:</div>
-    <div class="obs-text">${quote.paymentCondition || 'Condición de pago 07 días despues de realizar el servicio.'}</div>
+    <div class="obs-list">
+      ${renderObservationsList(quote.paymentCondition, quote.commercialConditions, quote.notes)}
+    </div>
   </div>
 
   <!-- Firmas -->
@@ -730,6 +824,46 @@ function renderWorkOrderHtml(order, company) {
       font-size: 8.5px;
       font-weight: bold;
     }
+    /* Observaciones y Términos Comerciales en OT */
+    .obs-section {
+      margin-top: 6px;
+      margin-bottom: 8px;
+      padding: 6px 10px;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 3.5px solid #0f294a;
+      border-radius: 4px;
+    }
+    .obs-title {
+      font-weight: 800;
+      color: #0f294a;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-size: 8px;
+    }
+    .obs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5px;
+    }
+    .obs-item {
+      display: flex;
+      align-items: flex-start;
+      color: #334155;
+      line-height: 1.3;
+      font-size: 8px;
+    }
+    .obs-bullet {
+      color: #d97706;
+      font-weight: 900;
+      font-size: 10px;
+      margin-right: 5px;
+      line-height: 1;
+    }
+    .obs-item-text {
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -876,8 +1010,37 @@ function renderWorkOrderHtml(order, company) {
     </tr>
   </table>
 
-  <!-- Sección 4: Firmas de Conformidad -->
-  <div class="section-title">4. Acta de Conformidad y Entrega Técnica</div>
+  <!-- Sección 4: Diagnóstico Técnico y Repuestos Detectados -->
+  ${((order.diagnosticServices && order.diagnosticServices.length > 0) || (order.diagnosticParts && order.diagnosticParts.length > 0)) ? `
+  <div class="section-title">4. Diagnóstico Técnico y Repuestos Detectados</div>
+  <table class="grid-table" style="margin-bottom: 4px;">
+    ${(order.diagnosticServices || []).map(s => `
+      <tr>
+        <td class="lbl" style="width: 20%;">Servicio Técnico:</td>
+        <td class="val font-bold" style="width: 60%;">${s.description}</td>
+        <td class="val text-right font-mono" style="width: 20%;">S/ ${Number(s.unitPrice || 0).toFixed(2)}</td>
+      </tr>
+    `).join('')}
+    ${(order.diagnosticParts || []).map(p => `
+      <tr>
+        <td class="lbl" style="width: 20%;">Repuesto Requerido:</td>
+        <td class="val" style="width: 60%;">${p.name} (Cant: ${p.quantity || 1})</td>
+        <td class="val text-right font-mono" style="width: 20%;">S/ ${Number(p.unitPrice || 0).toFixed(2)}</td>
+      </tr>
+    `).join('')}
+  </table>
+  ` : ''}
+
+  <!-- Condiciones de Atención & Observaciones -->
+  <div class="obs-section">
+    <div class="obs-title">Condiciones de Atención & Observaciones:</div>
+    <div class="obs-list">
+      ${renderObservationsList(order.paymentCondition)}
+    </div>
+  </div>
+
+  <!-- Sección 5: Firmas de Conformidad -->
+  <div class="section-title">5. Acta de Conformidad y Entrega Técnica</div>
   <table class="sig-table">
     <tr>
       <td>

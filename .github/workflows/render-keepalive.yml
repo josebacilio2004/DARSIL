@@ -1,0 +1,24 @@
+name: Render 24/7 Keep-Alive
+
+on:
+  schedule:
+    # Se ejecuta cada 12 minutos para evitar que el contenedor gratuito de Render entre en hibernación (sleep tras 15 min)
+    - cron: '*/12 * * * *'
+  workflow_dispatch: # Permite ejecución manual desde la pestaña Actions en GitHub
+
+jobs:
+  ping-render:
+    name: Ping Darsil Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Health Endpoint
+        run: |
+          echo "Realizando ping a Render Backend..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 https://darsil-backend.onrender.com/health)
+          echo "Respuesta HTTP: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 301 ] || [ "$HTTP_STATUS" -eq 302 ]; then
+            echo "✅ Backend despierto y respondiendo correctamente."
+          else
+            echo "⚠️ Backend respondió con código $HTTP_STATUS, reintentando..."
+            curl -f -s https://darsil-backend.onrender.com/health || exit 0
+          fi

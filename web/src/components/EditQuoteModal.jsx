@@ -11,6 +11,41 @@ const isPartItem = (item) => {
          desc.includes('REPUESTO') || desc.includes('ACCESORIO') || desc.includes('INSUMO');
 };
 
+const PAYMENT_CONDITION_PRESETS = [
+  'Contado contra entrega',
+  'Precios no incluyen IGV',
+  'Condición de pago 07 días despues de realizar el servicio.',
+  'Crédito 15 días factura',
+  'Crédito 30 días',
+  '50% adelanto / 50% saldo contra entrega',
+  'Garantía técnica: 30 días calendario'
+];
+
+const handleTogglePaymentCondition = (setter, currentVal, condition) => {
+  const lines = (currentVal || '')
+    .split(/\r?\n/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  
+  const cleanCond = condition.trim();
+  const exists = lines.some(l => l.toLowerCase() === cleanCond.toLowerCase());
+  
+  if (exists) {
+    const updated = lines.filter(l => l.toLowerCase() !== cleanCond.toLowerCase());
+    setter(updated.join('\n'));
+  } else {
+    setter([...lines, cleanCond].join('\n'));
+  }
+};
+
+const isConditionSelected = (currentVal, condition) => {
+  const lines = (currentVal || '')
+    .split(/\r?\n/)
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean);
+  return lines.includes(condition.trim().toLowerCase());
+};
+
 export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
   if (!quote) return null;
 
@@ -471,31 +506,38 @@ export default function EditQuoteModal({ quote, onClose, onQuoteUpdated }) {
               </div>
 
               <div className="sm:col-span-4">
-                <label className="block text-slate-400 font-semibold mb-1">Condición de Pago (Impresa en PDF):</label>
-                <input
-                  type="text"
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-slate-400 font-semibold text-xs">
+                    Condiciones Comerciales y de Pago (Impresas en PDF como lista vertical):
+                  </label>
+                  <span className="text-[10px] text-slate-400">Clic en cada botón para agregar o quitar</span>
+                </div>
+                <textarea
+                  rows={3}
                   required
                   value={paymentCondition}
                   onChange={(e) => setPaymentCondition(e.target.value)}
-                  placeholder="Ej. Condición de pago 07 días despues de realizar el servicio."
-                  className="w-full bg-darsil-card border border-darsil-border rounded-xl px-3 py-2 text-amber-300 font-medium outline-none focus:border-amber-400"
+                  placeholder="Ej.&#10;Contado contra entrega&#10;Precios no incluyen IGV&#10;Condición de pago 07 días despues de realizar el servicio."
+                  className="w-full bg-darsil-card border border-darsil-border rounded-xl p-3 text-amber-300 font-medium text-xs outline-none focus:border-amber-400 leading-relaxed resize-y"
                 />
-                <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  {[
-                    'Contado contra entrega',
-                    'Condición de pago 07 días despues de realizar el servicio.',
-                    'Crédito 15 días calendario',
-                    '50% adelanto y saldo contra entrega'
-                  ].map((p, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setPaymentCondition(p)}
-                      className="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border border-slate-700 transition"
-                    >
-                      {p}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {PAYMENT_CONDITION_PRESETS.map((p, i) => {
+                    const selected = isConditionSelected(paymentCondition, p);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleTogglePaymentCondition(setPaymentCondition, paymentCondition, p)}
+                        className={`text-[11px] px-2.5 py-1 rounded-lg border transition font-medium flex items-center space-x-1 ${
+                          selected
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm'
+                            : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                        }`}
+                      >
+                        <span>{selected ? '✓ ' : '+ '}{p}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

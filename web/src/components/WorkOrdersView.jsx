@@ -92,6 +92,41 @@ const FALLBACK_INVENTORY = [
   { _id: 'seed-8', sku: 'SEN-NOX-CAN-24V', name: 'Sensor NOx Digital Entrada/Salida Bus CAN 24V', category: 'SENSORES_ACTUADORES', unit: 'Uds.', currentStock: 4, salePrice: 1150.00 }
 ];
 
+const PAYMENT_CONDITION_PRESETS = [
+  'Contado contra entrega',
+  'Precios no incluyen IGV',
+  'Condición de pago 07 días despues de realizar el servicio.',
+  'Crédito 15 días factura',
+  'Crédito 30 días',
+  '50% adelanto / 50% saldo contra entrega',
+  'Garantía técnica: 30 días calendario'
+];
+
+const handleTogglePaymentCondition = (setter, currentVal, condition) => {
+  const lines = (currentVal || '')
+    .split(/\r?\n/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  
+  const cleanCond = condition.trim();
+  const exists = lines.some(l => l.toLowerCase() === cleanCond.toLowerCase());
+  
+  if (exists) {
+    const updated = lines.filter(l => l.toLowerCase() !== cleanCond.toLowerCase());
+    setter(updated.join('\n'));
+  } else {
+    setter([...lines, cleanCond].join('\n'));
+  }
+};
+
+const isConditionSelected = (currentVal, condition) => {
+  const lines = (currentVal || '')
+    .split(/\r?\n/)
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean);
+  return lines.includes(condition.trim().toLowerCase());
+};
+
 export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefreshQuotes }) {
   const [orders, setOrders] = useState([]);
   const [catalog, setCatalog] = useState(FALLBACK_CATALOG);
@@ -1770,31 +1805,36 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-slate-400 font-semibold mb-1">Condición de Pago (Opcional):</label>
-                    <input
-                      type="text"
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-400 font-semibold text-xs">Condición de Pago & Términos (Opcional):</label>
+                      <span className="text-[10px] text-amber-400 font-medium">Click para agregar/quitar viñetas</span>
+                    </div>
+                    <textarea
+                      rows={2}
                       value={dispPaymentCondition}
                       onChange={(e) => setDispPaymentCondition(e.target.value)}
-                      placeholder="Ej. Condición de pago 07 días despues de realizar el servicio."
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white text-xs outline-none focus:border-amber-400 mb-1.5"
+                      placeholder="Ej. Contado contra entrega&#10;Precios no incluyen IGV"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white text-xs outline-none focus:border-amber-400 mb-1.5 leading-relaxed font-sans"
                     />
                     <div className="flex flex-wrap gap-1">
-                      {[
-                        'Contado contra entrega',
-                        'Condición de pago 07 días despues de realizar el servicio.',
-                        'Crédito 15 días factura',
-                        'Crédito 30 días',
-                        '50% adelanto / 50% saldo contra entrega'
-                      ].map(cond => (
-                        <button
-                          key={cond}
-                          type="button"
-                          onClick={() => setDispPaymentCondition(cond)}
-                          className="px-2 py-0.5 rounded-md text-[10px] bg-slate-900 border border-slate-800 text-slate-300 hover:border-amber-400 hover:text-amber-300 transition"
-                        >
-                          {cond.length > 28 ? cond.slice(0, 28) + '...' : cond}
-                        </button>
-                      ))}
+                      {PAYMENT_CONDITION_PRESETS.map(cond => {
+                        const active = isConditionSelected(dispPaymentCondition, cond);
+                        return (
+                          <button
+                            key={cond}
+                            type="button"
+                            onClick={() => handleTogglePaymentCondition(setDispPaymentCondition, dispPaymentCondition, cond)}
+                            className={`px-2 py-0.5 rounded-md text-[10px] border transition flex items-center space-x-1 ${
+                              active
+                                ? 'bg-amber-500/20 text-amber-300 border-amber-400 font-bold'
+                                : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
+                            }`}
+                          >
+                            <span>{active ? '✓' : '+'}</span>
+                            <span>{cond.length > 32 ? cond.slice(0, 32) + '...' : cond}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -2870,31 +2910,36 @@ export default function WorkOrdersView({ onSelectQuote, triggerNewOrder, onRefre
                       </div>
 
                       <div className="sm:col-span-2">
-                        <label className="block text-slate-400 font-semibold mb-1">Condición de Pago Acordada:</label>
-                        <input
-                          type="text"
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-slate-400 font-semibold">Condición de Pago & Términos Acordados:</label>
+                          <span className="text-[10px] text-amber-400 font-medium">Click en las viñetas para agregar o quitar</span>
+                        </div>
+                        <textarea
+                          rows={3}
                           value={quotePaymentCondition}
                           onChange={(e) => setQuotePaymentCondition(e.target.value)}
-                          placeholder="Ej. Condición de pago 07 días despues de realizar el servicio."
-                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white text-xs outline-none focus:border-amber-400 mb-1.5"
+                          placeholder="Ej. Contado contra entrega&#10;Precios no incluyen IGV"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white text-xs outline-none focus:border-amber-400 mb-2 leading-relaxed font-sans"
                         />
-                        <div className="flex flex-wrap gap-1">
-                          {[
-                            'Contado contra entrega',
-                            'Condición de pago 07 días despues de realizar el servicio.',
-                            'Crédito 15 días factura',
-                            'Crédito 30 días',
-                            '50% adelanto / 50% saldo contra entrega'
-                          ].map(cond => (
-                            <button
-                              key={cond}
-                              type="button"
-                              onClick={() => setQuotePaymentCondition(cond)}
-                              className="px-2 py-0.5 rounded-md text-[10px] bg-slate-900 border border-slate-800 text-slate-300 hover:border-amber-400 hover:text-amber-300 transition"
-                            >
-                              {cond.length > 28 ? cond.slice(0, 28) + '...' : cond}
-                            </button>
-                          ))}
+                        <div className="flex flex-wrap gap-1.5">
+                          {PAYMENT_CONDITION_PRESETS.map(cond => {
+                            const active = isConditionSelected(quotePaymentCondition, cond);
+                            return (
+                              <button
+                                key={cond}
+                                type="button"
+                                onClick={() => handleTogglePaymentCondition(setQuotePaymentCondition, quotePaymentCondition, cond)}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition flex items-center space-x-1 ${
+                                  active
+                                    ? 'bg-amber-500/20 text-amber-300 border-amber-400 shadow-sm'
+                                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
+                                }`}
+                              >
+                                <span>{active ? '✓' : '+'}</span>
+                                <span>{cond}</span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
