@@ -14,6 +14,7 @@ const isPartItem = (item) => {
 const PAYMENT_CONDITION_PRESETS = [
   'Contado contra entrega',
   'Precios no incluyen IGV',
+  'Cotización válida por 15 días',
   'Condición de pago 07 días despues de realizar el servicio.',
   'Crédito 15 días factura',
   'Crédito 30 días',

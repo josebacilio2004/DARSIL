@@ -46,19 +46,13 @@ function formatCurrency(amount) {
   return Number(amount || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function isExcludedObservationNote(str) {
+function isSystemGeneratedLegacyNote(str) {
   if (!str || typeof str !== 'string') return true;
   const s = str.trim().toLowerCase();
   return (
     s.length === 0 ||
-    s.includes('cotización válida') ||
-    s.includes('cotizacion valida') ||
-    s.includes('válida por') ||
-    s.includes('valida por') ||
-    s.includes('días hábiles') ||
-    s.includes('dias habiles') ||
-    s.includes('días calendario') ||
-    s.includes('dias calendario') ||
+    s === 'nota: cotización válida por 15 días hábiles desde su emisión.' ||
+    s === 'nota: cotizacion valida por 15 dias habiles desde su emision.' ||
     s.startsWith('nota: cotización actualizada automáticamente') ||
     s.startsWith('nota: cotizacion actualizada automaticamente')
   );
@@ -70,28 +64,31 @@ function isExcludedObservationNote(str) {
 function renderObservationsList(paymentCondition, commercialConditions = [], notes = '') {
   const items = [];
 
+  // Lo que el usuario ingrese en paymentCondition NUNCA se censura (siempre se respeta y muestra)
   if (paymentCondition && typeof paymentCondition === 'string') {
     const parts = paymentCondition
       .split(/\r?\n|•|\s+-\s+|;/)
       .map(s => s.trim())
-      .filter(s => !isExcludedObservationNote(s));
+      .filter(s => s.length > 0 && !s.toLowerCase().startsWith('nota: cotización actualizada automáticamente'));
     items.push(...parts);
   }
 
   if (Array.isArray(commercialConditions)) {
     commercialConditions.forEach(c => {
-      if (c && typeof c === 'string' && !isExcludedObservationNote(c)) {
+      if (c && typeof c === 'string') {
         const cClean = c.trim();
-        if (!items.includes(cClean)) items.push(cClean);
+        if (cClean && !isSystemGeneratedLegacyNote(cClean) && !items.includes(cClean)) {
+          items.push(cClean);
+        }
       }
     });
   }
 
-  if (notes && typeof notes === 'string' && !isExcludedObservationNote(notes)) {
+  if (notes && typeof notes === 'string' && !isSystemGeneratedLegacyNote(notes)) {
     const noteParts = notes
       .split(/\r?\n|•/)
       .map(s => s.trim())
-      .filter(s => !isExcludedObservationNote(s));
+      .filter(s => s.length > 0 && !isSystemGeneratedLegacyNote(s));
     items.push(...noteParts);
   }
 
