@@ -21,6 +21,7 @@ import {
   Tag
 } from 'lucide-react';
 import { api } from '../services/api';
+import ConfirmDeleteModal from './ConfirmDeleteModal';
 
 export default function InventoryView() {
   const [items, setItems] = useState([]);
@@ -29,6 +30,17 @@ export default function InventoryView() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [onlyLowStock, setOnlyLowStock] = useState(false);
+
+  // Modal de confirmación de borrado seguro por palabra / SKU
+  const [deleteConfirmConfig, setDeleteConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    itemCode: '',
+    targetType: 'producto',
+    warningText: '',
+    onConfirm: null
+  });
 
   // Modales
   const [showItemModal, setShowItemModal] = useState(false);
@@ -105,16 +117,23 @@ export default function InventoryView() {
     }
   };
 
-  const handleDeleteCategory = async (id, name) => {
-    if (!window.confirm(`¿Deseas eliminar la categoría "${name}"?`)) return;
-    try {
-      const res = await api.deleteInventoryCategory(id);
-      if (res?.success) {
-        fetchCategoriesAndUnits();
+  const handleDeleteCategory = (id, name) => {
+    setDeleteConfirmConfig({
+      isOpen: true,
+      title: 'Eliminar Categoría de Almacén',
+      itemName: name,
+      itemCode: '',
+      targetType: 'categoría',
+      warningText: 'Los repuestos asignados a esta categoría mantendrán su ficha pero quedarán sin familia activa.',
+      onConfirm: async () => {
+        const res = await api.deleteInventoryCategory(id);
+        if (res?.success) {
+          fetchCategoriesAndUnits();
+        } else {
+          throw new Error(res?.message || 'Error al eliminar categoría');
+        }
       }
-    } catch (err) {
-      alert('Error eliminando categoría: ' + err.message);
-    }
+    });
   };
 
   const handleCreateUnit = async (e) => {
@@ -136,38 +155,45 @@ export default function InventoryView() {
     }
   };
 
-  const handleDeleteUnit = async (id, name) => {
-    if (!window.confirm(`¿Deseas eliminar la unidad de medida "${name}"?`)) return;
-    try {
-      const res = await api.deleteInventoryUnit(id);
-      if (res?.success) {
-        fetchCategoriesAndUnits();
+  const handleDeleteUnit = (id, name) => {
+    setDeleteConfirmConfig({
+      isOpen: true,
+      title: 'Eliminar Unidad de Medida',
+      itemName: name,
+      itemCode: '',
+      targetType: 'unidad de medida',
+      warningText: 'Esta unidad ya no podrá seleccionarse para nuevos repuestos o entradas de Kardex.',
+      onConfirm: async () => {
+        const res = await api.deleteInventoryUnit(id);
+        if (res?.success) {
+          fetchCategoriesAndUnits();
+        } else {
+          throw new Error(res?.message || 'Error al eliminar unidad');
+        }
       }
-    } catch (err) {
-      alert('Error eliminando unidad de medida: ' + err.message);
-    }
+    });
   };
 
-  const handleDeleteItem = async (item) => {
+  const handleDeleteItem = (item) => {
     if (!item) return;
-    const confirmMsg = `¿Estás seguro de que deseas eliminar permanentemente el ítem:\n\n"${item.name}" (SKU: ${item.sku})?\n\nEsta acción lo retirará del inventario activo y del catálogo de taller.`;
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      const res = await api.deleteInventoryItem(item._id);
-      if (res?.success) {
-        alert('Ítem eliminado correctamente del inventario.');
-        if (showItemModal) {
-          setShowItemModal(false);
+    setDeleteConfirmConfig({
+      isOpen: true,
+      title: 'Eliminar Ítem del Inventario',
+      itemName: item.name,
+      itemCode: item.sku,
+      targetType: 'repuesto / insumo de taller',
+      warningText: 'Esta acción dará de baja el ítem permanentemente del inventario activo y del catálogo comercial.',
+      onConfirm: async () => {
+        const res = await api.deleteInventoryItem(item._id);
+        if (res?.success) {
+          if (showItemModal) setShowItemModal(false);
+          await fetchInventory();
+          await fetchSummary();
+        } else {
+          throw new Error(res?.message || 'Error al eliminar el ítem');
         }
-        fetchInventory();
-        fetchSummary();
-      } else {
-        alert(res?.message || 'Error al eliminar el ítem');
       }
-    } catch (err) {
-      alert('Error de conexión al eliminar: ' + err.message);
-    }
+    });
   };
 
   const fetchInventory = async () => {
@@ -563,6 +589,13 @@ export default function InventoryView() {
                     title="Editar Ficha"
                   >
                     <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteItem(item)}
+                    className="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 hover:border-rose-500/50 transition"
+                    title="Eliminar Ítem del Inventario"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -1242,6 +1275,18 @@ export default function InventoryView() {
           </div>
         </div>
       )}
+
+      {/* Modal de Confirmación Segura por Palabra / SKU para Eliminación Definitiva */}
+      <ConfirmDeleteModal
+        isOpen={deleteConfirmConfig.isOpen}
+        onClose={() => setDeleteConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteConfirmConfig.onConfirm}
+        title={deleteConfirmConfig.title}
+        itemName={deleteConfirmConfig.itemName}
+        itemCode={deleteConfirmConfig.itemCode}
+        targetType={deleteConfirmConfig.targetType}
+        warningText={deleteConfirmConfig.warningText}
+      />
 
     </div>
   );

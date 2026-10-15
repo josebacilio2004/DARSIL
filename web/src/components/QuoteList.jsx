@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Eye, Edit3, MapPin, Share2, Trash2, Car, Calendar, DollarSign, Filter, Building2, PlusCircle } from 'lucide-react';
 import { api, getApiUrl } from '../services/api';
+import ConfirmDeleteModal from './ConfirmDeleteModal';
 
 const STATUS_CONFIG = {
   'BORRADOR': { label: 'Borrador', bg: 'bg-slate-800 text-slate-300 border-slate-700' },
@@ -14,6 +15,17 @@ const STATUS_CONFIG = {
 export default function QuoteList({ quotes, onSelectQuote, onEditQuote, onOpenMap, onRefresh, onOpenNewQuote }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
+
+  // Modal de confirmación tipada para eliminación segura
+  const [deleteModalConfig, setDeleteModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    itemCode: '',
+    targetType: 'cotización',
+    warningText: '',
+    onConfirm: null
+  });
 
   const filteredQuotes = quotes.filter(q => {
     const matchesSearch = 
@@ -38,15 +50,24 @@ export default function QuoteList({ quotes, onSelectQuote, onEditQuote, onOpenMa
     }
   };
 
-  const handleDelete = async (e, quote) => {
+  const handleDelete = (e, quote) => {
     e.stopPropagation();
-    if (!window.confirm(`¿Estás seguro de eliminar la cotización ${quote.quoteNumber}?`)) return;
-    try {
-      await api.deleteQuote(quote._id);
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      alert('Error al eliminar: ' + err.message);
-    }
+    setDeleteModalConfig({
+      isOpen: true,
+      title: 'Eliminar Cotización Oficial',
+      itemName: quote.clientName ? `${quote.clientName} (${quote.plate || 'Sin Placa'})` : quote.quoteNumber,
+      itemCode: quote.quoteNumber,
+      targetType: 'cotización',
+      warningText: 'Esta acción cancelará y eliminará permanentemente la cotización del sistema.',
+      onConfirm: async () => {
+        const res = await api.deleteQuote(quote._id);
+        if (res?.success) {
+          if (onRefresh) onRefresh();
+        } else {
+          throw new Error(res?.message || 'Error al eliminar cotización');
+        }
+      }
+    });
   };
 
   // Función para abrir WhatsApp automáticamente redirigiendo al número registrado
@@ -412,6 +433,18 @@ Quedamos a su entera disposición para coordinar la atención técnica.
           </table>
         </div>
       </div>
+
+      {/* Modal de confirmación tipada para eliminación segura */}
+      <ConfirmDeleteModal
+        isOpen={deleteModalConfig.isOpen}
+        onClose={() => setDeleteModalConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteModalConfig.onConfirm}
+        title={deleteModalConfig.title}
+        itemName={deleteModalConfig.itemName}
+        itemCode={deleteModalConfig.itemCode}
+        targetType={deleteModalConfig.targetType}
+        warningText={deleteModalConfig.warningText}
+      />
 
     </div>
   );

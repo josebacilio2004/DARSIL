@@ -31,7 +31,11 @@ import {
   Lightbulb,
   Zap,
   Target,
-  ArrowRight
+  ArrowRight,
+  Search,
+  Filter,
+  Activity,
+  Check
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -85,6 +89,12 @@ export default function FinanceBIView({ onNavigateToFinancial }) {
   const [advisorLoading, setAdvisorLoading] = useState(false);
   const [advisorQuery, setAdvisorQuery] = useState('');
   const [advisorChat, setAdvisorChat] = useState([]);
+
+  // Estados para filtro y búsqueda de Rentabilidad por Trabajo
+  const [jobSearch, setJobSearch] = useState('');
+  const [jobLevelFilter, setJobLevelFilter] = useState('ALL');
+  const [jobSortField, setJobSortField] = useState('netProfit');
+  const [jobSortOrder, setJobSortOrder] = useState('desc');
 
   const fetchMetrics = async () => {
     try {
@@ -476,6 +486,118 @@ export default function FinanceBIView({ onNavigateToFinancial }) {
     };
   }, [data?.monthlyTrends]);
 
+  // 5. Gráfico Horizontal de Top Trabajos por Utilidad Neta (S/)
+  const topJobsProfitOption = useMemo(() => {
+    if (!data?.jobProfitability?.jobs || data.jobProfitability.jobs.length === 0) return null;
+    const top5 = [...data.jobProfitability.jobs].slice(0, 5).reverse();
+
+    return {
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        backgroundColor: '#090d16',
+        borderColor: '#334155',
+        borderWidth: 1,
+        textStyle: { color: '#f8fafc' },
+        formatter: (params) => {
+          const item = top5[params[0].dataIndex];
+          if (!item) return '';
+          return `<div style="font-size:12px;font-weight:bold;color:#f8fafc;padding:2px 4px;">${item.orderNumber} - ${item.clientName}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">Placa: ${item.plate} • ${item.serviceDescription}</div>
+            <div style="display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#cbd5e1;">
+              <span>Facturación:</span>
+              <span style="font-weight:bold;color:#f8fafc;">S/ ${Number(item.totalRevenue).toFixed(2)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#f43f5e;">
+              <span>Costos Operativos:</span>
+              <span style="font-weight:bold;">- S/ ${Number(item.totalCost).toFixed(2)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#10b981;border-top:1px solid #334155;padding-top:4px;margin-top:4px;">
+              <span>Utilidad Neta:</span>
+              <span style="font-weight:bold;">S/ ${Number(item.netProfit).toFixed(2)} (${item.marginPercent}% Margen)</span>
+            </div>`;
+        }
+      },
+      grid: { top: '8%', left: '3%', right: '12%', bottom: '5%', containLabel: true },
+      xAxis: {
+        type: 'value',
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: '#1e293b', type: 'dashed' } },
+        axisLabel: {
+          color: '#64748b',
+          formatter: (v) => `S/ ${v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v}`
+        }
+      },
+      yAxis: {
+        type: 'category',
+        data: top5.map(j => `${j.orderNumber} (${j.plate})`),
+        axisLine: { lineStyle: { color: '#334155' } },
+        axisLabel: { color: '#cbd5e1', fontWeight: 'bold', fontSize: 11 }
+      },
+      series: [
+        {
+          name: 'Utilidad Neta (S/)',
+          type: 'bar',
+          barWidth: '45%',
+          data: top5.map(j => ({
+            value: j.netProfit,
+            itemStyle: {
+              color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
+                { offset: 0, color: '#10b981' },
+                { offset: 1, color: '#047857' }
+              ]),
+              borderRadius: [0, 8, 8, 0]
+            }
+          })),
+          label: {
+            show: true,
+            position: 'right',
+            color: '#10b981',
+            fontWeight: 'bold',
+            fontSize: 11,
+            formatter: (p) => 'S/ ' + Number(p.value).toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+          }
+        }
+      ]
+    };
+  }, [data?.jobProfitability]);
+
+  // Lista filtrada y ordenada de trabajos analizados
+  const filteredJobs = useMemo(() => {
+    if (!data?.jobProfitability?.jobs) return [];
+    let list = [...data.jobProfitability.jobs];
+
+    if (jobSearch.trim()) {
+      const q = jobSearch.toLowerCase().trim();
+      list = list.filter(j =>
+        (j.orderNumber || '').toLowerCase().includes(q) ||
+        (j.quoteNumber || '').toLowerCase().includes(q) ||
+        (j.clientName || '').toLowerCase().includes(q) ||
+        (j.plate || '').toLowerCase().includes(q) ||
+        (j.serviceDescription || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (jobLevelFilter !== 'ALL') {
+      list = list.filter(j => j.profitabilityLevel === jobLevelFilter);
+    }
+
+    list.sort((a, b) => {
+      let valA = a[jobSortField];
+      let valB = b[jobSortField];
+      if (typeof valA === 'string') {
+        valA = valA.toLowerCase();
+        valB = valB.toLowerCase();
+      }
+      if (valA < valB) return jobSortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return jobSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [data?.jobProfitability?.jobs, jobSearch, jobLevelFilter, jobSortField, jobSortOrder]);
+
   if (loading) {
     return (
       <div className="bg-darsil-card border border-darsil-border p-16 rounded-2xl text-center space-y-3">
@@ -502,7 +624,19 @@ export default function FinanceBIView({ onNavigateToFinancial }) {
     );
   }
 
-  const { kpis, cashFlow, topClients, recentPayments } = data;
+  const { kpis, cashFlow, topClients, recentPayments, jobProfitability } = data;
+  const jobSummary = jobProfitability?.summary || {
+    totalRevenue: 0,
+    totalPartsCost: 0,
+    totalLaborCost: 0,
+    totalOperatingCost: 0,
+    totalNetProfit: 0,
+    overallMarginPercent: 0,
+    overallRoiPercent: 0,
+    analyzedJobsCount: 0,
+    mostProfitableJob: null,
+    highestMarginJob: null
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-16 print:p-0 print:space-y-4">
@@ -852,6 +986,262 @@ export default function FinanceBIView({ onNavigateToFinancial }) {
               )}
             </div>
           )}
+        </div>
+
+      </div>
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN NUEVA: INTELIGENCIA FINANCIERA & RENTABILIDAD POR TRABAJO (ROI POR OT) */}
+      {/* ========================================================================= */}
+      <div className="bg-gradient-to-br from-darsil-card via-slate-900 to-darsil-card border border-emerald-500/30 p-5 sm:p-6 rounded-2xl shadow-2xl space-y-5">
+        
+        {/* Encabezado de la Sección */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-500/20 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                CONTROL DE COSTOS, MÁRGENES & RENTABILIDAD
+              </span>
+              <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-bold">
+                ROI REAL POR ORDEN DE TRABAJO
+              </span>
+            </div>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-black text-white flex items-center gap-2 mt-1">
+              <TrendingUp className="w-6 h-6 text-emerald-400 shrink-0" />
+              Inteligencia Financiera: Rentabilidad y Margen Real por Trabajo
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Auditoría de utilidades deducidas por consumo real de repuestos en almacén/Kardex y costo de mano de obra técnica asignada.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="text-xs font-mono text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1.5 rounded-xl font-bold">
+              {jobSummary.analyzedJobsCount} Trabajos Analizados
+            </span>
+          </div>
+        </div>
+
+        {/* 4 KPIs de Rentabilidad */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Margen Operativo Promedio */}
+          <div className="bg-slate-950/80 border border-emerald-500/40 p-4 rounded-xl relative overflow-hidden">
+            <div className="flex justify-between items-center text-slate-400 text-xs font-bold uppercase mb-1">
+              <span>Margen Operativo Promedio</span>
+              <Percent className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono">
+              {jobSummary.overallMarginPercent}%
+            </div>
+            <div className="text-[10px] text-slate-400 font-medium mt-1">
+              ROI Operativo global: <b className="text-emerald-300 font-bold font-mono">+{jobSummary.overallRoiPercent}%</b>
+            </div>
+          </div>
+
+          {/* Utilidad Neta Consolidada */}
+          <div className="bg-slate-950/80 border border-emerald-500/40 p-4 rounded-xl relative overflow-hidden">
+            <div className="flex justify-between items-center text-slate-400 text-xs font-bold uppercase mb-1">
+              <span>Utilidad Neta Consolidada</span>
+              <DollarSign className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-white font-mono">
+              {formatCurrency(jobSummary.totalNetProfit)}
+            </div>
+            <div className="text-[10px] text-slate-400 font-medium mt-1">
+              Facturación neta: <span className="text-slate-300 font-mono font-bold">{formatCurrency(jobSummary.totalRevenue)}</span>
+            </div>
+          </div>
+
+          {/* Costo Operativo Total */}
+          <div className="bg-slate-950/80 border border-rose-500/30 p-4 rounded-xl relative overflow-hidden">
+            <div className="flex justify-between items-center text-slate-400 text-xs font-bold uppercase mb-1">
+              <span>Costos Operativos (Repuestos + MO)</span>
+              <Activity className="w-4 h-4 text-rose-400" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-rose-400 font-mono">
+              {formatCurrency(jobSummary.totalOperatingCost)}
+            </div>
+            <div className="text-[10px] text-slate-400 font-medium mt-1 flex items-center justify-between">
+              <span>Rep: <b className="text-slate-300 font-mono">{formatCurrency(jobSummary.totalPartsCost)}</b></span>
+              <span>MO: <b className="text-slate-300 font-mono">{formatCurrency(jobSummary.totalLaborCost)}</b></span>
+            </div>
+          </div>
+
+          {/* Trabajo Más Rentable */}
+          <div className="bg-slate-950/80 border border-amber-500/30 p-4 rounded-xl relative overflow-hidden">
+            <div className="flex justify-between items-center text-slate-400 text-xs font-bold uppercase mb-1">
+              <span>Trabajo Mayor Margen</span>
+              <Award className="w-4 h-4 text-amber-400" />
+            </div>
+            <div className="text-lg sm:text-xl font-black text-amber-400 font-mono truncate">
+              {jobSummary.mostProfitableJob?.orderNumber || '---'}
+            </div>
+            <div className="text-[10px] text-slate-400 font-medium mt-1 truncate">
+              {jobSummary.mostProfitableJob ? (
+                <>
+                  <span className="text-white font-bold">{jobSummary.mostProfitableJob.clientName}</span> (Placa: {jobSummary.mostProfitableJob.plate})
+                  <div className="text-emerald-400 font-bold font-mono">
+                    +{formatCurrency(jobSummary.mostProfitableJob.netProfit)} ({jobSummary.mostProfitableJob.marginPercent}%)
+                  </div>
+                </>
+              ) : 'Sin órdenes registradas'}
+            </div>
+          </div>
+        </div>
+
+        {/* Gráfico Top 5 Trabajos por Utilidad */}
+        {topJobsProfitOption && (
+          <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                <BarChart3 className="w-4 h-4 text-emerald-400" />
+                Top 5 Trabajos / Órdenes con Mayor Utilidad Neta (S/):
+              </span>
+              <span className="text-[10px] text-slate-400">
+                Ganancia líquida en caja tras costos directos
+              </span>
+            </div>
+            <EChartCard option={topJobsProfitOption} style={{ height: 220 }} />
+          </div>
+        )}
+
+        {/* Tabla Detallada de Rentabilidad por Trabajo */}
+        <div className="space-y-3 pt-2">
+          {/* Barra de Filtros y Búsqueda */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                placeholder="Buscar por N° OT, cotización, cliente, placa..."
+                value={jobSearch}
+                onChange={(e) => setJobSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-emerald-400 outline-none"
+              />
+            </div>
+
+            {/* Filtros de Nivel de Rentabilidad */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[
+                { id: 'ALL', label: 'Todos' },
+                { id: 'EXCELENTE', label: 'Excelente (>60%)' },
+                { id: 'SALUDABLE', label: 'Saludable (40-60%)' },
+                { id: 'MODERADO', label: 'Moderado (25-40%)' },
+                { id: 'CRITICO', label: 'Crítico (<25%)' }
+              ].map(lvl => (
+                <button
+                  key={lvl.id}
+                  type="button"
+                  onClick={() => setJobLevelFilter(lvl.id)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition ${
+                    jobLevelFilter === lvl.id
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-sm'
+                      : 'bg-slate-950/80 text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  {lvl.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tabla de Trabajos */}
+          <div className="overflow-x-auto rounded-xl border border-darsil-border bg-slate-950/70">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-darsil-border bg-slate-900/80 text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                  <th className="py-2.5 px-3">Orden / Coti</th>
+                  <th className="py-2.5 px-3">Cliente & Vehículo</th>
+                  <th className="py-2.5 px-3">Servicio / Falla</th>
+                  <th className="py-2.5 px-3 text-right">Facturación</th>
+                  <th className="py-2.5 px-3 text-right">Costo Repuestos</th>
+                  <th className="py-2.5 px-3 text-right">Costo M.O.</th>
+                  <th className="py-2.5 px-3 text-right">Costo Total</th>
+                  <th className="py-2.5 px-3 text-right">Utilidad Neta</th>
+                  <th className="py-2.5 px-3 text-center">Margen Real</th>
+                  <th className="py-2.5 px-3 text-center">Nivel</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                {filteredJobs.length === 0 ? (
+                  <tr>
+                    <td colSpan="10" className="text-center py-8 text-slate-500">
+                      No se encontraron trabajos o servicios que coincidan con el filtro.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredJobs.map((j, idx) => {
+                    const isExc = j.profitabilityLevel === 'EXCELENTE';
+                    const isSal = j.profitabilityLevel === 'SALUDABLE';
+                    const isMod = j.profitabilityLevel === 'MODERADO';
+                    const isCrit = j.profitabilityLevel === 'CRITICO';
+
+                    return (
+                      <tr key={j.id || idx} className="hover:bg-slate-900/50 transition">
+                        <td className="py-2.5 px-3 font-mono">
+                          <span className="font-bold text-white block">{j.orderNumber}</span>
+                          <span className="text-[10px] text-amber-400 font-medium">{j.quoteNumber}</span>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <div className="font-bold text-white truncate max-w-[150px]">{j.clientName}</div>
+                          <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <span className="font-mono text-amber-300 font-bold">{j.plate}</span>
+                            <span>•</span>
+                            <span className="truncate max-w-[80px]">{j.model}</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-[11px] text-slate-300 max-w-[160px] truncate" title={j.serviceDescription}>
+                          {j.serviceDescription}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-right text-white">
+                          {formatCurrency(j.totalRevenue)}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono text-right text-slate-400 text-[11px]">
+                          {formatCurrency(j.partsCost)}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono text-right text-slate-400 text-[11px]">
+                          {formatCurrency(j.laborCost)}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono text-right text-rose-400 font-medium">
+                          {formatCurrency(j.totalCost)}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono font-black text-right text-emerald-400 text-sm">
+                          +{formatCurrency(j.netProfit)}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <div className="flex flex-col items-center">
+                            <span className="font-mono font-black text-xs text-white">{j.marginPercent}%</span>
+                            <div className="w-14 h-1.5 bg-slate-800 rounded-full overflow-hidden mt-0.5">
+                              <div
+                                className={`h-full rounded-full ${
+                                  isExc ? 'bg-emerald-400' : isSal ? 'bg-sky-400' : isMod ? 'bg-amber-400' : 'bg-rose-500'
+                                }`}
+                                style={{ width: `${Math.min(100, Math.max(5, j.marginPercent))}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-wide uppercase border ${
+                            isExc
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                              : isSal
+                              ? 'bg-sky-500/20 text-sky-300 border-sky-500/40'
+                              : isMod
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                              : 'bg-rose-500/20 text-red-400 border-rose-500/40'
+                          }`}>
+                            {j.profitabilityLevel}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </div>

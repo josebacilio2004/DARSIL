@@ -14,6 +14,7 @@ import {
   Tag
 } from 'lucide-react';
 import { api } from '../services/api';
+import ConfirmDeleteModal from './ConfirmDeleteModal';
 
 export default function CatalogView() {
   const [items, setItems] = useState([]);
@@ -21,6 +22,17 @@ export default function CatalogView() {
   const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+
+  // Modal de confirmación tipada para eliminación segura
+  const [deleteModalConfig, setDeleteModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    itemCode: '',
+    targetType: 'servicio técnico',
+    warningText: '',
+    onConfirm: null
+  });
 
   // Estados de CRUD
   const [modalOpen, setModalOpen] = useState(false);
@@ -83,18 +95,25 @@ export default function CatalogView() {
     setModalOpen(true);
   };
 
-  const handleDelete = async (item) => {
-    if (!window.confirm(`¿Estás seguro de eliminar el servicio "${item.code} - ${item.description}"?`)) {
-      return;
-    }
-    try {
-      await api.deleteCatalogItem(item._id);
-      setSyncMsg(`Servicio ${item.code} eliminado.`);
-      setTimeout(() => setSyncMsg(''), 3000);
-      fetchCatalog();
-    } catch (err) {
-      alert('Error al eliminar ítem: ' + err.message);
-    }
+  const handleDelete = (item) => {
+    setDeleteModalConfig({
+      isOpen: true,
+      title: 'Eliminar Servicio del Catálogo',
+      itemName: item.description,
+      itemCode: item.code,
+      targetType: 'servicio técnico',
+      warningText: 'Este servicio dejará de estar disponible para autocompletar en nuevas cotizaciones.',
+      onConfirm: async () => {
+        const res = await api.deleteCatalogItem(item._id);
+        if (res?.success) {
+          setSyncMsg(`Servicio ${item.code} eliminado correctamente.`);
+          setTimeout(() => setSyncMsg(''), 3000);
+          fetchCatalog();
+        } else {
+          throw new Error(res?.message || 'Error al eliminar servicio');
+        }
+      }
+    });
   };
 
   const handleSave = async (e) => {
@@ -472,6 +491,18 @@ export default function CatalogView() {
           </div>
         </div>
       )}
+
+      {/* Modal de confirmación tipada para eliminación segura */}
+      <ConfirmDeleteModal
+        isOpen={deleteModalConfig.isOpen}
+        onClose={() => setDeleteModalConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteModalConfig.onConfirm}
+        title={deleteModalConfig.title}
+        itemName={deleteModalConfig.itemName}
+        itemCode={deleteModalConfig.itemCode}
+        targetType={deleteModalConfig.targetType}
+        warningText={deleteModalConfig.warningText}
+      />
 
     </div>
   );
